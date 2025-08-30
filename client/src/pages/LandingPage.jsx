@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import landingHeroImg from '../assets/landingHeroImg.png';
 import SearchFilterSection from '../components/SearchFilterSection';
 import ItemList from '../components/ItemList';
@@ -6,6 +7,7 @@ import Footer from '../components/Footer';
 // import './styles/LandingPage.css'; //this is for custom styles if needed
 
 const LandingPage = () => {
+  const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState('');
   const [filters, setFilters] = useState({});
 
@@ -31,10 +33,16 @@ const LandingPage = () => {
           
           {/* Auth Buttons */}
           <div className="flex items-center space-x-4">
-            <button className="text-white border border-white px-4 py-2 rounded-md bg-transparent hover:bg-white hover:text-purple-600 transition-colors font-medium">
+            <button 
+              onClick={() => navigate('/signup')}
+              className="text-white border border-white px-4 py-2 rounded-md bg-transparent hover:bg-white hover:text-purple-600 transition-colors font-medium"
+            >
               SIGN UP
             </button>
-            <button className="bg-white text-black px-4 py-2 rounded-md hover:bg-gray-100 transition-colors font-medium">
+            <button 
+              onClick={() => navigate('/login')}
+              className="bg-white text-black px-4 py-2 rounded-md hover:bg-gray-100 transition-colors font-medium"
+            >
               LOGIN
             </button>
           </div>
@@ -47,7 +55,7 @@ const LandingPage = () => {
           <div className="grid lg:grid-cols-2 gap-8 lg:gap-16 items-center">
             {/* Left Side - Text Content */}
             <div className="space-y-10">
-                <h1 className="text-5xl sm:text-5xl lg:text-5xl xl:text-6xl font-bold text-[#6C4BF4] leading-tight font-poppins">
+                <h1 className="text-4xl sm:text-4xl lg:text-5xl xl:text-6xl font-bold text-[#6C4BF4] leading-tight font-poppins">
                 Rent What You Need,
                <br />When You   Need It
               </h1>
@@ -55,7 +63,9 @@ const LandingPage = () => {
                 QuickRent connects people with items for rent to those who need them, 
                 making access easy, secure, and affordable.
               </p>
-              <button className="bg-[#6C4BF4] text-white px-6 sm:px-10 py-4 sm:py-5 rounded-md text-lg sm:text-xl font-semibold hover:bg-purple-700 transition-colors font-poppins">
+              <button 
+              onClick={() => navigate('/login')}
+              className="bg-[#6C4BF4] text-white px-6 sm:px-10 py-4 sm:py-5 rounded-md text-lg sm:text-xl font-semibold hover:bg-purple-700 transition-colors font-poppins">
                 GET STARTED
               </button>
             </div>

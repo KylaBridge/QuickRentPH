@@ -1,6 +1,10 @@
 import React from 'react';
+import { useNavigate } from 'react-router-dom';
 
 const ItemList = ({ items, title = "Featured Items", showSeeMore = true, maxItems = 6 }) => {
+
+  const navigate = useNavigate();
+
   // Sample data
   const sampleItems = [
     {
@@ -101,7 +105,9 @@ const ItemList = ({ items, title = "Featured Items", showSeeMore = true, maxItem
             {title}
           </h2>
           {showSeeMore && (
-            <button className="text-[#6C4BF4] hover:text-purple-700 font-medium font-poppins">
+            <button 
+            onClick={() => navigate('/login')}
+            className="text-[#6C4BF4] hover:text-purple-700 font-medium font-poppins">
               See More
             </button>
           )}
