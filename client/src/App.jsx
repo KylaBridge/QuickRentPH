@@ -3,6 +3,7 @@ import LandingPage from "./pages/LandingPage.jsx";
 import LoginPage from "./pages/LoginPage.jsx";
 import SignUpPage from "./pages/SignUpPage.jsx";
 import Dashboard from "./pages/Dashboard.jsx";
+import ItemsForRent from "./pages/ItemsForRent.jsx";
 
 function App() {
   return (
@@ -13,7 +14,7 @@ function App() {
       <Route path="/login" element={<LoginPage />} />
       <Route path="/signup" element={<SignUpPage />} />
       <Route path="/dashboard" element={<Dashboard />} />
-      
+      <Route path="/items-for-rent" element={<ItemsForRent />} />
     </Routes>
   );
 }

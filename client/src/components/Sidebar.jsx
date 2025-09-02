@@ -83,37 +83,40 @@ const Sidebar = ({ isOpen, onToggle }) => {
     if (item.hasSubmenu) {
       return (
         <li key={item.name} className="relative">
-          {/* Main menu item with submenu */}
-          <button
-            onClick={() => toggleSubmenu(item.name)}
-            className={`
-              w-full flex items-center px-3 py-3 rounded-lg transition-all duration-200 group
-              ${isActive || isExpanded
-                ? 'bg-[#977EFF] text-white border-r-2 border-white' 
-                : 'text-white hover:bg-[#7857FD] hover:text-white'
-              }
-            `}
-          >
-            <span className="text-white">
-              {item.icon}
-            </span>
-            {!collapsed && (
-              <>
+          {/* Main menu item with submenu: clicking the row navigates; chevron toggles submenu */}
+          <div className="w-full flex items-center group">
+            <Link
+              to={item.path}
+              className={`
+                flex-1 flex items-center px-3 py-3 rounded-lg transition-all duration-200
+                ${isActive || isExpanded
+                  ? 'bg[#977EFF] bg-[#977EFF] text-white border-r-2 border-white' 
+                  : 'text-white hover:bg-[#7857FD] hover:text-white'}
+              `}
+            >
+              <span className="text-white">{item.icon}</span>
+              {!collapsed && (
                 <span className="ml-3 font-medium">{item.name}</span>
-                <svg 
-                  className={`ml-auto w-4 h-4 transition-transform duration-200 ${
-                    isExpanded ? 'rotate-180' : ''
-                  }`} 
-                  fill="none" 
-                  stroke="currentColor" 
+              )}
+            </Link>
+            {!collapsed && (
+              <button
+                onClick={(e) => { e.preventDefault(); e.stopPropagation(); toggleSubmenu(item.name); }}
+                className="ml-2 p-2 rounded-lg text-white hover:bg-[#7857FD]"
+                title={isExpanded ? 'Hide menu' : 'Show menu'}
+              >
+                <svg
+                  className={`w-4 h-4 transition-transform duration-200 ${isExpanded ? 'rotate-180' : ''}`}
+                  fill="none"
+                  stroke="currentColor"
                   viewBox="0 0 24 24"
                 >
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                 </svg>
-              </>
+              </button>
             )}
-          </button>
-          
+          </div>
+
           {/* Submenu */}
           {isExpanded && !collapsed && (
             <ul className="mt-1 ml-6 space-y-1">
@@ -125,10 +128,9 @@ const Sidebar = ({ isOpen, onToggle }) => {
                       to={subItem.path}
                       className={`
                         block px-3 py-2 rounded-lg transition-all duration-200 text-sm
-                        ${isSubActive 
-                          ? 'bg-[#977EFF] text-white border-l-2 border-white' 
-                          : 'text-white hover:bg-[#7857FD] hover:text-white'
-                        }
+                        ${isSubActive
+                          ? 'bg-[#977EFF] text-white border-l-2 border-white'
+                          : 'text-white hover:bg-[#7857FD] hover:text-white'}
                       `}
                     >
                       {subItem.name}
@@ -138,7 +140,7 @@ const Sidebar = ({ isOpen, onToggle }) => {
               })}
             </ul>
           )}
-          
+
           {/* Tooltip for collapsed mode */}
           {collapsed && (
             <div className="absolute left-full ml-2 px-2 py-1 bg-gray-900 text-white text-sm rounded-md opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none whitespace-nowrap z-50">
@@ -241,7 +243,7 @@ const Sidebar = ({ isOpen, onToggle }) => {
         </nav>
 
         {/* Logout button */}
-        <div className="absolute bottom-0 p-4 border-t border-[#7857FD]">
+        <div className="absolute bottom-0 p-4">
           <button
             onClick={() => {
               // Add logout logic here

@@ -67,16 +67,18 @@ const SearchFilterSection = ({ onFilterChange }) => {
     onFilterChange(newFilters);
   };
 
+  const btn = "flex items-center space-x-2 px-2.5 sm:px-3 py-1.5 border border-gray-300 rounded-md bg-white hover:bg-gray-50 transition-colors text-sm font-poppins";
+
   return (
-    <section className="w-full px-4 sm:px-6 lg:px-8 py-8 bg-gray-50">
+    <section className="w-full px-4 sm:px-6 lg:px-8 py-3 bg-gray-50">
       <div className="w-full max-w-7xl mx-auto">
         {/* Filter Options */}
-        <div className="flex flex-wrap gap-2 sm:gap-3 justify-center relative">
+        <div className="flex flex-wrap gap-2 sm:gap-2 justify-center relative">
           {/* Categories Dropdown */}
           <div className="relative">
             <button 
               onClick={() => toggleDropdown('categories')}
-              className="flex items-center space-x-2 px-3 sm:px-4 py-2 border border-gray-300 rounded-md bg-white hover:bg-gray-50 transition-colors text-sm sm:text-base font-poppins"
+              className={btn}
             >
               <span className="text-gray-900">{selectedFilters.categories || 'Categories'}</span>
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -108,7 +110,7 @@ const SearchFilterSection = ({ onFilterChange }) => {
           <div className="relative">
             <button 
               onClick={() => toggleDropdown('sort')}
-              className="flex items-center space-x-2 px-3 sm:px-4 py-2 border border-gray-300 rounded-md bg-white hover:bg-gray-50 transition-colors text-sm sm:text-base font-poppins"
+              className={btn}
             >
               <span className="text-gray-900">{selectedFilters.sort || 'Sort'}</span>
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -140,7 +142,7 @@ const SearchFilterSection = ({ onFilterChange }) => {
           <div className="relative">
             <button 
               onClick={() => toggleDropdown('price')}
-              className="flex items-center px-3 sm:px-4 py-2 border border-gray-300 rounded-md bg-white hover:bg-gray-50 transition-colors text-sm sm:text-base font-poppins"
+              className={btn}
             >
               <span className="text-gray-900">{selectedFilters.price || 'Price'}</span>
             </button>
@@ -214,7 +216,7 @@ const SearchFilterSection = ({ onFilterChange }) => {
           <div className="relative">
             <button 
               onClick={() => toggleDropdown('dealOption')}
-              className="flex items-center space-x-2 px-3 sm:px-4 py-2 border border-gray-300 rounded-md bg-white hover:bg-gray-50 transition-colors text-sm sm:text-base font-poppins"
+              className={btn}
             >
               <span className="text-gray-900">{selectedFilters.dealOption || 'Deal Option'}</span>
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -246,7 +248,7 @@ const SearchFilterSection = ({ onFilterChange }) => {
           <div className="relative">
             <button 
               onClick={() => toggleDropdown('location')}
-              className="flex items-center space-x-2 px-3 sm:px-4 py-2 border border-gray-300 rounded-md bg-white hover:bg-gray-50 transition-colors text-sm sm:text-base font-poppins"
+              className={btn}
             >
               <span className="text-gray-900">{selectedFilters.location || 'Location'}</span>
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -278,7 +280,7 @@ const SearchFilterSection = ({ onFilterChange }) => {
           <div className="relative">
             <button 
               onClick={() => toggleDropdown('condition')}
-              className="flex items-center space-x-2 px-3 sm:px-4 py-2 border border-gray-300 rounded-md bg-white hover:bg-gray-50 transition-colors text-sm sm:text-base font-poppins"
+              className={btn}
             >
               <span className="text-gray-900">{selectedFilters.condition || 'Condition'}</span>
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">

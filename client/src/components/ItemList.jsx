@@ -1,7 +1,7 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 
-const ItemList = ({ items, title = "Featured Items", showSeeMore = true, maxItems = 6 }) => {
+const ItemList = ({ items, title = "Featured Items", showSeeMore = true, maxItems = 6, showActions = false, onView, onRent, compact = false, onCardClick }) => {
 
   const navigate = useNavigate();
 
@@ -96,44 +96,57 @@ const ItemList = ({ items, title = "Featured Items", showSeeMore = true, maxItem
     ));
   };
 
+  const gridClasses = compact
+    ? 'grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-2 sm:gap-3'
+    : 'grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 lg:gap-6';
+
+  const cardClasses = compact
+    ? 'bg-white border border-gray-200 rounded-lg overflow-hidden hover:shadow-md transition-shadow duration-300 max-w-[200px] mx-auto cursor-pointer'
+    : 'bg-white border border-gray-200 rounded-lg overflow-hidden hover:shadow-lg transition-shadow duration-300 max-w-xs mx-auto cursor-pointer';
+
+  const imageWrapper = compact ? 'aspect-square p-2' : 'aspect-[4/3] p-2 sm:p-3';
+  const titleClasses = compact ? 'text-xs font-semibold' : 'text-sm sm:text-base font-semibold';
+  const priceClasses = compact ? 'text-sm font-bold' : 'text-sm sm:text-base font-bold';
+  const actionPadding = compact ? 'px-2 py-1 text-xs' : 'px-3 py-2 text-xs sm:text-sm';
+
   return (
-    <section className="w-full px-4 sm:px-6 lg:px-8 py-8">
+    <section className="w-full px-4 sm:px-6 lg:px-8 py-4">
       <div className="w-full max-w-7xl mx-auto">
         {/* Section Header */}
-        <div className="flex justify-between items-center mb-6">
-          <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 font-poppins">
-            {title}
-          </h2>
-          {showSeeMore && (
-            <button 
-            onClick={() => navigate('/login')}
-            className="text-[#6C4BF4] hover:text-purple-700 font-medium font-poppins">
-              See More
-            </button>
-          )}
-        </div>
+        {title !== '' && (
+          <div className="flex justify-between items-center mb-4">
+            <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 font-poppins">
+              {title}
+            </h2>
+            {showSeeMore && (
+              <button 
+                onClick={() => navigate('/login')}
+                className="text-[#6C4BF4] hover:text-purple-700 font-medium font-poppins"
+              >
+                See More
+              </button>
+            )}
+          </div>
+        )}
 
         {/* Items Grid */}
-        <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 lg:gap-6">
+        <div className={gridClasses}>
           {displayItems.map((item) => (
-            <div
-              key={item.id}
-              className="bg-white border border-gray-200 rounded-lg overflow-hidden hover:shadow-lg transition-shadow duration-300 max-w-xs mx-auto"
-            >
+            <div key={item.id} className={cardClasses} onClick={() => onCardClick && onCardClick(item)}>
               {/* Renter and Location */}
               <div className="px-2 sm:px-3 py-2 border-b border-gray-100">
                 <div className="flex justify-between items-center">
-                  <span className="text-xs sm:text-sm font-medium text-gray-900 font-poppins">
+                  <span className="text-[10px] sm:text-xs font-medium text-gray-900 font-poppins">
                     {item.renter}
                   </span>
-                  <span className="text-xs sm:text-sm text-gray-500 font-poppins">
+                  <span className="text-[10px] sm:text-xs text-gray-500 font-poppins">
                     {item.location}
                   </span>
                 </div>
               </div>
 
               {/* Item Image */}
-              <div className="aspect-[4/3] bg-gray-100 flex items-center justify-center p-2 sm:p-3">
+              <div className={`${imageWrapper} bg-gray-100 flex items-center justify-center`}>
                 <img
                   src={item.image}
                   alt={item.title}
@@ -142,36 +155,47 @@ const ItemList = ({ items, title = "Featured Items", showSeeMore = true, maxItem
               </div>
 
               {/* Item Details */}
-              <div className="px-2 sm:px-3 py-1.5 sm:py-2">
-                <h3 className="text-sm sm:text-base font-semibold text-gray-900 mb-1 font-poppins">
+              <div className="px-2 sm:px-3 py-2">
+                <h3 className={`${titleClasses} text-gray-900 mb-1 font-poppins`}>
                   {item.title}
                 </h3>
-                
-                {/* Price */}
                 <div className="flex items-center justify-between mb-1.5 sm:mb-2">
-                  <span className="text-sm sm:text-base font-bold text-[#6C4BF4] font-poppins">
+                  <span className={`${priceClasses} text-[#6C4BF4] font-poppins`}>
                     {item.price} / {item.period}
                   </span>
                 </div>
-
-                {/* Rating */}
                 <div className="flex items-center mb-1.5 sm:mb-2">
                   <div className="flex items-center space-x-0.5 sm:space-x-1">
                     {renderStars(item.rating)}
                   </div>
                 </div>
-
-                {/* Time and Like */}
                 <div className="flex items-center justify-between">
-                  <span className="text-xs sm:text-sm text-gray-500 font-poppins">
+                  <span className="text-[10px] sm:text-xs text-gray-500 font-poppins">
                     {item.timeAgo}
                   </span>
-                  <button className="text-gray-400 hover:text-red-500 transition-colors">
+                  <button className="text-gray-400 hover:text-red-500 transition-colors" onClick={(e) => e.stopPropagation()}>
                     <svg className="w-3.5 h-3.5 sm:w-4 sm:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
                     </svg>
                   </button>
                 </div>
+
+                {showActions && (
+                  <div className="mt-2 grid grid-cols-2 gap-2">
+                    <button
+                      onClick={(e) => { e.stopPropagation(); onView ? onView(item) : null; }}
+                      className={`bg-white border border-gray-300 rounded ${actionPadding} font-medium hover:bg-gray-50`}
+                    >
+                      VIEW
+                    </button>
+                    <button
+                      onClick={(e) => { e.stopPropagation(); onRent ? onRent(item) : null; }}
+                      className={`bg-[#6C4BF4] text-white rounded ${actionPadding} font-medium hover:bg-[#7857FD]`}
+                    >
+                      RENT
+                    </button>
+                  </div>
+                )}
               </div>
             </div>
           ))}
