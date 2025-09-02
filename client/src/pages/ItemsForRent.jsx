@@ -12,11 +12,6 @@ const ItemsForRent = () => {
 
   const toggleSidebar = () => setSidebarOpen(!sidebarOpen);
 
-  const user = {
-    name: 'John Doe',
-    email: 'john@example.com'
-  };
-
   // Placeholder handlers for actions
   const handleView = (item) => {
     setSelectedItem(item);
@@ -32,7 +27,7 @@ const ItemsForRent = () => {
       <Sidebar isOpen={sidebarOpen} onToggle={toggleSidebar} />
 
       <div className="flex-1 flex flex-col overflow-hidden">
-        <PageHeader title="Items for Rent" user={user} onToggleSidebar={toggleSidebar} />
+        <PageHeader title="Items for Rent" onToggleSidebar={toggleSidebar} />
 
         <main className="flex-1 overflow-y-auto">
           {/* Sticky search (always visible) */}

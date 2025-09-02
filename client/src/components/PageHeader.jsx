@@ -1,4 +1,10 @@
-const PageHeader = ({ title, user, onToggleSidebar, centerContent }) => {
+const PageHeader = ({ title, onToggleSidebar, centerContent }) => {
+  // Placeholder user data
+  const user = {
+    name: 'John Doe',
+    email: 'john@example.com'
+  };
+
   return (
     <header className="bg-white shadow-sm border-b border-gray-200 px-4 py-3">
       <div className="flex items-center justify-between">

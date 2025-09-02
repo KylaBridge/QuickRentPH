@@ -15,7 +15,6 @@ const Dashboard = () => {
 
   const user = {
     name: 'John Doe',
-    email: 'john@example.com'
   };
 
   // Example dynamic data. Wire these to real API data later.
@@ -234,7 +233,7 @@ const Dashboard = () => {
       
       {/* Main content */}
       <div className="flex-1 flex flex-col overflow-hidden">
-        <PageHeader title="Dashboard" user={user} onToggleSidebar={toggleSidebar} />
+        <PageHeader title="Dashboard"  onToggleSidebar={toggleSidebar} />
 
         {/* Main content area */}
         <main className="flex-1 overflow-y-auto p-6">
