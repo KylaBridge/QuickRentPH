@@ -36,9 +36,23 @@ const registerUser = async (req, res) => {
 
 const loginUser = async (req, res) => {
   try {
-    // continue here
+    const { email, password } = req.body;
+
+    const user = await User.findOne({ email });
+    if (!user) {
+      return res.status(200).json({ error: "Invalid Credentials" });
+    }
+
+    const match = await comparePassword(password, user.password);
+    if (!match) {
+      return res.status(200).json({ message: "Invalid Credentials" });
+    }
+
+    const token = createToken(user._id);
+
+    return res.status(200).json({ message: "User logged in", user, token });
   } catch (error) {
-    res.json(error);
+    res.status(400).json(error);
   }
 };
 
