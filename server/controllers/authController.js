@@ -1,24 +1,11 @@
 const User = require("../models/user");
-const jwt = require("jsonwebtoken");
 
 const { hashPassword, comparePassword } = require("../helpers/auth");
-
-const createToken = (id) => {
-  return jwt.sign({ id }, process.env.SECRET, { expiresIn: "3d" });
-};
-
-const createTempToken = (email) => {
-  return jwt.sign({ email }, process.env.SECRET, { expiresIn: "5m" });
-};
-
-const decodeTempToken = (tempToken) => {
-  try {
-    return jwt.verify(tempToken, process.env.SECRET);
-  } catch (error) {
-    console.log(error);
-    throw error;
-  }
-};
+const {
+  createToken,
+  createTempToken,
+  decodeTempToken,
+} = require("../helpers/jwt");
 
 const registerEmail = async (req, res) => {
   try {
@@ -29,7 +16,7 @@ const registerEmail = async (req, res) => {
       return res.json({ error: "Email Already Exists" });
     }
 
-    const tempToken = createTempToken(email);
+    const tempToken = createTempToken({ email });
     res.status(200).json({ message: "Email Created", tempToken });
   } catch (error) {
     res.status(400).json(error);
@@ -50,25 +37,60 @@ const registerPassword = async (req, res) => {
     try {
       decoded = decodeTempToken(tempToken);
     } catch (error) {
-      if (error.name === "TokenExpiredError") {
-        return res.status(400).json({
-          error: "Email expired, Please Register again",
-        });
-      }
-      return res.status(400).json({ error: "Invalid Token" });
+      return res.status(400).json({ error: "Invalid or Expired Token" });
     }
     const email = decoded.email;
 
-    if (password.length < 8) {
-      return res.json({ error: "Password needs to be at least 8 characters" });
+    if (password.length < 10) {
+      return res.json({ error: "Password needs to be at least 10 characters" });
     }
 
     const hashedPassword = await hashPassword(password);
-    const newUser = await User.create({ email, password: hashedPassword });
+    const newTempToken = createTempToken({
+      email,
+      password: hashedPassword,
+    });
+
+    res.status(200).json({
+      message: "Password created",
+      newTempToken,
+    });
+  } catch (error) {
+    res.status(400).json(error);
+  }
+};
+
+const registerUser = async (req, res) => {
+  try {
+    const { firstName, lastName, birthDate, gender, newTempToken } = req.body;
+
+    if (!newTempToken) {
+      return res.json({
+        error: "Invalid, No Token",
+      });
+    }
+
+    let decoded;
+    try {
+      decoded = decodeTempToken(newTempToken);
+    } catch (error) {
+      return res.status(400).json({ error: "Invalid or Expired Token" });
+    }
+    const email = decoded.email;
+    const password = decoded.password;
+
+    const newUser = await User.create({
+      email,
+      password,
+      firstName,
+      lastName,
+      birthDate,
+      gender,
+    });
     const token = createToken(newUser._id);
 
     res.status(200).json({
-      message: "Registration Successful",
+      message: "Registered Successfully",
       newUser,
       token,
     });
@@ -99,4 +121,4 @@ const loginUser = async (req, res) => {
   }
 };
 
-module.exports = { registerEmail, registerPassword, loginUser };
+module.exports = { registerEmail, registerPassword, registerUser, loginUser };
