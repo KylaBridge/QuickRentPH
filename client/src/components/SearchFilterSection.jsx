@@ -2,7 +2,6 @@ import React, { useState } from 'react';
 
 const SearchFilterSection = ({ onFilterChange }) => {
   const [activeDropdown, setActiveDropdown] = useState(null);
-  const [priceRange, setPriceRange] = useState([0, 1000]);
   const [selectedFilters, setSelectedFilters] = useState({
     categories: '',
     sort: '',
@@ -14,11 +13,39 @@ const SearchFilterSection = ({ onFilterChange }) => {
 
   const filterOptions = {
     categories: ['Electronics', 'Sports', 'Music', 'Tools', 'Books', 'Clothing', 'Furniture', 'Vehicles'],
-    sort: ['Price: Low to High', 'Price: High to Low', 'Newest First', 'Oldest First', 'Most Popular'],
-    dealOption: ['Daily', 'Weekly', 'Monthly', 'Hourly'],
-    location: ['Within 5 miles', 'Within 10 miles', 'Within 25 miles', 'Within 50 miles'],
-    condition: ['New', 'Like New', 'Good', 'Fair', 'Poor']
+    sort: ['Newest First', 'Oldest First', 'Most Popular'],
+    dealOption: [
+      'Standard Delivery',
+      'Express / Same-day Delivery',
+      'Scheduled Delivery',
+      'Drop-off Point / Locker Delivery',
+      'Return via Courier Pickup'
+    ],
   };
+
+  // --- Simulation for dynamic price ranges based on search ---
+  // In a real app, this would depend on the user's search or selected category.
+  // For now, we simulate with a hardcoded variable.
+  const searchedItem = selectedFilters.categories || 'default';
+  let priceRanges = [
+    { label: '₱1 - ₱149', value: '1-149' },
+    { label: '₱149 - ₱300', value: '149-300' },
+    { label: '₱300 - ₱6,000', value: '300-6000' },
+  ];
+  if (searchedItem.toLowerCase().includes('camera')) {
+    priceRanges = [
+      { label: '₱500 - ₱1,000', value: '500-1000' },
+      { label: '₱1,000 - ₱3,000', value: '1000-3000' },
+      { label: '₱3,000 - ₱10,000', value: '3000-10000' },
+    ];
+  } else if (searchedItem.toLowerCase().includes('umbrella')) {
+    priceRanges = [
+      { label: '₱10 - ₱50', value: '10-50' },
+      { label: '₱50 - ₱100', value: '50-100' },
+      { label: '₱100 - ₱300', value: '100-300' },
+    ];
+  }
+  // --- End simulation ---
 
   const toggleDropdown = (filterName) => {
     setActiveDropdown(activeDropdown === filterName ? null : filterName);
@@ -40,30 +67,6 @@ const SearchFilterSection = ({ onFilterChange }) => {
       [filterName]: ''
     };
     setSelectedFilters(newFilters);
-    if (filterName === 'price') {
-      setPriceRange([0, 1000]);
-    }
-    onFilterChange(newFilters);
-  };
-
-  const handlePriceChange = (index, value) => {
-    const newRange = [...priceRange];
-    newRange[index] = parseInt(value);
-    setPriceRange(newRange);
-    const newFilters = {
-      ...selectedFilters,
-      price: `$${newRange[0]} - $${newRange[1]}`
-    };
-    setSelectedFilters(newFilters);
-  };
-
-  const applyPriceFilter = () => {
-    const newFilters = {
-      ...selectedFilters,
-      price: `$${priceRange[0]} - $${priceRange[1]}`
-    };
-    setSelectedFilters(newFilters);
-    setActiveDropdown(null);
     onFilterChange(newFilters);
   };
 
@@ -138,76 +141,34 @@ const SearchFilterSection = ({ onFilterChange }) => {
             )}
           </div>
 
-          {/* Price Range Button */}
+          {/* Price Range Dropdown */}
           <div className="relative">
             <button 
               onClick={() => toggleDropdown('price')}
               className={btn}
             >
               <span className="text-gray-900">{selectedFilters.price || 'Price'}</span>
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+              </svg>
             </button>
             {activeDropdown === 'price' && (
-              <div className="absolute top-full left-0 mt-1 w-80 bg-white border border-gray-300 rounded-md shadow-lg z-10 p-4">
-                <h3 className="font-semibold text-gray-800 mb-4 text-center">Price range</h3>
-                <div className="flex items-center space-x-2 mb-4">
-                  <div className="flex-1">
-                    <label className="text-xs text-gray-500">Min</label>
-                    <input
-                      type="number"
-                      value={priceRange[0]}
-                      onChange={(e) => handlePriceChange(0, e.target.value)}
-                      className="w-full px-2 py-1 border border-gray-300 rounded text-sm"
-                    />
-                  </div>
-                  <span className="text-gray-400">-</span>
-                  <div className="flex-1">
-                    <label className="text-xs text-gray-500">Max</label>
-                    <input
-                      type="number"
-                      value={priceRange[1]}
-                      onChange={(e) => handlePriceChange(1, e.target.value)}
-                      className="w-full px-2 py-1 border border-gray-300 rounded text-sm"
-                    />
-                  </div>
-                </div>
-                <div className="mb-4">
-                  <input
-                    type="range"
-                    min="0"
-                    max="1000"
-                    value={priceRange[0]}
-                    onChange={(e) => handlePriceChange(0, e.target.value)}
-                    className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer slider"
-                    style={{
-                      background: `linear-gradient(to right, #6C4BF4 0%, #6C4BF4 ${(priceRange[0] / 1000) * 100}%, #e5e7eb ${(priceRange[0] / 1000) * 100}%, #e5e7eb 100%)`
-                    }}
-                  />
-                  <input
-                    type="range"
-                    min="0"
-                    max="1000"
-                    value={priceRange[1]}
-                    onChange={(e) => handlePriceChange(1, e.target.value)}
-                    className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer slider mt-2"
-                    style={{
-                      background: `linear-gradient(to right, #6C4BF4 0%, #6C4BF4 ${(priceRange[1] / 1000) * 100}%, #e5e7eb ${(priceRange[1] / 1000) * 100}%, #e5e7eb 100%)`
-                    }}
-                  />
-                </div>
-                <div className="space-y-2">
+              <div className="absolute top-full left-0 mt-1 w-48 bg-white border border-gray-300 rounded-md shadow-lg z-10">
+                {priceRanges.map((range) => (
                   <button
-                    onClick={applyPriceFilter}
-                    className="w-full bg-white border border-gray-300 rounded px-4 py-2 text-sm font-poppins hover:bg-gray-50"
+                    key={range.value}
+                    onClick={() => selectFilter('price', range.label)}
+                    className={`w-full text-left px-4 py-2 hover:bg-gray-50 text-sm font-poppins text-gray-900 ${selectedFilters.price === range.label ? 'bg-[#6C4BF4] text-white' : ''}`}
                   >
-                    Apply
+                    {range.label}
                   </button>
-                  <button
-                    onClick={() => resetFilter('price')}
-                    className="w-full bg-gray-100 border border-gray-300 rounded px-4 py-2 text-sm font-poppins hover:bg-gray-200 text-gray-600"
-                  >
-                    Reset
-                  </button>
-                </div>
+                ))}
+                <button
+                  onClick={() => resetFilter('price')}
+                  className="w-full text-left px-4 py-2 hover:bg-gray-50 text-sm font-poppins text-gray-500 border-t border-gray-200"
+                >
+                  Reset
+                </button>
               </div>
             )}
           </div>
@@ -224,7 +185,7 @@ const SearchFilterSection = ({ onFilterChange }) => {
               </svg>
             </button>
             {activeDropdown === 'dealOption' && (
-              <div className="absolute top-full left-0 mt-1 w-48 bg-white border border-gray-300 rounded-md shadow-lg z-10">
+              <div className="absolute top-full left-0 mt-1 w-80 bg-white border border-gray-300 rounded-md shadow-lg z-10">
                 {filterOptions.dealOption.map((option) => (
                   <button
                     key={option}
@@ -236,70 +197,6 @@ const SearchFilterSection = ({ onFilterChange }) => {
                 ))}
                 <button
                   onClick={() => resetFilter('dealOption')}
-                  className="w-full text-left px-4 py-2 hover:bg-gray-50 text-sm font-poppins text-gray-500 border-t border-gray-200"
-                >
-                  Reset
-                </button>
-              </div>
-            )}
-          </div>
-
-          {/* Location Dropdown */}
-          <div className="relative">
-            <button 
-              onClick={() => toggleDropdown('location')}
-              className={btn}
-            >
-              <span className="text-gray-900">{selectedFilters.location || 'Location'}</span>
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-              </svg>
-            </button>
-            {activeDropdown === 'location' && (
-              <div className="absolute top-full left-0 mt-1 w-48 bg-white border border-gray-300 rounded-md shadow-lg z-10">
-                {filterOptions.location.map((option) => (
-                  <button
-                    key={option}
-                    onClick={() => selectFilter('location', option)}
-                    className="w-full text-left px-4 py-2 hover:bg-gray-50 text-sm font-poppins text-gray-900"
-                  >
-                    {option}
-                  </button>
-                ))}
-                <button
-                  onClick={() => resetFilter('location')}
-                  className="w-full text-left px-4 py-2 hover:bg-gray-50 text-sm font-poppins text-gray-500 border-t border-gray-200"
-                >
-                  Reset
-                </button>
-              </div>
-            )}
-          </div>
-
-          {/* Condition Dropdown */}
-          <div className="relative">
-            <button 
-              onClick={() => toggleDropdown('condition')}
-              className={btn}
-            >
-              <span className="text-gray-900">{selectedFilters.condition || 'Condition'}</span>
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-              </svg>
-            </button>
-            {activeDropdown === 'condition' && (
-              <div className="absolute top-full left-0 mt-1 w-48 bg-white border border-gray-300 rounded-md shadow-lg z-10">
-                {filterOptions.condition.map((option) => (
-                  <button
-                    key={option}
-                    onClick={() => selectFilter('condition', option)}
-                    className="w-full text-left px-4 py-2 hover:bg-gray-50 text-sm font-poppins text-gray-900"
-                  >
-                    {option}
-                  </button>
-                ))}
-                <button
-                  onClick={() => resetFilter('condition')}
                   className="w-full text-left px-4 py-2 hover:bg-gray-50 text-sm font-poppins text-gray-500 border-t border-gray-200"
                 >
                   Reset
