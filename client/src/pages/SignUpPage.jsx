@@ -50,7 +50,8 @@ const SignUpPage = () => {
   const [formData, setFormData] = useState({
     email: '',
     password: '',
-    name: '',
+    firstName: '',
+    lastName: '',
     dob: '',
     gender: '',
     agreeToTerms: false
@@ -88,8 +89,12 @@ const SignUpPage = () => {
       }
       setStep(step + 1);
     } else if (steps[step] === 'profile') {
-      if (!formData.name.trim()) {
-        setError('Please enter your name.');
+      if (!formData.firstName.trim()) {
+        setError('Please enter your first name.');
+        return;
+      }
+      if (!formData.lastName.trim()) {
+        setError('Please enter your last name.');
         return;
       }
       if (!formData.dob) {
@@ -261,21 +266,32 @@ const SignUpPage = () => {
                   </div>
                 </>
               )}
-              {/* Step 3: Name, Date of Birth, Gender (Combined) */}
+              {/* Step 3: First Name, Last Name, Date of Birth, Gender (Combined) */}
               {step === 2 && (
                 <>
                   <label className="block text-sm font-semibold text-gray-700 mb-1">Profile Information</label>
-                  <input
-                    type="text"
-                    id="name"
-                    name="name"
-                    value={formData.name}
-                    onChange={handleInputChange}
-                    required
-                    className="w-full px-4 py-4 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#6C4BF4] focus:border-transparent font-poppins text-lg mb-3"
-                    placeholder="What should we call you?"
-                  />
-                  <div className="text-xs text-gray-500 mb-2">This name will appear on your profile.</div>
+                  <div className="flex gap-3 mb-3">
+                    <input
+                      type="text"
+                      id="firstName"
+                      name="firstName"
+                      value={formData.firstName}
+                      onChange={handleInputChange}
+                      required
+                      className="w-1/2 px-4 py-4 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#6C4BF4] focus:border-transparent font-poppins text-lg"
+                      placeholder="First name"
+                    />
+                    <input
+                      type="text"
+                      id="lastName"
+                      name="lastName"
+                      value={formData.lastName}
+                      onChange={handleInputChange}
+                      required
+                      className="w-1/2 px-4 py-4 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#6C4BF4] focus:border-transparent font-poppins text-lg"
+                      placeholder="Last name"
+                    />
+                  </div>
                   <label htmlFor="dob" className="block text-sm font-semibold text-gray-700 mb-1">Date of Birth</label>
                   <input
                     type="date"
