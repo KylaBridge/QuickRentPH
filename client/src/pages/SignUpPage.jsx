@@ -41,7 +41,6 @@ const steps = [
   'email',
   'password',
   'profile',
-  'terms',
 ];
 
 const SignUpPage = () => {
@@ -105,8 +104,6 @@ const SignUpPage = () => {
         setError('Please select your gender.');
         return;
       }
-      setStep(step + 1);
-    } else if (steps[step] === 'terms') {
       if (!formData.agreeToTerms) {
         setError('You must agree to the Terms and Conditions to continue.');
         return;
@@ -266,7 +263,7 @@ const SignUpPage = () => {
                   </div>
                 </>
               )}
-              {/* Step 3: First Name, Last Name, Date of Birth, Gender (Combined) */}
+              {/* Step 3: First Name, Last Name, Date of Birth, Gender, Terms (Combined) */}
               {step === 2 && (
                 <>
                   <label className="block text-sm font-semibold text-gray-700 mb-1">Profile Information</label>
@@ -338,17 +335,8 @@ const SignUpPage = () => {
                       <span>Other</span>
                     </label>
                   </div>
-                  {error && <div className="text-red-500 text-sm mt-1">{error}</div>}
-                  <div className="flex justify-between mt-2">
-                    <button type="button" onClick={handleBack} className="text-[#6C4BF4] font-medium">Back</button>
-                    <button type="submit" className="bg-[#6C4BF4] text-white py-3 px-6 rounded-md font-semibold hover:bg-purple-700 transition-colors font-poppins">Next</button>
-                  </div>
-                </>
-              )}
-              {/* Step 4: Terms and Conditions */}
-              {step === 3 && (
-                <>
-                  <div className="flex items-center mb-2">
+                  {/* Terms and Conditions Checkbox */}
+                  <div className="flex items-center mb-2 mt-6">
                     <input
                       type="checkbox"
                       id="agreeToTerms"
@@ -364,7 +352,7 @@ const SignUpPage = () => {
                     </label>
                   </div>
                   {error && <div className="text-red-500 text-sm mt-1">{error}</div>}
-                  <div className="flex justify-between">
+                  <div className="flex justify-between mt-2">
                     <button type="button" onClick={handleBack} className="text-[#6C4BF4] font-medium">Back</button>
                     <button type="submit" className="bg-[#6C4BF4] text-white py-3 px-6 rounded-md font-semibold hover:bg-purple-700 transition-colors font-poppins">Sign Up</button>
                   </div>
