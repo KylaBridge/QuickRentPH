@@ -8,7 +8,7 @@ const createTempToken = (payload) => {
   return jwt.sign(payload, process.env.SECRET, { expiresIn: "5m" });
 };
 
-const decodeTempToken = (tempToken) => {
+const decodeToken = (tempToken) => {
   try {
     return jwt.verify(tempToken, process.env.SECRET);
   } catch (error) {
@@ -17,4 +17,4 @@ const decodeTempToken = (tempToken) => {
   }
 };
 
-module.exports = { createToken, createTempToken, decodeTempToken };
+module.exports = { createToken, createTempToken, decodeToken };

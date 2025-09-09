@@ -1,16 +1,25 @@
 require("dotenv").config();
 const mongoose = require("mongoose");
+const cors = require("cors");
+const cookieParser = require("cookie-parser");
 const express = require("express");
 const app = express();
 
 const authRoutes = require("./routes/authRoutes");
 
 // Middlewares
-app.use((req, res, next) => {
-  console.log(req.method, req.url);
-  next();
-});
+// app.use((req, res, next) => {
+//   console.log(req.method, req.url);
+//   next();
+// });
 app.use(express.json());
+app.use(cookieParser());
+app.use(
+  cors({
+    origin: process.env.FRONTEND_URL,
+    credentials: true,
+  })
+);
 
 // Routes
 app.use("/api/auth", authRoutes);
