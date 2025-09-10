@@ -23,7 +23,7 @@ const LoginPage = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    const res = await loginUser(formData.email, formData.password);
+    await loginUser(formData.email, formData.password);
     navigate("/dashboard");
     console.log("Login data:", formData);
   };

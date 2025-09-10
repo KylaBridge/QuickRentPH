@@ -122,7 +122,7 @@ const SignUpPage = () => {
         return;
       }
       try {
-        const res = await registerUser({
+        await registerUser({
           firstName: formData.firstName,
           lastName: formData.lastName,
           birthDate: formData.birthDate,
