@@ -37,7 +37,7 @@ const steps = ["email", "password", "profile"];
 
 const SignUpPage = () => {
   const navigate = useNavigate();
-  const { registerEmail, registerPassword, registerUser, setUser } =
+  const { registerEmail, registerPassword, registerUser } =
     useContext(AuthContext);
   const [tempToken, setTempToken] = useState();
   const [newTempToken, setNewTempToken] = useState();
@@ -129,7 +129,6 @@ const SignUpPage = () => {
           gender: formData.gender,
           newTempToken,
         });
-        setUser(res.user);
         alert("Sign up successful!");
         navigate("/dashboard");
       } catch (error) {

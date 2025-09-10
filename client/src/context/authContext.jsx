@@ -45,6 +45,7 @@ export function AuthProvider({ children }) {
   const registerUser = async (profileData) => {
     try {
       const res = await api.post("/api/auth/register", profileData);
+      setUser(res.data.user);
       return res.data;
     } catch (error) {
       throw error.response.data.error;
@@ -53,6 +54,7 @@ export function AuthProvider({ children }) {
 
   const loginUser = async (email, password) => {
     const res = await api.post("/api/auth/login", { email, password });
+    setUser(res.data.user);
     return res.data;
   };
 

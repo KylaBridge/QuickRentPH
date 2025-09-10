@@ -6,7 +6,7 @@ import Footer from "../components/Footer";
 
 const LoginPage = () => {
   const navigate = useNavigate();
-  const { loginUser, setUser } = useContext(AuthContext);
+  const { loginUser } = useContext(AuthContext);
   const [formData, setFormData] = useState({
     email: "",
     password: "",
@@ -24,7 +24,6 @@ const LoginPage = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     const res = await loginUser(formData.email, formData.password);
-    setUser(res.user);
     navigate("/dashboard");
     console.log("Login data:", formData);
   };
