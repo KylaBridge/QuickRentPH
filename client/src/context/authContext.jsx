@@ -26,21 +26,29 @@ export function AuthProvider({ children }) {
       const res = await api.post("/api/auth/register/email", { email });
       return res.data.tempToken;
     } catch (error) {
-      throw error.response?.data?.error;
+      throw error.response.data.error;
     }
   };
 
   const registerPassword = async (password, tempToken) => {
-    const res = await api.post("/api/auth/register/password", {
-      password,
-      tempToken,
-    });
-    return res.data.newTempToken;
+    try {
+      const res = await api.post("/api/auth/register/password", {
+        password,
+        tempToken,
+      });
+      return res.data.newTempToken;
+    } catch (error) {
+      throw error.response.data.error;
+    }
   };
 
   const registerUser = async (profileData) => {
-    const res = await api.post("/api/auth/register", profileData);
-    return res.data;
+    try {
+      const res = await api.post("/api/auth/register", profileData);
+      return res.data;
+    } catch (error) {
+      throw error.response.data.error;
+    }
   };
 
   const loginUser = async (email, password) => {

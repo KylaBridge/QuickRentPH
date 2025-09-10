@@ -36,7 +36,9 @@ const registerPassword = async (req, res) => {
     try {
       decoded = decodeToken(tempToken);
     } catch (error) {
-      return res.status(400).json({ error: "Invalid or Expired Token" });
+      return res
+        .status(400)
+        .json({ error: "Invalid or Expired Token, Register Your Email Again" });
     }
     const email = decoded.email;
 
@@ -75,7 +77,9 @@ const registerUser = async (req, res) => {
     try {
       decoded = decodeToken(newTempToken);
     } catch (error) {
-      return res.status(400).json({ error: "Invalid or Expired Token" });
+      return res
+        .status(400)
+        .json({ error: "Invalid or Expired Token, Try Again" });
     }
     const email = decoded.email;
     const password = decoded.password;

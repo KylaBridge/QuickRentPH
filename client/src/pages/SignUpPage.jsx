@@ -96,6 +96,7 @@ const SignUpPage = () => {
         setStep(step + 1);
       } catch (error) {
         setError(error);
+        setStep(step - 1);
       }
     }
 
@@ -129,13 +130,12 @@ const SignUpPage = () => {
           newTempToken,
         });
         setUser(res.user);
+        alert("Sign up successful!");
+        navigate("/dashboard");
       } catch (error) {
         setError(error);
+        setStep(0);
       }
-      // Final step: submit
-      alert("Sign up successful!");
-      // Reset or redirect as needed
-      navigate("/dashboard");
     }
   };
 
