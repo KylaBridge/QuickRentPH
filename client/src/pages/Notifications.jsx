@@ -113,7 +113,7 @@ const Notifications = () => {
       <Sidebar isOpen={sidebarOpen} onToggle={toggleSidebar} />
       <div className="flex-1 flex flex-col overflow-hidden">
         <PageHeader title="Notifications" onToggleSidebar={toggleSidebar} />
-        <main className="flex-1 overflow-y-auto px-10 py-6">
+        <main className="flex-1 overflow-y-auto px-6 py-6">
           <div className="max-w-full mx-auto bg-white rounded-lg shadow-xl p-8">
             <div className="flex items-center space-x-12 text-lg font-semibold text-gray-700 border-b border-gray-200 -mx-8 px-8 pb-3">
               <button
@@ -167,7 +167,7 @@ const Notifications = () => {
                 filteredNotifications.map((n) => (
                   <div
                     key={n.id}
-                    className="flex items-start p-6 bg-gray-50 rounded-xl shadow-lg transition-all duration-300 hover:bg-gray-100"
+                    className="flex items-start px-6 py-3.5 bg-gray-50 rounded-xl shadow-lg transition-all duration-300 hover:bg-gray-100"
                   >
                     <div className="flex items-start space-x-6 w-full">
                       {renderIcon(n.type)}
