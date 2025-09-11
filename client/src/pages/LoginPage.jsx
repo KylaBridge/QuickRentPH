@@ -25,7 +25,6 @@ const LoginPage = () => {
     e.preventDefault();
     await loginUser(formData.email, formData.password);
     navigate("/dashboard");
-    console.log("Login data:", formData);
   };
 
   return (

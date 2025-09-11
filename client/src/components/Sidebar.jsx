@@ -1,7 +1,9 @@
-import { useState } from 'react';
+import { useState, useContext } from 'react';
+import { AuthContext } from "../context/authContext";
 import { Link, useLocation } from 'react-router-dom';
 
 const Sidebar = ({ isOpen, onToggle }) => {
+  const { logoutUser } = useContext(AuthContext);
   const [collapsed, setCollapsed] = useState(false);
   const [expandedMenu, setExpandedMenu] = useState(null);
   const location = useLocation();
@@ -245,8 +247,8 @@ const Sidebar = ({ isOpen, onToggle }) => {
         {/* Logout button */}
         <div className="absolute bottom-0 p-4">
           <button
-            onClick={() => {
-              // Add logout logic here
+            onClick={async () => {
+              await logoutUser();
               console.log('Logout clicked');
             }}
             className={`
