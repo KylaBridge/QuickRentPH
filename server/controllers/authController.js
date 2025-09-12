@@ -1,8 +1,13 @@
 const User = require("../models/user");
-
 const { hashPassword, comparePassword } = require("../helpers/auth");
-const { createToken, createTempToken, decodeToken } = require("../helpers/jwt");
-const user = require("../models/user");
+const {
+  createTempToken,
+  createAccessToken,
+  createRefreshToken,
+  decodeTempToken,
+  decodeAccessToken,
+  decodeRefreshToken,
+} = require("../helpers/jwt");
 
 const registerEmail = async (req, res) => {
   try {
@@ -34,7 +39,7 @@ const registerPassword = async (req, res) => {
 
     let decoded;
     try {
-      decoded = decodeToken(tempToken);
+      decoded = decodeTempToken(tempToken);
     } catch (error) {
       return res
         .status(400)
@@ -75,7 +80,7 @@ const registerUser = async (req, res) => {
 
     let decoded;
     try {
-      decoded = decodeToken(newTempToken);
+      decoded = decodeTempToken(newTempToken);
     } catch (error) {
       return res
         .status(400)
@@ -92,15 +97,22 @@ const registerUser = async (req, res) => {
       birthDate,
       gender,
     });
-    const token = createToken(newUser._id);
+    const accessToken = createAccessToken({ id: newUser._id });
+    const refreshToken = createRefreshToken({ id: newUser._id });
     const { password: pwd, ...userWithoutPassword } = newUser._doc;
 
     res
-      .cookie("accessToken", token, {
+      .cookie("accessToken", accessToken, {
         httpOnly: true,
         secure: process.env.NODE_ENV === "production",
         sameSite: "strict",
-        maxAge: 1000 * 60 * 60 * 24 * 3,
+        maxAge: 1000 * 60 * 30,
+      })
+      .cookie("refreshToken", refreshToken, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === "production",
+        sameSite: "strict",
+        maxAge: 1000 * 60 * 60 * 24 * 7,
       })
       .status(200)
       .json({
@@ -126,15 +138,22 @@ const loginUser = async (req, res) => {
       return res.status(400).json({ error: "Invalid Credentials" });
     }
 
-    const token = createToken(user._id);
+    const accessToken = createAccessToken({ id: user._id });
+    const refreshToken = createRefreshToken({ id: user._id });
     const { password: pwd, ...userWithoutPassword } = user._doc;
 
     res
-      .cookie("accessToken", token, {
+      .cookie("accessToken", accessToken, {
         httpOnly: true,
         secure: process.env.NODE_ENV === "production",
         sameSite: "strict",
-        maxAge: 1000 * 60 * 60 * 24 * 3,
+        maxAge: 1000 * 60 * 30,
+      })
+      .cookie("refreshToken", refreshToken, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === "production",
+        sameSite: "strict",
+        maxAge: 1000 * 60 * 60 * 24 * 7,
       })
       .status(200)
       .json({ message: "User logged in", user: userWithoutPassword });
@@ -145,13 +164,50 @@ const loginUser = async (req, res) => {
 
 const logoutUser = (req, res) => {
   try {
-    res.clearCookie("accessToken", {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      sameSite: "strict",
-    });
+    res
+      .clearCookie("accessToken", {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === "production",
+        sameSite: "strict",
+      })
+      .clearCookie("refreshToken", {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === "production",
+        sameSite: "strict",
+      });
     res.status(200).json({ message: "Logged out" });
   } catch (error) {
+    res.status(400).json(error);
+  }
+};
+
+const refreshToken = (req, res) => {
+  try {
+    const refreshToken = req.cookies.refreshToken;
+
+    if (!refreshToken) {
+      return res.status(401).json({ error: "Invalid, no refresh token" });
+    }
+
+    let decoded;
+    try {
+      decoded = decodeRefreshToken(refreshToken);
+    } catch (error) {
+      return res.status(200).json({ error: "Expired Refresh Token" });
+    }
+
+    const newAccessToken = createAccessToken({ id: decoded.id });
+
+    res
+      .cookie("accessToken", newAccessToken, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === "production",
+        sameSite: "strict",
+        maxAge: 1000 * 60 * 30,
+      })
+      .status(200)
+      .json({ message: "Access Token Created" });
+  } catch {
     res.status(400).json(error);
   }
 };
@@ -164,7 +220,7 @@ const profile = async (req, res) => {
       return res.status(200).json({ user: null });
     }
 
-    const decoded = decodeToken(token);
+    const decoded = decodeAccessToken(token);
     const user = await User.findById(decoded.id).select("-password");
 
     if (!user) {
@@ -183,5 +239,6 @@ module.exports = {
   registerUser,
   loginUser,
   logoutUser,
+  refreshToken,
   profile,
 };

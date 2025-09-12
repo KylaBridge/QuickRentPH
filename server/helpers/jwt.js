@@ -1,20 +1,49 @@
 const jwt = require("jsonwebtoken");
 
-const createToken = (id) => {
-  return jwt.sign({ id }, process.env.SECRET, { expiresIn: "3d" });
-};
-
 const createTempToken = (payload) => {
-  return jwt.sign(payload, process.env.SECRET, { expiresIn: "5m" });
+  return jwt.sign(payload, process.env.TEMP_SECRET, { expiresIn: "5m" });
 };
 
-const decodeToken = (tempToken) => {
+const createAccessToken = (payload) => {
+  return jwt.sign(payload, process.env.ACCESS_SECRET, { expiresIn: "30m" });
+};
+
+const createRefreshToken = (payload) => {
+  return jwt.sign(payload, process.env.REFRESH_SECRET, { expiresIn: "7d" });
+};
+
+const decodeTempToken = (token) => {
   try {
-    return jwt.verify(tempToken, process.env.SECRET);
+    return jwt.verify(token, process.env.TEMP_SECRET);
   } catch (error) {
     console.log(error);
     throw error;
   }
 };
 
-module.exports = { createToken, createTempToken, decodeToken };
+const decodeAccessToken = (token) => {
+  try {
+    return jwt.verify(token, process.env.ACCESS_SECRET);
+  } catch (error) {
+    console.log(error);
+    throw error;
+  }
+};
+
+const decodeRefreshToken = (token) => {
+  try {
+    return jwt.verify(token, process.env.REFRESH_SECRET);
+  } catch (error) {
+    console.log(error);
+    throw error;
+  }
+};
+
+module.exports = {
+  createTempToken,
+  createAccessToken,
+  createRefreshToken,
+  decodeTempToken,
+  decodeAccessToken,
+  decodeRefreshToken,
+};

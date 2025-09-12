@@ -10,6 +10,7 @@ export function AuthProvider({ children }) {
   useEffect(() => {
     const fetchUser = async () => {
       try {
+        await api.post("/api/auth/refresh");
         const res = await api.get("/api/auth/profile");
         setUser(res.data.user);
       } catch (error) {
