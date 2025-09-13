@@ -9,6 +9,7 @@ import MyWishlist from "./pages/MyWishlist.jsx";
 import MyRentals from "./pages/MyRentals.jsx";
 import Notifications from "./pages/Notifications.jsx";
 import Messages from "./pages/Messages.jsx";
+import Profile from "./pages/Profile.jsx";
 import ProtectedRoute from "./components/ProtectedRoute.jsx";
 
 function App() {
@@ -72,6 +73,14 @@ function App() {
         element={
           <ProtectedRoute>
             <Messages />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/profile"
+        element={
+          <ProtectedRoute>
+            <Profile />
           </ProtectedRoute>
         }
       />
