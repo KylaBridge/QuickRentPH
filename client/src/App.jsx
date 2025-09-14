@@ -10,6 +10,7 @@ import MyRentals from "./pages/MyRentals.jsx";
 import Notifications from "./pages/Notifications.jsx";
 import Messages from "./pages/Messages.jsx";
 import Profile from "./pages/Profile.jsx";
+import AddItem from "./components/myRentals/AddItem.jsx";
 import ProtectedRoute from "./components/ProtectedRoute.jsx";
 
 function App() {
@@ -81,6 +82,14 @@ function App() {
         element={
           <ProtectedRoute>
             <Profile />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/additem"
+        element={
+          <ProtectedRoute>
+            <AddItem />
           </ProtectedRoute>
         }
       />

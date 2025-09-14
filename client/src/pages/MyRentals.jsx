@@ -4,6 +4,7 @@ import PageHeader from '../components/PageHeader';
 import ItemsTab from '../components/myRentals/ItemsTab';
 import EarningsTab from '../components/myRentals/EarningsTab';
 import RemovedTab from '../components/myRentals/RemovedTab';
+import AddItem from "../components/myRentals/AddItem";
 
 // Custom Dropdown Component
 // This component replaces the default browser <select> element for better styling control.
@@ -60,6 +61,7 @@ const MyRentals = () => {
     const [activeTab, setActiveTab] = useState('items');
     // New state to manage which dropdown is open. It will store the label of the open dropdown.
     const [openDropdown, setOpenDropdown] = useState(null);
+    const [showAddItem, setShowAddItem] = useState(false);
 
     // State for pagination
     const [currentPage, setCurrentPage] = useState(1);
@@ -256,6 +258,7 @@ const MyRentals = () => {
                 onRemoveItem={handleRemoveItem}
                 currentPage={currentPage}
                 totalPages={totalPages}
+                onAddItem={() => setShowAddItem(true)}
             />
         ),
         earnings: (
@@ -286,89 +289,91 @@ const MyRentals = () => {
             <Sidebar isOpen={sidebarOpen} onToggle={toggleSidebar} />
             <div className="flex-1 flex flex-col overflow-hidden">
                 <PageHeader title="My Rentals" onToggleSidebar={toggleSidebar} />
-
                 <main className="flex-1 p-6 flex flex-col overflow-hidden">
-                    <div className="w-full bg-white rounded-lg shadow-xl p-8 flex-1 flex flex-col">
-                        {/* Tab Navigation Section */}
-                        <div className="flex items-center space-x-12 text-lg font-semibold text-gray-700 border-b border-gray-200 -mx-8 px-8 pb-3">
+                    {showAddItem ? (
+                        // Completely override the MyRentals container with AddItem
+                        <AddItem onClose={() => setShowAddItem(false)} />
+                    ) : (
+                        <div className="w-full bg-white rounded-lg shadow-xl p-8 flex-1 flex flex-col">
+                            {/* Tab Navigation Section */}
+                            <div className="flex items-center space-x-12 text-lg font-semibold text-gray-700 border-b border-gray-200 -mx-8 px-8 pb-3">
+                                {/* Items Tab */}
+                                <button
+                                    onClick={() => setActiveTab('items')}
+                                    className={`relative ${
+                                        activeTab === 'items' ? 'text-[#6C4BF4] font-bold' : 'text-gray-700'
+                                    }`}
+                                >
+                                    Items
+                                    {activeTab === 'items' && (
+                                        <span className="absolute left-0 -bottom-3 h-1 w-full bg-[#6C4BF4] rounded" />
+                                    )}
+                                </button>
 
-                            {/* Items Tab */}
-                            <button
-                                onClick={() => setActiveTab('items')}
-                                className={`relative ${
-                                    activeTab === 'items' ? 'text-[#6C4BF4] font-bold' : 'text-gray-700'
-                                }`}
-                            >
-                                Items
-                                {activeTab === 'items' && (
-                                    <span className="absolute left-0 -bottom-3 h-1 w-full bg-[#6C4BF4] rounded" />
-                                )}
-                            </button>
+                                {/* Requests Tab */}
+                                <button
+                                    onClick={() => setActiveTab('requests')}
+                                    className={`relative ${
+                                        activeTab === 'requests' ? 'text-[#6C4BF4] font-bold' : 'text-gray-700'
+                                    }`}
+                                >
+                                    Requests
+                                    {activeTab === 'requests' && (
+                                        <span className="absolute left-0 -bottom-3 h-1 w-full bg-[#6C4BF4] rounded" />
+                                    )}
+                                </button>
 
-                            {/* Requests Tab */}
-                            <button
-                                onClick={() => setActiveTab('requests')}
-                                className={`relative ${
-                                    activeTab === 'requests' ? 'text-[#6C4BF4] font-bold' : 'text-gray-700'
-                                }`}
-                            >
-                                Requests
-                                {activeTab === 'requests' && (
-                                    <span className="absolute left-0 -bottom-3 h-1 w-full bg-[#6C4BF4] rounded" />
-                                )}
-                            </button>
+                                {/* Status Tab */}
+                                <button
+                                    onClick={() => setActiveTab('status')}
+                                    className={`relative ${
+                                        activeTab === 'status' ? 'text-[#6C4BF4] font-bold' : 'text-gray-700'
+                                    }`}
+                                >
+                                    Status
+                                    {activeTab === 'status' && (
+                                        <span className="absolute left-0 -bottom-3 h-1 w-full bg-[#6C4BF4] rounded" />
+                                    )}
+                                </button>
 
-                            {/* Status Tab */}
-                            <button
-                                onClick={() => setActiveTab('status')}
-                                className={`relative ${
-                                    activeTab === 'status' ? 'text-[#6C4BF4] font-bold' : 'text-gray-700'
-                                }`}
-                            >
-                                Status
-                                {activeTab === 'status' && (
-                                    <span className="absolute left-0 -bottom-3 h-1 w-full bg-[#6C4BF4] rounded" />
-                                )}
-                            </button>
+                                {/* Earnings Tab */}
+                                <button
+                                    onClick={() => setActiveTab('earnings')}
+                                    className={`relative ${
+                                        activeTab === 'earnings' ? 'text-[#6C4BF4] font-bold' : 'text-gray-700'
+                                    }`}
+                                >
+                                    Earnings
+                                    {activeTab === 'earnings' && (
+                                        <span className="absolute left-0 -bottom-3 h-1 w-full bg-[#6C4BF4] rounded" />
+                                    )}
+                                </button>
 
-                            {/* Earnings Tab */}
-                            <button
-                                onClick={() => setActiveTab('earnings')}
-                                className={`relative ${
-                                    activeTab === 'earnings' ? 'text-[#6C4BF4] font-bold' : 'text-gray-700'
-                                }`}
-                            >
-                                Earnings
-                                {activeTab === 'earnings' && (
-                                    <span className="absolute left-0 -bottom-3 h-1 w-full bg-[#6C4BF4] rounded" />
+                                {/* Removed Tab */}
+                                <button
+                                    onClick={() => setActiveTab('removed')}
+                                    className={`relative ${
+                                        activeTab === 'removed' ? 'text-[#6C4BF4] font-bold' : 'text-gray-700'
+                                    }`}
+                                >
+                                    Removed
+                                    {activeTab === 'removed' && (
+                                        <span className="absolute left-0 -bottom-3 h-1 w-full bg-[#6C4BF4] rounded" />
+                                    )}
+                                </button>
+                            </div>
+                            {/* Conditional content based on activeTab */}
+                            <div className="mt-8 flex-1 flex flex-col">
+                                {tabComponents[activeTab] || (
+                                    <div className="flex-1 flex items-center justify-center">
+                                        <p className="text-gray-500">
+                                            Content for the "{activeTab.charAt(0).toUpperCase() + activeTab.slice(1)}" tab goes here.
+                                        </p>
+                                    </div>
                                 )}
-                            </button>
-
-                            {/* Removed Tab */}
-                            <button
-                                onClick={() => setActiveTab('removed')}
-                                className={`relative ${
-                                    activeTab === 'removed' ? 'text-[#6C4BF4] font-bold' : 'text-gray-700'
-                                }`}
-                            >
-                                Removed
-                                {activeTab === 'removed' && (
-                                    <span className="absolute left-0 -bottom-3 h-1 w-full bg-[#6C4BF4] rounded" />
-                                )}
-                            </button>
+                            </div>
                         </div>
-
-                        {/* Conditional content based on activeTab */}
-                        <div className="mt-8 flex-1 flex flex-col">
-                            {tabComponents[activeTab] || (
-                                <div className="flex-1 flex items-center justify-center">
-                                    <p className="text-gray-500">
-                                        Content for the "{activeTab.charAt(0).toUpperCase() + activeTab.slice(1)}" tab goes here.
-                                    </p>
-                                </div>
-                            )}
-                        </div>
-                    </div>
+                    )}
                 </main>
             </div>
         </div>

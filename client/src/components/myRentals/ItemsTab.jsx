@@ -1,3 +1,5 @@
+import AddItem from './AddItem'; // Only needed if you want to preview here, but not required for just the button
+
 const ItemsTab = ({
     currentItems,
     rowDropdown,
@@ -13,7 +15,8 @@ const ItemsTab = ({
     pageNumbers,
     currentPage,
     totalPages,
-    onRemoveItem
+    onRemoveItem,
+    onAddItem
 }) => (
     <div className="flex-1 flex flex-col">
         <div className="flex flex-col md:flex-row items-start md:items-center justify-between space-y-4 md:space-y-0">
@@ -46,7 +49,10 @@ const ItemsTab = ({
                 />
             </div>
             {/* Add an Item button on the right */}
-            <button className="bg-[#6C4BF4] text-white px-6 py-2 rounded-lg font-semibold shadow-md hover:bg-[#3200FF] active:bg-[#5f46c6] transition-colors duration-200 w-full md:w-auto flex items-center gap-2">
+            <button
+                className="bg-[#6C4BF4] text-white px-6 py-2 rounded-lg font-semibold shadow-md hover:bg-[#3200FF] active:bg-[#5f46c6] transition-colors duration-200 w-full md:w-auto flex items-center gap-2"
+                onClick={onAddItem}
+            >
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4"/>
                 </svg>
