@@ -6,6 +6,7 @@ const express = require("express");
 const app = express();
 
 const authRoutes = require("./routes/authRoutes");
+const userRoutes = require("./routes/userRoutes");
 
 // Middlewares
 // app.use((req, res, next) => {
@@ -23,6 +24,7 @@ app.use(
 
 // Routes
 app.use("/api/auth", authRoutes);
+// app.use("/api/user", userRoutes);
 
 // The main shit
 mongoose
