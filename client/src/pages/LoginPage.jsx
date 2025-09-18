@@ -12,6 +12,7 @@ const LoginPage = () => {
     password: "",
     rememberMe: false,
   });
+  const [error, setError] = useState("");
 
   const handleInputChange = (e) => {
     const { name, value, type, checked } = e.target;
@@ -23,8 +24,26 @@ const LoginPage = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    await loginUser(formData.email, formData.password);
-    navigate("/dashboard");
+    setError("");
+    try {
+      await loginUser(formData.email, formData.password);
+      navigate("/dashboard");
+    } catch (err) {
+      // Directly map backend error strings to display messages
+      switch (err) {
+        case "Invalid Credentials":
+          setError("Email or password is invalid");
+          break;
+        case "Email is not registered":
+          setError("Email is not registered");
+          break;
+        case "This email is already tied to an existing QuickRent account.":
+          setError("Email is already registered");
+          break;
+        default:
+          setError(typeof err === "string" ? err : "Login failed. Please try again.");
+      }
+    }
   };
 
   return (
@@ -85,6 +104,9 @@ const LoginPage = () => {
             </div>
 
             <form onSubmit={handleSubmit} className="space-y-6">
+              {error && (
+                <div className="text-red-500 text-sm mb-2 text-center font-poppins">{error}</div>
+              )}
               {/* Email */}
               <div>
                 <label

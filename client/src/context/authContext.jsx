@@ -54,9 +54,17 @@ export function AuthProvider({ children }) {
   };
 
   const loginUser = async (email, password) => {
-    const res = await api.post("/api/auth/login", { email, password });
-    setUser(res.data.user);
-    return res.data;
+    try {
+      const res = await api.post("/api/auth/login", { email, password });
+      setUser(res.data.user);
+      return res.data;
+    } catch (error) {
+      // Throw the backend error string if available
+      if (error.response && error.response.data && error.response.data.error) {
+        throw error.response.data.error;
+      }
+      throw error;
+    }
   };
 
   const logoutUser = async () => {

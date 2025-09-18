@@ -128,9 +128,10 @@ const loginUser = async (req, res) => {
   try {
     const { email, password } = req.body;
 
+
     const user = await User.findOne({ email });
     if (!user) {
-      return res.status(400).json({ error: "Invalid Credentials" });
+      return res.status(400).json({ error: "Email is not registered" });
     }
 
     const match = await comparePassword(password, user.password);
