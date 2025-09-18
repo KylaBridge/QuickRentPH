@@ -53,6 +53,7 @@ const SignUpPage = () => {
     agreeToTerms: false,
   });
   const [error, setError] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const [emailChecked, setEmailChecked] = useState(false);
 
   const handleInputChange = (e) => {
@@ -288,15 +289,32 @@ const SignUpPage = () => {
                   </label>
                   <div className="relative">
                     <input
-                      type="password"
+                      type={showPassword ? "text" : "password"}
                       id="password"
                       name="password"
                       value={formData.password}
                       onChange={handleInputChange}
                       required
-                      className="w-full px-4 py-4 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#6C4BF4] focus:border-transparent font-poppins text-lg"
+                      className="w-full px-4 py-4 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#6C4BF4] focus:border-transparent font-poppins text-lg pr-10"
                       placeholder="Create a password"
                     />
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword((prev) => !prev)}
+                      className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700 focus:outline-none"
+                      tabIndex={-1}
+                      aria-label={showPassword ? "Hide password" : "Show password"}
+                    >
+                      {showPassword ? (
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                          <path d="M4.293 4.293a1 1 0 011.414 0l10 10a1 1 0 01-1.414 1.414l-1.32-1.32A8.001 8.001 0 012 10c1.73-3.14 5.06-5 8-5 1.13 0 2.22.19 3.22.54l-1.43 1.43A6.001 6.001 0 004 10c0 1.13.19 2.22.54 3.22l-1.43 1.43a1 1 0 010-1.414z" />
+                        </svg>
+                      ) : (
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                          <path d="M10 3C6.13 3 2.73 5.86 1 10c1.73 4.14 5.13 7 9 7s7.27-2.86 9-7c-1.73-4.14-5.13-7-9-7zm0 12a5 5 0 110-10 5 5 0 010 10zm0-8a3 3 0 100 6 3 3 0 000-6z" />
+                        </svg>
+                      )}
+                    </button>
                   </div>
                   <div className="mt-4 mb-2">
                     <div className="font-semibold text-sm text-gray-900 mb-1">

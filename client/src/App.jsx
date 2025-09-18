@@ -2,6 +2,7 @@ import { Routes, Route, Navigate } from "react-router-dom";
 import LandingPage from "./pages/LandingPage.jsx";
 import LoginPage from "./pages/LoginPage.jsx";
 import SignUpPage from "./pages/SignUpPage.jsx";
+import ResetPassword from "./pages/ResetPassword.jsx";
 import Dashboard from "./pages/Dashboard.jsx";
 import ItemsForRent from "./pages/ItemsForRent.jsx";
 import MyRequests from "./pages/MyRequests.jsx";
@@ -20,7 +21,8 @@ function App() {
 
       <Route path="/landing" element={<LandingPage />} />
       <Route path="/login" element={<LoginPage />} />
-      <Route path="/signup" element={<SignUpPage />} />
+  <Route path="/signup" element={<SignUpPage />} />
+  <Route path="/reset-password" element={<ResetPassword />} />
       <Route
         path="/dashboard"
         element={
