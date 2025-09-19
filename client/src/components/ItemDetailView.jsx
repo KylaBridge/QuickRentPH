@@ -52,7 +52,7 @@ const ItemDetailView = ({ item, onBack }) => {
         <div className="sticky top-0 z-20 bg-gray-50 pt-2 pb-2">
           <button
             onClick={onBack}
-            className="text-[#6C4BF4] text-sm flex items-center gap-2 bg-white px-3 py-1 rounded shadow hover:bg-gray-50"
+            className="text-[#6C4BF4] text-sm flex items-center gap-2 px-3 py-1"
           >
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
@@ -64,16 +64,27 @@ const ItemDetailView = ({ item, onBack }) => {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mt-2">
           {/* Image Gallery Panel */}
           <div className="bg-white border border-gray-200 rounded-lg p-4 lg:col-span-2 flex flex-col">
-            <div className="relative aspect-video bg-gray-100 rounded flex items-center justify-center overflow-hidden">
+            <div
+              className="relative h-64 md:h-80 bg-gray-100 rounded flex items-center justify-center overflow-hidden"
+              onMouseLeave={stopAutoSlide}
+            >
+              {/* Counter */}
+              {images.length > 0 && (
+                <div className="absolute left-2 top-2 text-xs text-gray-700 bg-white/70 rounded px-2 py-0.5 shadow">
+                  {currentImage + 1}/{images.length}
+                </div>
+              )}
+
               <img
                 src={images[currentImage]}
                 alt={item.title}
                 className="w-full h-full object-contain transition-all duration-200"
               />
+
               {/* Prev Button */}
               {images.length > 1 && (
                 <button
-                  className="absolute left-2 top-1/2 -translate-y-1/2 bg-white/80 hover:bg-white text-gray-700 rounded-full p-2 shadow"
+                  className="absolute left-2 top-1/2 -translate-y-1/2 bg-white/90 hover:bg-white text-[#6C4BF4] rounded-full p-2 shadow"
                   onClick={goToPrev}
                   onMouseEnter={() => startAutoSlide('prev')}
                   onMouseLeave={stopAutoSlide}
@@ -84,10 +95,11 @@ const ItemDetailView = ({ item, onBack }) => {
                   </svg>
                 </button>
               )}
+
               {/* Next Button */}
               {images.length > 1 && (
                 <button
-                  className="absolute right-2 top-1/2 -translate-y-1/2 bg-white/80 hover:bg-white text-gray-700 rounded-full p-2 shadow"
+                  className="absolute right-2 top-1/2 -translate-y-1/2 bg-white/90 hover:bg-white text-[#6C4BF4] rounded-full p-2 shadow"
                   onClick={goToNext}
                   onMouseEnter={() => startAutoSlide('next')}
                   onMouseLeave={stopAutoSlide}
@@ -99,17 +111,19 @@ const ItemDetailView = ({ item, onBack }) => {
                 </button>
               )}
             </div>
-            {/* Thumbnails */}
+
+            {/* Dot Indicators */}
             {images.length > 1 && (
               <div className="mt-3 flex items-center justify-center gap-2">
-                {images.map((img, idx) => (
+                {images.map((_, idx) => (
                   <button
                     key={idx}
-                    className={`w-10 h-10 rounded border-2 ${currentImage === idx ? 'border-[#6C4BF4]' : 'border-gray-200'} overflow-hidden`}
                     onClick={() => setCurrentImage(idx)}
-                  >
-                    <img src={img} alt={`thumb-${idx}`} className="w-full h-full object-cover" />
-                  </button>
+                    className={`h-2.5 w-2.5 rounded-full transition-colors ${
+                      currentImage === idx ? 'bg-[#6C4BF4]' : 'bg-gray-300'
+                    }`}
+                    aria-label={`Go to image ${idx + 1}`}
+                  />
                 ))}
               </div>
             )}
