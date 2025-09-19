@@ -1,16 +1,29 @@
 import React, { useRef, useState, useEffect } from "react";
+import gcashLogo from "../../assets/GCash-Logo.png";
+import paymayaLogo from "../../assets/paymaya-logo.png";
+import mastercardLogo from "../../assets/Mastercard-logo.svg.png";
 
 const MIN_BOX_WIDTH = 160; // px
 const BOX_GAP = 16; // px (gap-4)
 const UPLOAD_BOX_WIDTH = 160; // px
 
-const CATEGORIES = ['Electronics', 'Sports', 'Music', 'Tools', 'Books', 'Clothing', 'Furniture', 'Vehicles'];
+const CATEGORIES = [
+  "Electronics",
+  "Sports",
+  "Music",
+  "Tools",
+  "Books",
+  "Clothing",
+  "Furniture",
+  "Vehicles",
+];
 const DEAL_OPTIONS = [
-      'Standard Delivery',
-      'Express / Same-day Delivery',
-      'Scheduled Delivery',
-      'Drop-off Point / Locker Delivery',
-      'Return via Courier Pickup'];
+  "Standard Delivery",
+  "Express / Same-day Delivery",
+  "Scheduled Delivery",
+  "Drop-off Point / Locker Delivery",
+  "Return via Courier Pickup",
+];
 const DEFAULT_TERMS = [
   { label: "Minimum rental period", value: "3 days" },
   { label: "Late fee", value: "₱300/day" },
@@ -25,35 +38,44 @@ const AddItem = ({ onClose }) => {
   const [images, setImages] = useState([]);
   const [page, setPage] = useState(0);
   const [maxVisible, setMaxVisible] = useState(2);
+  const [paymentMethods, setPaymentMethods] = useState({
+    gcash: false,
+    paymaya: false,
+    card: false,
+    bank: false,
+  });
+  const [deliveryOption, setDeliveryOption] = useState("");
+  const [category, setCategory] = useState("");
+  const [downpayment, setDownpayment] = useState("");
 
   // Dynamically calculate how many boxes fit in the image container
- useEffect(() => {
-  if (!containerRef.current) return;
+  useEffect(() => {
+    if (!containerRef.current) return;
 
-  const calcBoxes = () => {
-    const width = containerRef.current.offsetWidth;
-    let calculatedMax = 2;
+    const calcBoxes = () => {
+      const width = containerRef.current.offsetWidth;
+      let calculatedMax = 2;
 
-    if (width >= 600) {
-      const available = width - UPLOAD_BOX_WIDTH - BOX_GAP;
-      calculatedMax = Math.max(
-        1,
-        Math.floor((available + BOX_GAP) / (MIN_BOX_WIDTH + BOX_GAP))
-      );
-    }
+      if (width >= 600) {
+        const available = width - UPLOAD_BOX_WIDTH - BOX_GAP;
+        calculatedMax = Math.max(
+          1,
+          Math.floor((available + BOX_GAP) / (MIN_BOX_WIDTH + BOX_GAP))
+        );
+      }
 
-    setMaxVisible(calculatedMax);
-  };
+      setMaxVisible(calculatedMax);
+    };
 
-  // Run once on mount
-  calcBoxes();
+    // Run once on mount
+    calcBoxes();
 
-  // Use ResizeObserver instead of window resize
-  const resizeObserver = new ResizeObserver(calcBoxes);
-  resizeObserver.observe(containerRef.current);
+    // Use ResizeObserver instead of window resize
+    const resizeObserver = new ResizeObserver(calcBoxes);
+    resizeObserver.observe(containerRef.current);
 
-  return () => resizeObserver.disconnect();
-}, []);
+    return () => resizeObserver.disconnect();
+  }, []);
 
   // Handle file input (click or drag)
   const handleFiles = (files) => {
@@ -81,7 +103,7 @@ const AddItem = ({ onClose }) => {
   // Remove image
   const handleRemove = (idx) => {
     setImages((prev) => prev.filter((_, i) => i !== idx));
-    if (page > 0 && (page * maxVisible) >= images.length - 1) {
+    if (page > 0 && page * maxVisible >= images.length - 1) {
       setPage(page - 1);
     }
   };
@@ -104,7 +126,58 @@ const AddItem = ({ onClose }) => {
     } else {
       e.target.value = value.toFixed(2); // format to 2 decimals
     }
-};
+  };
+
+  // Size/Dimensions dynamic placeholders per category
+  const DIM_PLACEHOLDERS = {
+    Electronics: "e.g., 6.1 in x 2.9 in x 0.3 in",
+    Sports: "e.g., Ball diameter: 22 cm, Racket length: 68 cm",
+    Music: "e.g., Guitar: 40 in length, 15 in width",
+    Tools: "e.g., 12 in x 5 in x 3 in",
+    Books: "e.g., 8.5 in x 11 in",
+    Clothing: "e.g., S, M, L, XL",
+    Furniture: "e.g., 180 cm x 90 cm x 40 cm",
+    Vehicles: "e.g., 4.5 m x 1.8 m x 1.6 m",
+  };
+  const DEFAULT_DIM_PLACEHOLDER =
+    "Enter product size/dimensions (e.g., Length x Width x Height)";
+  const sizePlaceholder = category
+    ? DIM_PLACEHOLDERS[category] || DEFAULT_DIM_PLACEHOLDER
+    : DEFAULT_DIM_PLACEHOLDER;
+
+  const handleDownpaymentChange = (e) => {
+    const raw = e.target.value;
+    // keep only digits and one decimal point
+    let sanitized = raw.replace(/[^0-9.]/g, "");
+    const parts = sanitized.split(".");
+    if (parts.length > 2) {
+      sanitized = parts[0] + "." + parts.slice(1).join("");
+    }
+
+    // allow empty while typing
+    if (sanitized === "" || sanitized === ".") {
+      setDownpayment("");
+      return;
+    }
+
+    let num = parseFloat(sanitized);
+    if (isNaN(num)) {
+      setDownpayment("");
+      return;
+    }
+
+    if (num > 100) {
+      setDownpayment("100");
+      return;
+    }
+    if (num < 0) {
+      setDownpayment("0");
+      return;
+    }
+
+    // keep user's decimal typing (e.g., 50.)
+    setDownpayment(sanitized);
+  };
 
   // Paging
   const totalPages = Math.ceil(images.length / maxVisible) || 1;
@@ -124,9 +197,8 @@ const AddItem = ({ onClose }) => {
   // Replace input ref for each image
   const replaceInputRefs = useRef([]);
 
-
   return (
-    <div className="w-full mx-auto relative px-2 sm:px-4">
+    <div className="w-full mx-auto relative px-2 sm:px-4 flex-1 min-h-0">
       {/* Header Section */}
       <div className="flex justify-between items-center mb-2">
         {/* Cancel Button */}
@@ -169,7 +241,9 @@ const AddItem = ({ onClose }) => {
           {/* Product Media (responsive card) */}
           <div className="bg-white rounded-xl shadow p-4 min-h-[180px]">
             {/* Product Media */}
-            <label className="font-semibold mb-2 block text-sm">Product Media</label>
+            <label className="font-semibold mb-2 block text-sm">
+              Product Media
+            </label>
             <div
               className="flex gap-4 items-center"
               ref={containerRef}
@@ -327,12 +401,12 @@ const AddItem = ({ onClose }) => {
                 Product Specification
               </label>
 
-               <label className="block text-xs font-medium mb-1">
+              <label className="block text-xs font-medium mb-1">
                 Size/Dimensions <span className="text-red-600">*</span>
               </label>
               <input
-                className="mb-1 border border-gray-200 rounded px-3 py-1 text-sm w-full"
-                placeholder=""
+                className="mb-1 border border-gray-200 rounded px-3 py-1 text-xs w-full"
+                placeholder={sizePlaceholder}
               />
               <label className="block text-xs font-medium mb-1">
                 Color <span className="text-red-600">*</span>
@@ -363,26 +437,153 @@ const AddItem = ({ onClose }) => {
           </div>
           {/* Booking Details (full width under the two cards above) */}
           <div className="bg-white rounded-xl shadow p-4 min-h-[90px]">
-            <label className="font-semibold mb-2 block text-sm">Booking Details</label>
-            <div className="flex gap-2 mb-1">
-              <input
-                className="flex-1 border border-gray-200 rounded px-3 py-1 text-sm"
-                placeholder="Downpayment required (%) *"
-              />
-              <input
-                className="flex-1 border border-gray-200 rounded px-3 py-1 text-sm"
-                placeholder="Pickup Location *"
-              />
+            <label className="font-semibold mb-2 block text-sm">
+              Booking Details
+            </label>
+            {/* Row 1 */}
+            <div className="flex gap-2 mb-2">
+              <div className="flex-1">
+                <label className="block text-xs font-medium mb-1">
+                  Downpayment required (%){" "}
+                  <span className="text-red-600">*</span>
+                </label>
+                <div className="relative">
+                  <input
+                    type="text"
+                    inputMode="decimal"
+                    pattern="[0-9]*[.]?[0-9]*"
+                    className="w-full border border-gray-200 rounded pl-3 pr-7 py-1 text-sm placeholder-gray-400"
+                    placeholder="e.g. 50"
+                    value={downpayment}
+                    onChange={handleDownpaymentChange}
+                  />
+                  <span className="absolute right-2 top-1/2 -translate-y-1/2 text-[11px] text-gray-500">
+                    %
+                  </span>
+                </div>
+              </div>
+              <div className="flex-1">
+                <label className="block text-xs font-medium mb-1">
+                  Pickup Location <span className="text-red-600">*</span>
+                </label>
+                <input
+                  className="w-full border border-gray-200 rounded px-3 py-1 text-sm"
+                  placeholder="e.g. Sampaloc, Metro Manila"
+                />
+              </div>
             </div>
-            <div className="flex gap-2 mb-1">
-              <input
-                className="flex-1 border border-gray-200 rounded px-3 py-1 text-sm"
-                placeholder="Payment Methods *"
-              />
-              <input
-                className="flex-1 border border-gray-200 rounded px-3 py-1 text-sm"
-                placeholder="Delivery Options *"
-              />
+            {/* Row 2 */}
+            <div className="flex gap-2">
+              <div className="flex-1">
+                <label className="block text-xs font-medium mb-1">
+                  Payment Methods <span className="text-red-600">*</span>
+                </label>
+                <div className="flex items-center gap-3 flex-wrap">
+                  {/* GCash */}
+                  <label className="inline-flex items-center gap-2 px-2 py-1 bg-white rounded-md border border-gray-300 shadow-sm cursor-pointer">
+                    <input
+                      type="checkbox"
+                      className="sr-only"
+                      checked={paymentMethods.gcash}
+                      onChange={() =>
+                        setPaymentMethods((p) => ({ ...p, gcash: !p.gcash }))
+                      }
+                    />
+                    <span
+                      className={`w-3 h-3 rounded-sm border ${
+                        paymentMethods.gcash
+                          ? "bg-[#6C4BF4] border-[#6C4BF4]"
+                          : "bg-white border-gray-300"
+                      }`}
+                    />
+                    <img src={gcashLogo} alt="GCash" className="h-5" />
+                  </label>
+
+                  {/* PayMaya */}
+                  <label className="inline-flex items-center gap-2 px-2 py-1 bg-white rounded-md border border-gray-300 shadow-sm cursor-pointer">
+                    <input
+                      type="checkbox"
+                      className="sr-only"
+                      checked={paymentMethods.paymaya}
+                      onChange={() =>
+                        setPaymentMethods((p) => ({
+                          ...p,
+                          paymaya: !p.paymaya,
+                        }))
+                      }
+                    />
+                    <span
+                      className={`w-3 h-3 rounded-sm border ${
+                        paymentMethods.paymaya
+                          ? "bg-[#6C4BF4] border-[#6C4BF4]"
+                          : "bg-white border-gray-300"
+                      }`}
+                    />
+                    <img src={paymayaLogo} alt="PayMaya" className="h-5" />
+                  </label>
+
+                  {/* Card (Mastercard) */}
+                  <label className="inline-flex items-center gap-2 px-2 py-1 bg-white rounded-md border border-gray-300 shadow-sm cursor-pointer">
+                    <input
+                      type="checkbox"
+                      className="sr-only"
+                      checked={paymentMethods.card}
+                      onChange={() =>
+                        setPaymentMethods((p) => ({ ...p, card: !p.card }))
+                      }
+                    />
+                    <span
+                      className={`w-3 h-3 rounded-sm border ${
+                        paymentMethods.card
+                          ? "bg-[#6C4BF4] border-[#6C4BF4]"
+                          : "bg-white border-gray-300"
+                      }`}
+                    />
+                    <img src={mastercardLogo} alt="Card" className="h-5" />
+                  </label>
+
+                  {/* Bank Transfer (text badge) */}
+                  <label className="inline-flex items-center gap-2 px-2 py-1 bg-white rounded-md border border-gray-300 shadow-sm cursor-pointer">
+                    <input
+                      type="checkbox"
+                      className="sr-only"
+                      checked={paymentMethods.bank}
+                      onChange={() =>
+                        setPaymentMethods((p) => ({ ...p, bank: !p.bank }))
+                      }
+                    />
+                    <span
+                      className={`w-3 h-3 rounded-sm border ${
+                        paymentMethods.bank
+                          ? "bg-[#6C4BF4] border-[#6C4BF4]"
+                          : "bg-white border-gray-300"
+                      }`}
+                    />
+                    <span className="text-[10px] font-semibold border rounded px-2 py-0.5 text-gray-700">
+                      BANK TRANSFER
+                    </span>
+                  </label>
+                </div>
+              </div>
+              <div className="flex-1">
+                <label className="block text-xs font-medium mb-1">
+                  Delivery Options <span className="text-red-600">*</span>
+                </label>
+                <select
+                  className="w-full rounded-md border border-gray-300 px-3 py-2 text-xs bg-white focus:border-black focus:ring-1 focus:ring-black"
+                  value={deliveryOption}
+                  onChange={(e) => setDeliveryOption(e.target.value)}
+                >
+                  <option value="" disabled>
+                    Select delivery option
+                  </option>
+                  {DEAL_OPTIONS.map((option) => (
+                    <option key={option} value={option}>
+                      {option}
+                    </option>
+                  ))}
+                </select>
+              </div>
             </div>
           </div>
         </div>
@@ -390,61 +591,62 @@ const AddItem = ({ onClose }) => {
         <div className="flex flex-col gap-4 flex-1 min-w-0">
           {/* Basic Information (shorter card) */}
           <div className="bg-white rounded-2xl shadow p-4">
-          {/* Section Title */}
-          <h2 className="text-sm font-semibold mb-1">Basic Information</h2>
+            {/* Section Title */}
+            <h2 className="text-sm font-semibold mb-1">Basic Information</h2>
 
-          {/* Product Name */}
-          <label className="block text-xs font-medium mb-1">
-            Product Name <span className="text-red-600">*</span>
-          </label>
-          <input
-            type="text"
-            placeholder="e.g. iPhone 14 Pro Max"
-            className="mb-2 w-full rounded-md border border-gray-300 px-3 py-1 text-xs focus:border-black focus:ring-1 focus:ring-black"
-          />
+            {/* Product Name */}
+            <label className="block text-xs font-medium mb-1">
+              Product Name <span className="text-red-600">*</span>
+            </label>
+            <input
+              type="text"
+              placeholder="e.g. iPhone 14 Pro Max"
+              className="mb-2 w-full rounded-md border border-gray-300 px-3 py-1 text-xs focus:border-black focus:ring-1 focus:ring-black"
+            />
 
-          {/* Item Category */}
-          <label className="block text-xs font-medium mb-1">
-            Item Category <span className="text-red-600">*</span>
-          </label>
-          <select
-                className="mb-2 w-full rounded-md border border-gray-300 px-3 py-1 text-xs bg-white focus:border-black focus:ring-1 focus:ring-black"
-                defaultValue=""
-              >
-                <option value="" disabled>
-                  Select a category
+            {/* Item Category */}
+            <label className="block text-xs font-medium mb-1">
+              Item Category <span className="text-red-600">*</span>
+            </label>
+            <select
+              className="mb-2 w-full rounded-md border border-gray-300 px-3 py-1 text-xs bg-white focus:border-black focus:ring-1 focus:ring-black"
+              value={category}
+              onChange={(e) => setCategory(e.target.value)}
+            >
+              <option value="" disabled>
+                Select a category
+              </option>
+              {CATEGORIES.map((category) => (
+                <option key={category} value={category}>
+                  {category}
                 </option>
-                {CATEGORIES.map((category) => (
-                  <option key={category} value={category}>
-                    {category}
-                  </option>
-                ))}
-              </select>
+              ))}
+            </select>
 
-          {/* Item Price & Deal Option */}
-          <div className="flex gap-4 mb-2">
-            <div className="flex-1">
-              <label className="block text-xs font-medium mb-1">
-                Item Price <span className="text-red-600">*</span>
-              </label>
-              <div className="flex items-center rounded-md border border-gray-300 px-2">
-                <span className="text-gray-500">₱</span>
-                <input
-                  type="number"
-                  step="0.01"
-                  min="0.01"
-                  defaultValue="0.00"
-                  placeholder="0.00"
-                  className="w-full border-0 px-2 py-1 text-xs focus:ring-0 focus:outline-none"
-                  onBlur={validatePriceInput}
-                />
+            {/* Item Price & Deal Option */}
+            <div className="flex gap-4 mb-2">
+              <div className="flex-1">
+                <label className="block text-xs font-medium mb-1">
+                  Item Price <span className="text-red-600">*</span>
+                </label>
+                <div className="flex items-center rounded-md border border-gray-300 px-2">
+                  <span className="text-gray-500">₱</span>
+                  <input
+                    type="number"
+                    step="0.01"
+                    min="0.01"
+                    defaultValue="0.00"
+                    placeholder="0.00"
+                    className="w-full border-0 px-2 py-1 text-xs focus:ring-0 focus:outline-none"
+                    onBlur={validatePriceInput}
+                  />
+                </div>
               </div>
-            </div>
 
-            <div className="flex-1">
-              <label className="block text-xs font-medium mb-1">
-                Deal Option <span className="text-red-600">*</span>
-              </label>
+              <div className="flex-1">
+                <label className="block text-xs font-medium mb-1">
+                  Deal Option <span className="text-red-600">*</span>
+                </label>
                 <select
                   className="w-full rounded-md border border-gray-300 px-3 py-1 text-xs bg-white focus:border-black focus:ring-1 focus:ring-black"
                   defaultValue=""
@@ -458,26 +660,28 @@ const AddItem = ({ onClose }) => {
                     </option>
                   ))}
                 </select>
+              </div>
             </div>
-          </div>
 
-          {/* Location */}
-          <label className="block text-sm font-medium mb-1">
-            Location <span className="text-red-600">*</span>
-          </label>
-          <input
-            type="text"
-            placeholder="e.g. Quezon City, Metro Manila"
-            className="w-full rounded-md border border-gray-300 px-3 py-1 text-xs focus:border-black focus:ring-1 focus:ring-black"
-          />
-        </div>
+            {/* Location */}
+            <label className="block text-sm font-medium mb-1">
+              Location <span className="text-red-600">*</span>
+            </label>
+            <input
+              type="text"
+              placeholder="e.g. Quezon City, Metro Manila"
+              className="w-full rounded-md border border-gray-300 px-3 py-1 text-xs focus:border-black focus:ring-1 focus:ring-black"
+            />
+          </div>
           {/* Terms and Conditions */}
           <div className="bg-white rounded-xl shadow p-4">
             <label className="font-semibold mb-2 block text-sm">
               Terms and Conditions
             </label>
             <div className="text-xs text-gray-700 mb-2">
-              <div className="font-semibold">Default Rules (system-generated)</div>
+              <div className="font-semibold">
+                Default Rules (system-generated)
+              </div>
               <ul className="list-disc pl-5 space-y-1">
                 {DEFAULT_TERMS.map((term, index) => (
                   <li key={index}>
