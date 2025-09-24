@@ -1,31 +1,27 @@
-import { useState, useRef, useContext } from 'react';
-import { useNavigate } from 'react-router-dom';
-import Sidebar from '../components/Sidebar';
-import { AuthContext } from '../context/authContext';
-import { UserContext } from '../context/userContext';
+import { useState, useRef, useContext } from "react";
+import { useNavigate } from "react-router-dom";
+import Sidebar from "../components/Sidebar";
+import { AuthContext } from "../context/authContext";
+import { UserContext } from "../context/userContext";
 
-const genderOptions = [
-  'male',
-  'female',
-  'other'
-];
+const genderOptions = ["male", "female", "other"];
 
 const Profile = () => {
   const { user } = useContext(AuthContext);
-  const { changeProfile } = useContext(UserContext)
+  const { changeProfile } = useContext(UserContext);
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   // Use user context for initial values
   const initialProfile = {
-    profilePic: user?.profilePic || '',
+    profilePic: user?.profilePic || "",
     quickRentId: user?._id,
-    firstName: user?.firstName || '',
-    lastName: user?.lastName || '',
-    username: user?.username || '',
-    mobile: user?.mobile || '',
-    email: user?.email || '',
-    gender: user?.gender || '',
-    birthDate: user?.birthDate.slice(0, 10) || ''
+    firstName: user?.firstName || "",
+    lastName: user?.lastName || "",
+    username: user?.username || "",
+    mobileNumber: user?.mobileNumber || "",
+    email: user?.email || "",
+    gender: user?.gender || "",
+    birthDate: user?.birthDate.slice(0, 10) || "",
   };
 
   const [profile, setProfile] = useState(initialProfile);
@@ -40,20 +36,21 @@ const Profile = () => {
 
   // Validation
   const validate = (field, value) => {
-    let err = '';
-    if (field === 'email') {
-      if (!/^[\w-.]+@([\w-]+\.)+[\w-]{2,4}$/.test(value)) err = 'Invalid email address';
+    let err = "";
+    if (field === "email") {
+      if (!/^[\w-.]+@([\w-]+\.)+[\w-]{2,4}$/.test(value))
+        err = "Invalid email address";
     }
-    if (field === 'mobile') {
-      if (!/^09\d{9}$/.test(value)) err = 'Invalid PH mobile number';
+    if (field === "mobileNumber") {
+      if (!/^09\d{9}$/.test(value)) err = "Invalid PH mobile number";
     }
     return err;
   };
 
   const handleChange = (field, value) => {
-    setEditProfile(prev => ({ ...prev, [field]: value }));
+    setEditProfile((prev) => ({ ...prev, [field]: value }));
     setChanged(true);
-    setErrors(prev => ({ ...prev, [field]: validate(field, value) }));
+    setErrors((prev) => ({ ...prev, [field]: validate(field, value) }));
   };
 
   const handleCopyId = () => {
@@ -66,7 +63,7 @@ const Profile = () => {
     const file = e.target.files[0];
     if (file) {
       const url = URL.createObjectURL(file);
-      setEditProfile(prev => ({ ...prev, profilePic: url }));
+      setEditProfile((prev) => ({ ...prev, profilePic: url }));
       setChanged(true);
     }
   };
@@ -84,12 +81,15 @@ const Profile = () => {
     if (first && last) return (first[0] + last[0]).toUpperCase();
     if (first) return first[0].toUpperCase();
     if (last) return last[0].toUpperCase();
-    return '';
+    return "";
   };
 
   return (
     <div className="flex h-screen bg-gray-50">
-      <Sidebar isOpen={sidebarOpen} onToggle={() => setSidebarOpen(!sidebarOpen)} />
+      <Sidebar
+        isOpen={sidebarOpen}
+        onToggle={() => setSidebarOpen(!sidebarOpen)}
+      />
       <div className="flex-1 flex flex-col overflow-hidden">
         {/* Custom header with back arrow and Edit Profile text */}
         <div className="bg-white shadow-sm border-b border-gray-200 px-4 py-3 flex items-center">
@@ -98,11 +98,23 @@ const Profile = () => {
             onClick={() => navigate(-1)}
             aria-label="Go Back"
           >
-            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+            <svg
+              className="w-6 h-6"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M15 19l-7-7 7-7"
+              />
             </svg>
           </button>
-          <span className="text-xl font-semibold text-gray-900">Edit Profile</span>
+          <span className="text-xl font-semibold text-gray-900">
+            Edit Profile
+          </span>
         </div>
         <main className="flex-1 overflow-y-auto">
           <div className="flex justify-center items-start py-10 px-2 sm:px-6">
@@ -117,11 +129,11 @@ const Profile = () => {
               {/* Save Button */}
               <button
                 className={`absolute top-6 right-8 px-6 py-2 rounded-full text-base font-bold shadow transition ${
-                  changed && Object.values(errors).every(e => !e)
-                    ? 'bg-[#6C4BF4] text-white hover:bg-[#7857FD]'
-                    : 'bg-gray-200 text-gray-400 cursor-not-allowed'
+                  changed && Object.values(errors).every((e) => !e)
+                    ? "bg-[#6C4BF4] text-white hover:bg-[#7857FD]"
+                    : "bg-gray-200 text-gray-400 cursor-not-allowed"
                 }`}
-                disabled={!changed || Object.values(errors).some(e => e)}
+                disabled={!changed || Object.values(errors).some((e) => e)}
                 onClick={handleSave}
               >
                 Save
@@ -146,8 +158,18 @@ const Profile = () => {
                     onClick={openFilePicker}
                     aria-label="Change profile picture"
                   >
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536M9 13l6-6M7 17h8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                    <svg
+                      className="w-4 h-4"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M15.232 5.232l3.536 3.536M9 13l6-6M7 17h8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v10a2 2 0 002 2z"
+                      />
                     </svg>
                   </button>
                   <input
@@ -159,16 +181,35 @@ const Profile = () => {
                   />
                 </div>
                 <div className="mt-2 flex items-center gap-2">
-                  <span className="text-xs text-gray-500 font-semibold">QuickRent ID:</span>
-                  <span className="text-xs font-mono bg-gray-100 px-2 py-1 rounded">{editProfile.quickRentId}</span>
+                  <span className="text-xs text-gray-500 font-semibold">
+                    QuickRent ID:
+                  </span>
+                  <span className="text-xs font-mono bg-gray-100 px-2 py-1 rounded">
+                    {editProfile.quickRentId}
+                  </span>
                   <button
                     className="ml-1 p-1 rounded hover:bg-gray-200"
                     onClick={handleCopyId}
                     aria-label="Copy QuickRent ID"
                   >
-                    <svg className="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16h8a2 2 0 002-2V8a2 2 0 00-2-2H8a2 2 0 00-2 2v6a2 2 0 002 2z" />
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 8V6a2 2 0 00-2-2H8a2 2 0 00-2 2v2" />
+                    <svg
+                      className="w-4 h-4 text-gray-500"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M8 16h8a2 2 0 002-2V8a2 2 0 00-2-2H8a2 2 0 00-2 2v6a2 2 0 002 2z"
+                      />
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M16 8V6a2 2 0 00-2-2H8a2 2 0 00-2 2v2"
+                      />
                     </svg>
                   </button>
                 </div>
@@ -178,68 +219,90 @@ const Profile = () => {
               <div className="flex-1 grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-4">
                 {/* First Name */}
                 <div>
-                  <label className="block text-xs text-gray-500 mb-1">First Name</label>
+                  <label className="block text-xs text-gray-500 mb-1">
+                    First Name
+                  </label>
                   <input
                     type="text"
                     className="w-full border-b border-gray-200 focus:border-[#6C4BF4] outline-none py-2 text-gray-900 text-base bg-transparent"
                     value={editProfile.firstName}
-                    onChange={e => handleChange('firstName', e.target.value)}
+                    onChange={(e) => handleChange("firstName", e.target.value)}
                     placeholder="First Name"
                   />
                 </div>
                 {/* Last Name */}
                 <div>
-                  <label className="block text-xs text-gray-500 mb-1">Last Name</label>
+                  <label className="block text-xs text-gray-500 mb-1">
+                    Last Name
+                  </label>
                   <input
                     type="text"
                     className="w-full border-b border-gray-200 focus:border-[#6C4BF4] outline-none py-2 text-gray-900 text-base bg-transparent"
                     value={editProfile.lastName}
-                    onChange={e => handleChange('lastName', e.target.value)}
+                    onChange={(e) => handleChange("lastName", e.target.value)}
                     placeholder="Last Name"
                   />
                 </div>
                 {/* Username */}
                 <div>
-                  <label className="block text-xs text-gray-500 mb-1">Username</label>
+                  <label className="block text-xs text-gray-500 mb-1">
+                    Username
+                  </label>
                   <input
                     type="text"
                     className="w-full border-b border-gray-200 focus:border-[#6C4BF4] outline-none py-2 text-gray-900 text-base bg-transparent"
                     value={editProfile.username}
-                    onChange={e => handleChange('username', e.target.value)}
+                    onChange={(e) => handleChange("username", e.target.value)}
                     placeholder="Username"
                   />
                 </div>
                 {/* Mobile Number */}
                 <div>
-                  <label className="block text-xs text-gray-500 mb-1">Mobile Number</label>
+                  <label className="block text-xs text-gray-500 mb-1">
+                    Mobile Number
+                  </label>
                   <div className="flex items-center gap-2">
                     <input
                       type="tel"
                       className="flex-1 border-b border-gray-200 focus:border-[#6C4BF4] outline-none py-2 text-gray-900 text-base bg-transparent"
-                      value={editProfile.mobile}
-                      onChange={e => handleChange('mobile', e.target.value)}
+                      value={editProfile.mobileNumber}
+                      onChange={(e) =>
+                        handleChange("mobileNumber", e.target.value)
+                      }
                       placeholder="Mobile Number"
                     />
                   </div>
-                  {errors.mobile && <div className="text-xs text-red-500 mt-1">{errors.mobile}</div>}
+                  {errors.mobileNumber && (
+                    <div className="text-xs text-red-500 mt-1">
+                      {errors.mobileNumber}
+                    </div>
+                  )}
                 </div>
                 {/* Email Address */}
                 <div>
-                  <label className="block text-xs text-gray-500 mb-1">Email Address</label>
+                  <label className="block text-xs text-gray-500 mb-1">
+                    Email Address
+                  </label>
                   <div className="flex items-center gap-2">
                     <input
                       type="email"
                       className="flex-1 border-b border-gray-200 focus:border-[#6C4BF4] outline-none py-2 text-gray-900 text-base bg-transparent"
                       value={editProfile.email}
-                      onChange={e => handleChange('email', e.target.value)}
+                      onChange={(e) => handleChange("email", e.target.value)}
                       placeholder="Email Address"
                     />
                   </div>
-                  {errors.email && <div className="text-xs text-red-500 mt-1">{errors.email}</div>}
+                  {errors.email && (
+                    <div className="text-xs text-red-500 mt-1">
+                      {errors.email}
+                    </div>
+                  )}
                 </div>
                 {/* Gender */}
                 <div>
-                  <label className="block text-xs text-gray-500 mb-1">Gender</label>
+                  <label className="block text-xs text-gray-500 mb-1">
+                    Gender
+                  </label>
                   <div className="relative">
                     <button
                       className="w-full text-left border-b border-gray-200 focus:border-[#6C4BF4] outline-none py-2 text-gray-900 text-base bg-transparent"
@@ -249,11 +312,18 @@ const Profile = () => {
                     </button>
                     {showGender && (
                       <div className="absolute left-0 top-12 z-10 bg-white border border-gray-200 rounded-lg shadow w-48 animate-fade-in">
-                        {genderOptions.map(opt => (
+                        {genderOptions.map((opt) => (
                           <button
                             key={opt}
-                            className={`block w-full text-left px-4 py-2 hover:bg-gray-100 ${editProfile.gender === opt ? 'text-[#6C4BF4] font-semibold' : ''}`}
-                            onClick={() => { handleChange('gender', opt); setShowGender(false); }}
+                            className={`block w-full text-left px-4 py-2 hover:bg-gray-100 ${
+                              editProfile.gender === opt
+                                ? "text-[#6C4BF4] font-semibold"
+                                : ""
+                            }`}
+                            onClick={() => {
+                              handleChange("gender", opt);
+                              setShowGender(false);
+                            }}
                           >
                             {opt}
                           </button>
@@ -264,7 +334,9 @@ const Profile = () => {
                 </div>
                 {/* Birthday */}
                 <div>
-                  <label className="block text-xs text-gray-500 mb-1">Birthday</label>
+                  <label className="block text-xs text-gray-500 mb-1">
+                    Birthday
+                  </label>
                   <div className="relative">
                     <input
                       type="text"
@@ -279,7 +351,10 @@ const Profile = () => {
                         type="date"
                         className="absolute left-0 top-10 z-10 border border-gray-200 rounded-lg shadow px-3 py-2"
                         value={editProfile.birthDate}
-                        onChange={e => { handleChange('birthDate', e.target.value); setShowDate(false); }}
+                        onChange={(e) => {
+                          handleChange("birthDate", e.target.value);
+                          setShowDate(false);
+                        }}
                         onBlur={() => setShowDate(false)}
                         autoFocus
                       />
@@ -290,9 +365,19 @@ const Profile = () => {
                 <div className="col-span-2 mt-4">
                   <div className="bg-gray-50 rounded-xl p-4 flex items-center justify-between">
                     <span className="text-base text-gray-900 font-semibold flex items-center gap-2">
-                      <svg className="w-5 h-5 text-[#6C4BF4]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <svg
+                        className="w-5 h-5 text-[#6C4BF4]"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
                         <rect width="18" height="11" x="3" y="11" rx="2" />
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 11V7a5 5 0 0110 0v4" />
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M7 11V7a5 5 0 0110 0v4"
+                        />
                       </svg>
                       Security
                     </span>
