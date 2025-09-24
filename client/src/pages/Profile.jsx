@@ -2,28 +2,30 @@ import { useState, useRef, useContext } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Sidebar from '../components/Sidebar';
 import { AuthContext } from '../context/authContext';
+import { UserContext } from '../context/userContext';
 
 const genderOptions = [
-  'Male',
-  'Female',
-  'Other'
+  'male',
+  'female',
+  'other'
 ];
 
 const Profile = () => {
   const { user } = useContext(AuthContext);
+  const { changeProfile } = useContext(UserContext)
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   // Use user context for initial values
   const initialProfile = {
     profilePic: user?.profilePic || '',
-    quickRentId: user?.quickRentId || 'QR-12345678',
+    quickRentId: user?._id,
     firstName: user?.firstName || '',
     lastName: user?.lastName || '',
     username: user?.username || '',
     mobile: user?.mobile || '',
     email: user?.email || '',
     gender: user?.gender || '',
-    birthday: user?.birthDate || ''
+    birthDate: user?.birthDate.slice(0, 10) || ''
   };
 
   const [profile, setProfile] = useState(initialProfile);
@@ -69,7 +71,8 @@ const Profile = () => {
     }
   };
 
-  const handleSave = () => {
+  const handleSave = async () => {
+    await changeProfile(editProfile);
     setProfile(editProfile);
     setChanged(false);
   };
@@ -217,7 +220,6 @@ const Profile = () => {
                       onChange={e => handleChange('mobile', e.target.value)}
                       placeholder="Mobile Number"
                     />
-                    <button className="text-xs text-[#6C4BF4] font-semibold px-2 py-1 rounded hover:bg-gray-100">Change</button>
                   </div>
                   {errors.mobile && <div className="text-xs text-red-500 mt-1">{errors.mobile}</div>}
                 </div>
@@ -232,7 +234,6 @@ const Profile = () => {
                       onChange={e => handleChange('email', e.target.value)}
                       placeholder="Email Address"
                     />
-                    <button className="text-xs text-[#6C4BF4] font-semibold px-2 py-1 rounded hover:bg-gray-100">Change</button>
                   </div>
                   {errors.email && <div className="text-xs text-red-500 mt-1">{errors.email}</div>}
                 </div>
@@ -268,17 +269,17 @@ const Profile = () => {
                     <input
                       type="text"
                       className="w-full border-b border-gray-200 focus:border-[#6C4BF4] outline-none py-2 text-gray-900 text-base bg-transparent"
-                      value={editProfile.birthday}
+                      value={editProfile.birthDate}
                       readOnly
                       onClick={() => setShowDate(true)}
-                      placeholder="Birthday"
+                      placeholder="Birth Date"
                     />
                     {showDate && (
                       <input
                         type="date"
                         className="absolute left-0 top-10 z-10 border border-gray-200 rounded-lg shadow px-3 py-2"
-                        value={editProfile.birthday}
-                        onChange={e => { handleChange('birthday', e.target.value); setShowDate(false); }}
+                        value={editProfile.birthDate}
+                        onChange={e => { handleChange('birthDate', e.target.value); setShowDate(false); }}
                         onBlur={() => setShowDate(false)}
                         autoFocus
                       />

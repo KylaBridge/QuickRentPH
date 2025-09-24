@@ -11,6 +11,15 @@ const Dashboard = () => {
   const [activeTab, setActiveTab] = useState("overview");
   const [earningsActiveTab, setEarningsActiveTab] = useState("earnings");
 
+  const dashboardName = () => {
+    const fullName = `${user.firstName + " " + user.lastName}`;
+    if (!user.username) {
+      return fullName;
+    } else {
+      return user.username;
+    }
+  };
+
   const toggleSidebar = () => {
     setSidebarOpen(!sidebarOpen);
   };
@@ -355,7 +364,7 @@ const Dashboard = () => {
             {/* Welcome section */}
             <div className="mb-8">
               <h2 className="text-2xl font-bold text-gray-900 mb-2">
-                Welcome, {`${user?.firstName} ${user?.lastName}`}
+                Welcome, {dashboardName()}
               </h2>
             </div>
 

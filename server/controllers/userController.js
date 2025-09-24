@@ -1,47 +1,37 @@
 const User = require("../models/user");
 const { decodeAccessToken } = require("../helpers/jwt");
 
-const changeCredentials = async (req, res) => {
+const changeProfile = async (req, res) => {
   try {
-    const accessToken = req.cookies.accessToken;
-    const {
-      firstName,
-      lastName,
-      userName,
-      mobileNumber,
-      email,
-      gender,
-      birthDate,
-    } = req.body;
+    const token = req.cookies.accessToken;
+    if (!token) {
+      return res.status(401).json({ error: "Not authenticated" });
+    }
 
     let decoded;
     try {
-      decoded = decodeAccessToken(accessToken);
+      decoded = decodeAccessToken(token);
     } catch (error) {
-      return res.status(401).json({ error: "Unauthorized User" });
+      return res.status(401).json({ error: "Invalid or expired token" });
     }
 
-    if (!/^[\w-.]+@([\w-]+\.)+[\w-]{2,4}$/.test(email)) {
-      return res.status(400).json({ error: "Invalid Email" });
-    }
-    if (!/^09\d{9}$/.test(mobileNumber)) {
-      return res.status(400).json({ error: "Invalid PH Phone Number" });
-    }
-
-    const user = await User.put({
-      firstName,
-      lastName,
-      userName,
-      mobileNumber,
-      email,
-      gender,
-      birthDate,
+    const updatedUser = await User.findByIdAndUpdate(decoded.id, req.body, {
+      new: true,
+      runValidators: true,
     });
 
-    res.status(200).json({ message: "Profile updated" });
+    if (!updatedUser) {
+      return res.status(404).json({ error: "User not found" });
+    }
+
+    res.status(200).json({
+      message: "User updated successfully",
+      user: updatedUser,
+    });
   } catch (error) {
-    res.status(401).json(error);
+    console.error(error);
+    res.status(500).json({ error: "Server error updating profile" });
   }
 };
 
-module.exports = { changeCredentials };
+module.exports = { changeProfile };

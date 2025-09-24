@@ -13,6 +13,7 @@ import Messages from "./pages/Messages.jsx";
 import Profile from "./pages/Profile.jsx";
 import AddItem from "./components/myRentals/AddItem.jsx";
 import ProtectedRoute from "./components/ProtectedRoute.jsx";
+import { UserProvider } from "./context/userContext.jsx";
 
 function App() {
   return (
@@ -21,8 +22,8 @@ function App() {
 
       <Route path="/landing" element={<LandingPage />} />
       <Route path="/login" element={<LoginPage />} />
-  <Route path="/signup" element={<SignUpPage />} />
-  <Route path="/reset-password" element={<ResetPassword />} />
+      <Route path="/signup" element={<SignUpPage />} />
+      <Route path="/reset-password" element={<ResetPassword />} />
       <Route
         path="/dashboard"
         element={
@@ -79,14 +80,18 @@ function App() {
           </ProtectedRoute>
         }
       />
+
       <Route
         path="/profile"
         element={
           <ProtectedRoute>
-            <Profile />
+            <UserProvider>
+              <Profile />
+            </UserProvider>
           </ProtectedRoute>
         }
       />
+
       <Route
         path="/additem"
         element={

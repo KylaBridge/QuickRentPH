@@ -6,6 +6,15 @@ const PageHeader = ({ title, onToggleSidebar, centerContent, hideUserInfo }) => 
   const { user } = useContext(AuthContext);
   const navigate = useNavigate();
 
+  const pageHeaderName = () => {
+    const fullName = `${user.firstName + " " + user.lastName}`;
+    if (!user.username) {
+      return fullName;
+    } else {
+      return user.username;
+    }
+  }
+
   const handleProfileClick = () => {
     navigate("/profile");
   };
@@ -50,7 +59,7 @@ const PageHeader = ({ title, onToggleSidebar, centerContent, hideUserInfo }) => 
               onClick={handleProfileClick}
               title="Edit Profile"
             >
-              <p className="text-sm font-medium text-gray-900">{`${user?.firstName} ${user?.lastName}`}</p>
+              <p className="text-sm font-medium text-gray-900">{pageHeaderName()}</p>
               <p className="text-xs text-gray-500">{user?.email}</p>
             </div>
             <div

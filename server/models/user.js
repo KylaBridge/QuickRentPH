@@ -12,6 +12,11 @@ const userSchema = new Schema({
     required: true,
     default: "Last Name",
   },
+  username: {
+    type: String,
+    default: null,
+    unique: true,
+  },
   birthDate: {
     type: Date,
     required: true,
