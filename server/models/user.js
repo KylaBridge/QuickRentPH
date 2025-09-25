@@ -39,7 +39,7 @@ const userSchema = new Schema({
     type: String,
     trim: true,
     match: [/^09\d{9}$/, "Invalid Philippine mobile number"],
-    default: "",
+    default: null,
   },
 });
 
