@@ -523,7 +523,7 @@ const AddItem = ({ onClose }) => {
                   </label>
 
                   {/* Card (Mastercard) */}
-                  <label className="inline-flex items-center gap-2 px-2 py-1 bg-white rounded-md border border-gray-300 shadow-sm cursor-pointer">
+                  {/* <label className="inline-flex items-center gap-2 px-2 py-1 bg-white rounded-md border border-gray-300 shadow-sm cursor-pointer">
                     <input
                       type="checkbox"
                       className="sr-only"
@@ -540,10 +540,10 @@ const AddItem = ({ onClose }) => {
                       }`}
                     />
                     <img src={mastercardLogo} alt="Card" className="h-5" />
-                  </label>
+                  </label> */}
 
                   {/* Bank Transfer (text badge) */}
-                  <label className="inline-flex items-center gap-2 px-2 py-1 bg-white rounded-md border border-gray-300 shadow-sm cursor-pointer">
+                  {/* <label className="inline-flex items-center gap-2 px-2 py-1 bg-white rounded-md border border-gray-300 shadow-sm cursor-pointer">
                     <input
                       type="checkbox"
                       className="sr-only"
@@ -562,7 +562,7 @@ const AddItem = ({ onClose }) => {
                     <span className="text-[10px] font-semibold border rounded px-2 py-0.5 text-gray-700">
                       BANK TRANSFER
                     </span>
-                  </label>
+                  </label> */}
                 </div>
               </div>
               <div className="flex-1">
