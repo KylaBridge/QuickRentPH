@@ -3,7 +3,6 @@ import Sidebar from "../components/Sidebar";
 import PageHeader from "../components/PageHeader";
 import ItemsTab from "../components/myRentals/ItemsTab";
 import EarningsTab from "../components/myRentals/EarningsTab";
-import RemovedTab from "../components/myRentals/RemovedTab";
 import AddItem from "../components/myRentals/AddItem";
 
 // Custom Dropdown Component
@@ -376,8 +375,7 @@ const MyRentals = () => {
     },
   ]);
 
-  // State for removed items
-  const [removedItemsData, setRemovedItemsData] = useState([]);
+  // Removed: state for removed items since 'Removed' tab is no longer present
 
   // State for earnings data
   const [earningsData] = useState([
@@ -613,23 +611,7 @@ const MyRentals = () => {
   );
   const paginateEarnings = (pageNumber) => setEarningsCurrentPage(pageNumber);
 
-  // Pagination logic for Removed Items
-  const [removedCurrentPage, setRemovedCurrentPage] = useState(1);
-  const removedItemsPerPage = 7;
-  const indexOfLastRemovedItem = removedCurrentPage * removedItemsPerPage;
-  const indexOfFirstRemovedItem = indexOfLastRemovedItem - removedItemsPerPage;
-  const currentRemovedItems = removedItemsData.slice(
-    indexOfFirstRemovedItem,
-    indexOfLastRemovedItem
-  );
-  const totalRemovedPages = Math.ceil(
-    removedItemsData.length / removedItemsPerPage
-  );
-  const removedPageNumbers = Array.from(
-    { length: totalRemovedPages },
-    (_, i) => i + 1
-  );
-  const paginateRemoved = (pageNumber) => setRemovedCurrentPage(pageNumber);
+  // Removed: pagination logic for Removed Items
 
   const toggleSidebar = () => setSidebarOpen(!sidebarOpen);
 
@@ -683,29 +665,8 @@ const MyRentals = () => {
   };
 
   const handleRemoveItem = (itemId) => {
-    const itemToRemove = itemsData.find((item) => item.id === itemId);
-    if (itemToRemove) {
-      // Add to removed list
-      setRemovedItemsData((prev) => [...prev, itemToRemove]);
-      // Remove from active list
-      setItemsData((prev) => prev.filter((item) => item.id !== itemId));
-      // Switch to the 'removed' tab
-      setActiveTab("removed");
-    }
-  };
-
-  const handleRestoreItem = (itemId) => {
-    const itemToRestore = removedItemsData.find((item) => item.id === itemId);
-    if (itemToRestore) {
-      // Add item back to the main list
-      setItemsData((prev) =>
-        [...prev, itemToRestore].sort((a, b) => a.id - b.id)
-      ); // sort to maintain order
-      // Remove item from the removed list
-      setRemovedItemsData((prev) => prev.filter((item) => item.id !== itemId));
-      // Switch back to the 'items' tab
-      setActiveTab("items");
-    }
+    // Simply remove the item from the list
+    setItemsData((prev) => prev.filter((item) => item.id !== itemId));
   };
 
   const tabComponents = {
@@ -739,16 +700,6 @@ const MyRentals = () => {
           totalPages={totalEarningsPages}
         />
       </div>
-    ),
-    removed: (
-      <RemovedTab
-        removedItems={currentRemovedItems}
-        onRestoreItem={handleRestoreItem}
-        paginate={paginateRemoved}
-        pageNumbers={removedPageNumbers}
-        currentPage={removedCurrentPage}
-        totalPages={totalRemovedPages}
-      />
     ),
   };
 
@@ -829,20 +780,6 @@ const MyRentals = () => {
                   )}
                 </button>
 
-                {/* Removed Tab */}
-                <button
-                  onClick={() => setActiveTab("removed")}
-                  className={`relative ${
-                    activeTab === "removed"
-                      ? "text-[#6C4BF4] font-bold"
-                      : "text-gray-700"
-                  }`}
-                >
-                  Removed
-                  {activeTab === "removed" && (
-                    <span className="absolute left-0 -bottom-3 h-1 w-full bg-[#6C4BF4] rounded" />
-                  )}
-                </button>
               </div>
               {/* Conditional content based on activeTab */}
               <div className="mt-8 flex-1 flex flex-col">
