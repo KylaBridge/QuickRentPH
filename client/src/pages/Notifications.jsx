@@ -156,7 +156,7 @@ const Notifications = () => {
                   activeTab === 'requests' ? 'text-[#6C4BF4] font-bold' : 'text-gray-700'
                 }`}
               >
-                Requests
+                Priority
                 {activeTab === 'requests' && (
                   <span className="absolute left-0 -bottom-3 h-1 w-full bg-[#6C4BF4] rounded" />
                 )}

@@ -11,6 +11,7 @@ import MyRentals from "./pages/MyRentals.jsx";
 import Notifications from "./pages/Notifications.jsx";
 import Messages from "./pages/Messages.jsx";
 import Profile from "./pages/Profile.jsx";
+import Help from "./pages/Help.jsx";
 import AddItem from "./components/myRentals/AddItem.jsx";
 import ProtectedRoute from "./components/ProtectedRoute.jsx";
 import { UserProvider } from "./context/userContext.jsx";
@@ -77,6 +78,15 @@ function App() {
         element={
           <ProtectedRoute>
             <Messages />
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/help"
+        element={
+          <ProtectedRoute>
+            <Help />
           </ProtectedRoute>
         }
       />

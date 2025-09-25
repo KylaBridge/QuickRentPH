@@ -237,20 +237,7 @@ const SignUpPage = () => {
                       </span>
                     </div>
                   </div>
-                  <div className="grid grid-cols-2 gap-3">
-                    <button
-                      type="button"
-                      className="w-full flex items-center justify-center px-4 py-3 border border-gray-300 rounded-md shadow-sm bg-white text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors"
-                    >
-                      <svg
-                        className="w-5 h-5 mr-2"
-                        fill="currentColor"
-                        viewBox="0 0 24 24"
-                      >
-                        <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z" />
-                      </svg>
-                      Facebook
-                    </button>
+                  <div className="grid grid-cols-1 gap-3">
                     <button
                       type="button"
                       className="w-full flex items-center justify-center px-4 py-3 border border-gray-300 rounded-md shadow-sm bg-white text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors"
@@ -303,14 +290,26 @@ const SignUpPage = () => {
                       onClick={() => setShowPassword((prev) => !prev)}
                       className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700 focus:outline-none"
                       tabIndex={-1}
-                      aria-label={showPassword ? "Hide password" : "Show password"}
+                      aria-label={
+                        showPassword ? "Hide password" : "Show password"
+                      }
                     >
                       {showPassword ? (
-                        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          className="h-5 w-5"
+                          viewBox="0 0 20 20"
+                          fill="currentColor"
+                        >
                           <path d="M4.293 4.293a1 1 0 011.414 0l10 10a1 1 0 01-1.414 1.414l-1.32-1.32A8.001 8.001 0 012 10c1.73-3.14 5.06-5 8-5 1.13 0 2.22.19 3.22.54l-1.43 1.43A6.001 6.001 0 004 10c0 1.13.19 2.22.54 3.22l-1.43 1.43a1 1 0 010-1.414z" />
                         </svg>
                       ) : (
-                        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          className="h-5 w-5"
+                          viewBox="0 0 20 20"
+                          fill="currentColor"
+                        >
                           <path d="M10 3C6.13 3 2.73 5.86 1 10c1.73 4.14 5.13 7 9 7s7.27-2.86 9-7c-1.73-4.14-5.13-7-9-7zm0 12a5 5 0 110-10 5 5 0 010 10zm0-8a3 3 0 100 6 3 3 0 000-6z" />
                         </svg>
                       )}
