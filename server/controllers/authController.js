@@ -23,7 +23,7 @@ const registerEmail = async (req, res) => {
     const tempToken = createTempToken({ email });
     res.status(200).json({ message: "Email Created", tempToken });
   } catch (error) {
-    res.status(400).json(error);
+    res.status(400).json({ error: error.message });
   }
 };
 
@@ -64,7 +64,7 @@ const registerPassword = async (req, res) => {
       newTempToken,
     });
   } catch (error) {
-    res.status(400).json(error);
+    res.status(400).json({ error: error.message });
   }
 };
 
@@ -120,14 +120,13 @@ const registerUser = async (req, res) => {
         user: userWithoutPassword,
       });
   } catch (error) {
-    res.status(400).json(error);
+    res.status(400).json({ error: error.message });
   }
 };
 
 const loginUser = async (req, res) => {
   try {
     const { email, password } = req.body;
-
 
     const user = await User.findOne({ email });
     if (!user) {
@@ -159,7 +158,7 @@ const loginUser = async (req, res) => {
       .status(200)
       .json({ message: "User logged in", user: userWithoutPassword });
   } catch (error) {
-    res.status(400).json(error);
+    res.status(400).json({ error: error.message });
   }
 };
 
@@ -178,7 +177,7 @@ const logoutUser = (req, res) => {
       });
     res.status(200).json({ message: "Logged out" });
   } catch (error) {
-    res.status(400).json(error);
+    res.status(400).json({ error: error.message });
   }
 };
 
@@ -209,7 +208,7 @@ const refreshToken = (req, res) => {
       .status(200)
       .json({ message: "Access Token Created" });
   } catch {
-    res.status(400).json(error);
+    res.status(400).json({ error: error.message });
   }
 };
 

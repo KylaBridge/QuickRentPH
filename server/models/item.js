@@ -6,38 +6,75 @@ const itemSchema = new Schema({
     type: String,
     required: true,
   },
-  brand: {
+  category: {
     type: String,
-    required: true,
-  },
-  model: {
-    type: String,
-    required: true,
-  },
-  specifications: {
-    type: String,
-    required: true,
-  },
-  availability: {
-    type: String,
-    enum: ["Available", "Unavailable", "Rented Out"],
-    required: true,
-  },
-  status: {
-    type: String,
-    enum: ["Active", "Inactive"],
     required: true,
   },
   price: {
     type: Number,
     required: true,
   },
-  rating: {
-    type: Number,
+  dealOption: {
+    type: String,
+    enum: [
+      "Standard Delivery",
+      "Express",
+      "Scheduled Delivery",
+      "Drop-Off Point",
+      "Return",
+    ],
+    required: true,
   },
-  owner: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: "Users",
+  location: {
+    type: String,
+    required: true,
+  },
+  images: {
+    type: [String],
+    required: true,
+  },
+  size: {
+    type: String,
+    required: true,
+  },
+  color: {
+    type: String,
+    required: true,
+  },
+  description: {
+    type: String,
+    required: true,
+  },
+  includedAccessories: {
+    type: String,
+  },
+  downpayment: {
+    type: Number,
+    required: true,
+  },
+  pickupLocation: {
+    type: String,
+    required: true,
+  },
+  paymentMethod: {
+    type: String,
+    required: true,
+  },
+  deliveryOptions: {
+    type: String,
+    enum: [
+      "Standard Delivery",
+      "Express",
+      "Scheduled Delivery",
+      "Drop-Off Point",
+      "Return",
+    ],
+    required: true,
+  },
+  availability: {
+    type: String,
+    enum: ["Availability", "Available", "Unavailable", "Rented Out"],
+    default: "Available",
     required: true,
   },
 });

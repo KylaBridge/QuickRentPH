@@ -61,7 +61,9 @@ function App() {
         path="/my-rentals"
         element={
           <ProtectedRoute>
-            <MyRentals />
+            <UserProvider>
+              <MyRentals />
+            </UserProvider>
           </ProtectedRoute>
         }
       />
@@ -95,9 +97,7 @@ function App() {
         path="/profile"
         element={
           <ProtectedRoute>
-            <UserProvider>
-              <Profile />
-            </UserProvider>
+            <Profile />
           </ProtectedRoute>
         }
       />
