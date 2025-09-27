@@ -5,7 +5,6 @@ const {
   createAccessToken,
   createRefreshToken,
   decodeTempToken,
-  decodeAccessToken,
   decodeRefreshToken,
 } = require("../helpers/jwt");
 
@@ -214,22 +213,17 @@ const refreshToken = (req, res) => {
 
 const profile = async (req, res) => {
   try {
-    const token = req.cookies.accessToken;
-
-    if (!token) {
-      return res.status(200).json({ user: null });
+    const userId = req.userId;
+    if (!userId) {
+      return res.status(401).json({ error: "Not authenticated" });
     }
-
-    const decoded = decodeAccessToken(token);
-    const user = await User.findById(decoded.id).select("-password");
-
+    const user = await User.findById(userId).select("-password");
     if (!user) {
-      return res.status(200).json({ user: null });
+      return res.status(404).json({ error: "User not found" });
     }
-
     res.status(200).json({ user });
   } catch (error) {
-    res.status(200).json({ user: null });
+    res.status(500).json({ error: "Server error fetching profile" });
   }
 };
 

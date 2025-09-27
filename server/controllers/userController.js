@@ -1,21 +1,13 @@
 const User = require("../models/user");
-const { decodeAccessToken } = require("../helpers/jwt");
 
 const changeProfile = async (req, res) => {
   try {
-    const token = req.cookies.accessToken;
-    if (!token) {
+    const userId = req.userId;
+    if (!userId) {
       return res.status(401).json({ error: "Not authenticated" });
     }
 
-    let decoded;
-    try {
-      decoded = decodeAccessToken(token);
-    } catch (error) {
-      return res.status(401).json({ error: "Invalid or expired token" });
-    }
-
-    const updatedUser = await User.findByIdAndUpdate(decoded.id, req.body, {
+    const updatedUser = await User.findByIdAndUpdate(userId, req.body, {
       new: true,
       runValidators: true,
     });
