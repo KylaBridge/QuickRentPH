@@ -2,6 +2,11 @@ const mongoose = require("mongoose");
 const Schema = mongoose.Schema;
 
 const itemSchema = new Schema({
+  owner: {
+    type: Schema.Types.ObjectId,
+    ref: "Users",
+    required: true,
+  },
   name: {
     type: String,
     required: true,
@@ -60,7 +65,7 @@ const itemSchema = new Schema({
     type: String,
     required: true,
   },
-  deliveryOptions: {
+  deliveryOption: {
     type: String,
     enum: [
       "Standard Delivery",

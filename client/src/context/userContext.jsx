@@ -15,36 +15,83 @@ export function UserProvider({ children }) {
       }
       return res.data.user;
     } catch (error) {
-      throw error.response.data.error;
+      throw error.response?.data?.error || "Profile update failed";
     }
   };
 
+  // Fetch all items owned by the current user
+  const getUserItems = async () => {
+    try {
+      const res = await api.get("/api/rentals/items");
+      return res.data.items || [];
+    } catch (error) {
+      throw error.response?.data?.error || "Failed to fetch items";
+    }
+  };
+
+  const buildItemFormData = (item) => {
+    const formData = new FormData();
+    Object.keys(item).forEach((key) => {
+      if (key !== "images" && item[key] !== undefined && item[key] !== null) {
+        formData.append(key, item[key]);
+      }
+    });
+    if (item.images && Array.isArray(item.images)) {
+      item.images.forEach((file) => formData.append("images", file));
+    }
+    return formData;
+  };
+
+  // Create an item
   const addItem = async (newItem) => {
     try {
-      const formData = new FormData();
-
-      Object.keys(newItem).forEach((key) => {
-        if (key !== "images") {
-          formData.append(key, newItem[key]);
+      const res = await api.post(
+        "/api/rentals/items",
+        buildItemFormData(newItem),
+        {
+          headers: { "Content-Type": "multipart/form-data" },
         }
-      });
-      if (newItem.images && Array.isArray(newItem.images)) {
-        newItem.images.forEach((file) => {
-          formData.append("images", file);
-        });
-      }
+      );
+      return res.data.item;
+    } catch (error) {
+      throw error.response?.data?.error || "Add item failed";
+    }
+  };
 
-      const res = await api.post("/api/rentals/addItem", formData, {
-        headers: { "Content-Type": "multipart/form-data" },
-      });
+  // Update an existing item
+  const updateItem = async (id, updates) => {
+    try {
+      const res = await api.put(
+        `/api/rentals/items/${id}`,
+        buildItemFormData(updates),
+        { headers: { "Content-Type": "multipart/form-data" } }
+      );
+      return res.data.item;
+    } catch (error) {
+      throw error.response?.data?.error || "Update item failed";
+    }
+  };
+
+  // Delete an item
+  const deleteItem = async (itemId) => {
+    try {
+      const res = await api.delete(`/api/rentals/items/${itemId}`);
       return res.data;
     } catch (error) {
-      throw error.response.data.error;
+      throw error.response?.data?.error || "Delete item failed";
     }
   };
 
   return (
-    <UserContext.Provider value={{ changeProfile, addItem }}>
+    <UserContext.Provider
+      value={{
+        changeProfile,
+        getUserItems,
+        addItem,
+        updateItem,
+        deleteItem,
+      }}
+    >
       {children}
     </UserContext.Provider>
   );

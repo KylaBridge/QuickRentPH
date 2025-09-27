@@ -2,8 +2,17 @@ const express = require("express");
 const router = express.Router();
 
 const upload = require("../helpers/multer");
-const { addItem } = require("../controllers/rentalController");
+const { requireAuth } = require("../middleware/requireAuth");
+const {
+  getUserItems,
+  addItem,
+  deleteItem,
+  updateItem,
+} = require("../controllers/rentalController");
 
-router.post("/addItem", upload.array("images", 5), addItem);
+router.get("/items", requireAuth, getUserItems);
+router.post("/items", requireAuth, upload.array("images", 5), addItem);
+router.put("/items/:id", requireAuth, upload.array("images", 5), updateItem);
+router.delete("/items/:id", requireAuth, deleteItem);
 
 module.exports = router;
