@@ -97,7 +97,9 @@ function App() {
         path="/profile"
         element={
           <ProtectedRoute>
-            <Profile />
+            <UserProvider>
+              <Profile />
+            </UserProvider>
           </ProtectedRoute>
         }
       />
