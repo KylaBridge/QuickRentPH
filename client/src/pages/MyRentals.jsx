@@ -89,7 +89,7 @@ const MyRentals = () => {
       model: "Celestron 130EQ",
       category: "Outdoor",
       price: "1200.00",
-      availability: "Unavailable",
+      availability: "Rented Out",
       status: "Active",
       image: "https://placehold.co/60x60/4c4c87/ffffff?text=Scope",
     },
@@ -129,7 +129,7 @@ const MyRentals = () => {
       model: "Canon 50mm",
       category: "Electronics",
       price: "950.00",
-      availability: "Unavailable",
+      availability: "Rented Out",
       status: "Active",
       image: "https://placehold.co/60x60/7689A4/ffffff?text=Lens",
     },
@@ -179,7 +179,7 @@ const MyRentals = () => {
       model: "MiniBeam P7",
       category: "Electronics",
       price: "700.00",
-      availability: "Unavailable",
+      availability: "Rented Out",
       status: "Inactive",
       image: "https://placehold.co/60x60/B2A0A1/ffffff?text=Projector",
     },
@@ -229,7 +229,7 @@ const MyRentals = () => {
       model: "Singsation All-In-One",
       category: "Events and Parties",
       price: "900.00",
-      availability: "Unavailable",
+      availability: "Rented Out",
       status: "Active",
       image: "https://placehold.co/60x60/C19B81/ffffff?text=Karaoke",
     },
@@ -289,7 +289,7 @@ const MyRentals = () => {
       model: "NordicTrack T 6.5S",
       category: "Sports Essentials",
       price: "3000.00",
-      availability: "Unavailable",
+      availability: "Rented Out",
       status: "Active",
       image: "https://placehold.co/60x60/5F9EA0/ffffff?text=Treadmill",
     },
@@ -339,7 +339,7 @@ const MyRentals = () => {
       model: "Oculus Quest 2",
       category: "Electronics",
       price: "1700.00",
-      availability: "Unavailable",
+      availability: "Rented Out",
       status: "Inactive",
       image: "https://placehold.co/60x60/DDA0DD/ffffff?text=VR",
     },
@@ -624,10 +624,6 @@ const MyRentals = () => {
     console.log("Selected availability:", availability);
   };
 
-  const handleStatusSelect = (status) => {
-    console.log("Selected status:", status);
-  };
-
   const handleEarningsStatusSelect = (status) => {
     console.log("Selected earnings status:", status);
     setEarningsStatusFilter(status);
@@ -673,15 +669,11 @@ const MyRentals = () => {
     items: (
       <ItemsTab
         currentItems={currentItems}
-        rowDropdown={rowDropdown}
-        handleRowDropdownToggle={handleRowDropdownToggle}
-        handleRowSelect={handleRowSelect}
         CustomDropdown={CustomDropdown}
         openDropdown={openDropdown}
         handleDropdownToggle={handleDropdownToggle}
         handleCategorySelect={handleCategorySelect}
         handleAvailabilitySelect={handleAvailabilitySelect}
-        handleStatusSelect={handleStatusSelect}
         paginate={paginate}
         pageNumbers={pageNumbers}
         onRemoveItem={handleRemoveItem}
@@ -744,23 +736,8 @@ const MyRentals = () => {
                       : "text-gray-700"
                   }`}
                 >
-                  Requests
+                  Reserved
                   {activeTab === "requests" && (
-                    <span className="absolute left-0 -bottom-3 h-1 w-full bg-[#6C4BF4] rounded" />
-                  )}
-                </button>
-
-                {/* Status Tab */}
-                <button
-                  onClick={() => setActiveTab("status")}
-                  className={`relative ${
-                    activeTab === "status"
-                      ? "text-[#6C4BF4] font-bold"
-                      : "text-gray-700"
-                  }`}
-                >
-                  Status
-                  {activeTab === "status" && (
                     <span className="absolute left-0 -bottom-3 h-1 w-full bg-[#6C4BF4] rounded" />
                   )}
                 </button>
@@ -779,7 +756,6 @@ const MyRentals = () => {
                     <span className="absolute left-0 -bottom-3 h-1 w-full bg-[#6C4BF4] rounded" />
                   )}
                 </button>
-
               </div>
               {/* Conditional content based on activeTab */}
               <div className="mt-8 flex-1 flex flex-col">
