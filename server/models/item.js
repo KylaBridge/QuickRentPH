@@ -21,13 +21,6 @@ const itemSchema = new Schema({
   },
   dealOption: {
     type: String,
-    enum: [
-      "Standard Delivery",
-      "Express",
-      "Scheduled Delivery",
-      "Drop-Off Point",
-      "Return",
-    ],
     required: true,
   },
   location: {
@@ -67,18 +60,10 @@ const itemSchema = new Schema({
   },
   deliveryOption: {
     type: String,
-    enum: [
-      "Standard Delivery",
-      "Express",
-      "Scheduled Delivery",
-      "Drop-Off Point",
-      "Return",
-    ],
     required: true,
   },
   availability: {
     type: String,
-    enum: ["Availability", "Available", "Unavailable", "Rented Out"],
     default: "Available",
     required: true,
   },
