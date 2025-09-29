@@ -1,4 +1,5 @@
-import React, { useRef, useState, useEffect } from "react";
+import React, { useRef, useState, useEffect, useContext } from "react";
+import { UserContext } from "../../context/userContext";
 import gcashLogo from "../../assets/GCash-Logo.png";
 import paymayaLogo from "../../assets/paymaya-logo.png";
 import mastercardLogo from "../../assets/Mastercard-logo.svg.png";
@@ -32,7 +33,8 @@ const DEFAULT_TERMS = [
   { label: "Renter must present a valid government ID upon pickup" },
 ];
 
-const AddItem = ({ onClose }) => {
+const AddItem = ({ onClose, onSuccess }) => {
+  const { addItem } = useContext(UserContext);
   const fileInputRef = useRef();
   const containerRef = useRef();
   const [images, setImages] = useState([]);
@@ -41,12 +43,26 @@ const AddItem = ({ onClose }) => {
   const [paymentMethods, setPaymentMethods] = useState({
     gcash: false,
     paymaya: false,
-    card: false,
-    bank: false,
   });
-  const [deliveryOption, setDeliveryOption] = useState("");
-  const [category, setCategory] = useState("");
-  const [downpayment, setDownpayment] = useState("");
+  // Single form state object
+  const [formData, setFormData] = useState({
+    name: "",
+    category: "",
+    price: "0.00",
+    dealOption: "",
+    location: "",
+    size: "",
+    color: "",
+    description: "",
+    includedAccessories: "",
+    downpayment: "",
+    pickupLocation: "",
+    deliveryOption: "",
+    customTerms: "",
+  });
+  const [errors, setErrors] = useState([]);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [successMsg, setSuccessMsg] = useState("");
 
   // Dynamically calculate how many boxes fit in the image container
   useEffect(() => {
@@ -117,14 +133,18 @@ const AddItem = ({ onClose }) => {
     );
   };
 
-  // Validate price input
-  const validatePriceInput = (e) => {
-    const value = parseFloat(e.target.value);
+  // Generic form field handler
+  const handleFieldChange = (field, value) => {
+    setFormData((prev) => ({ ...prev, [field]: value }));
+  };
 
+  // Validate price input formatting on blur
+  const validatePriceInput = () => {
+    const value = parseFloat(formData.price);
     if (isNaN(value) || value <= 0) {
-      e.target.value = "0.00";
+      handleFieldChange("price", "0.00");
     } else {
-      e.target.value = value.toFixed(2); // format to 2 decimals
+      handleFieldChange("price", value.toFixed(2));
     }
   };
 
@@ -141,8 +161,8 @@ const AddItem = ({ onClose }) => {
   };
   const DEFAULT_DIM_PLACEHOLDER =
     "Enter product size/dimensions (e.g., Length x Width x Height)";
-  const sizePlaceholder = category
-    ? DIM_PLACEHOLDERS[category] || DEFAULT_DIM_PLACEHOLDER
+  const sizePlaceholder = formData.category
+    ? DIM_PLACEHOLDERS[formData.category] || DEFAULT_DIM_PLACEHOLDER
     : DEFAULT_DIM_PLACEHOLDER;
 
   const handleDownpaymentChange = (e) => {
@@ -156,27 +176,27 @@ const AddItem = ({ onClose }) => {
 
     // allow empty while typing
     if (sanitized === "" || sanitized === ".") {
-      setDownpayment("");
+      handleFieldChange("downpayment", "");
       return;
     }
 
     let num = parseFloat(sanitized);
     if (isNaN(num)) {
-      setDownpayment("");
+      handleFieldChange("downpayment", "");
       return;
     }
 
     if (num > 100) {
-      setDownpayment("100");
+      handleFieldChange("downpayment", "100");
       return;
     }
     if (num < 0) {
-      setDownpayment("0");
+      handleFieldChange("downpayment", "0");
       return;
     }
 
     // keep user's decimal typing (e.g., 50.)
-    setDownpayment(sanitized);
+    handleFieldChange("downpayment", sanitized);
   };
 
   // Paging
@@ -197,8 +217,126 @@ const AddItem = ({ onClose }) => {
   // Replace input ref for each image
   const replaceInputRefs = useRef([]);
 
+  // Cleanup object URLs on unmount
+  useEffect(() => {
+    return () => {
+      images.forEach((img) => URL.revokeObjectURL(img.url));
+    };
+  }, [images]);
+
+  const validateForm = () => {
+    const errs = [];
+    if (!formData.name.trim()) errs.push("Product Name is required");
+    if (!formData.category) errs.push("Category is required");
+    if (!formData.price || parseFloat(formData.price) <= 0)
+      errs.push("Price must be greater than 0");
+    if (!formData.dealOption) errs.push("Deal Option is required");
+    if (!formData.location.trim()) errs.push("Location is required");
+    if (!formData.size.trim()) errs.push("Size/Dimensions is required");
+    if (!formData.color.trim()) errs.push("Color is required");
+    if (!formData.description.trim()) errs.push("Description is required");
+    if (!formData.downpayment || isNaN(parseFloat(formData.downpayment)))
+      errs.push("Downpayment is required");
+    if (!formData.pickupLocation.trim())
+      errs.push("Pickup Location is required");
+    if (!formData.deliveryOption) errs.push("Delivery Option is required");
+    const selectedPayments = Object.entries(paymentMethods)
+      .filter(([, v]) => v)
+      .map(([k]) => k);
+    if (selectedPayments.length === 0)
+      errs.push("At least one payment method is required");
+    if (images.length === 0) errs.push("At least one image is required");
+    return errs;
+  };
+
+  const handleCreate = async (e) => {
+    e.preventDefault();
+    setErrors([]);
+    setSuccessMsg("");
+    const validationErrors = validateForm();
+    if (validationErrors.length) {
+      setErrors(validationErrors);
+      return;
+    }
+    setIsSubmitting(true);
+    try {
+      const selectedPayments = Object.entries(paymentMethods)
+        .filter(([, v]) => v)
+        .map(([k]) => k)
+        .join(",");
+
+      const itemData = {
+        name: formData.name.trim(),
+        category: formData.category,
+        price: parseFloat(formData.price),
+        dealOption: formData.dealOption,
+        location: formData.location.trim(),
+        size: formData.size.trim(),
+        color: formData.color.trim(),
+        description: formData.description.trim(),
+        ...(formData.includedAccessories.trim() && {
+          includedAccessories: formData.includedAccessories.trim(),
+        }),
+        downpayment: parseFloat(formData.downpayment),
+        pickupLocation: formData.pickupLocation.trim(),
+        paymentMethod: selectedPayments,
+        deliveryOption: formData.deliveryOption,
+        images: images.slice(0, 5).map(({ file }) => file),
+      };
+
+      await addItem(itemData);
+      setSuccessMsg("Item created successfully.");
+
+      // Call onSuccess callback if provided
+      if (onSuccess) {
+        onSuccess();
+      } else {
+        // Reset form using Object.fromEntries (only if no onSuccess callback)
+        setFormData(
+          Object.fromEntries(
+            Object.keys(formData).map((key) => [
+              key,
+              key === "price" ? "0.00" : "",
+            ])
+          )
+        );
+        setPaymentMethods({ gcash: false, paymaya: false });
+        setImages([]);
+        setPage(0);
+      }
+    } catch (err) {
+      const msg = typeof err === "string" ? err : "Failed to create item";
+      setErrors([msg]);
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handlePriceChange = (e) => {
+    handleFieldChange("price", e.target.value);
+  };
+
   return (
-    <div className="w-full mx-auto relative px-2 sm:px-4 flex-1 min-h-0">
+    <form
+      onSubmit={handleCreate}
+      noValidate
+      className="w-full mx-auto relative px-2 sm:px-4 flex-1 min-h-0"
+    >
+      {/* Feedback Messages */}
+      {errors.length > 0 && (
+        <div className="mb-2 bg-red-50 border border-red-200 text-red-700 rounded p-2 text-xs">
+          <ul className="list-disc pl-4 space-y-0.5">
+            {errors.map((err, i) => (
+              <li key={i}>{err}</li>
+            ))}
+          </ul>
+        </div>
+      )}
+      {successMsg && (
+        <div className="mb-2 bg-green-50 border border-green-200 text-green-700 rounded p-2 text-xs">
+          {successMsg}
+        </div>
+      )}
       {/* Header Section */}
       <div className="flex justify-between items-center mb-2">
         {/* Cancel Button */}
@@ -228,8 +366,12 @@ const AddItem = ({ onClose }) => {
               <circle cx="12" cy="12" r="3" strokeWidth={2} />
             </svg>
           </div>
-          <button className="bg-[#6C4BF4] hover:bg-[#7857FD] text-white font-bold rounded-lg px-7 py-2 text-m shadow">
-            Create
+          <button
+            type="submit"
+            disabled={isSubmitting}
+            className={`bg-[#6C4BF4] hover:bg-[#7857FD] text-white font-bold rounded-lg px-7 py-2 text-m shadow disabled:opacity-60 disabled:cursor-not-allowed`}
+          >
+            {isSubmitting ? "Creating..." : "Create"}
           </button>
         </div>
       </div>
@@ -407,13 +549,17 @@ const AddItem = ({ onClose }) => {
               <input
                 className="mb-1 border border-gray-200 rounded px-3 py-1 text-xs w-full"
                 placeholder={sizePlaceholder}
+                value={formData.size}
+                onChange={(e) => handleFieldChange("size", e.target.value)}
               />
               <label className="block text-xs font-medium mb-1">
                 Color <span className="text-red-600">*</span>
               </label>
               <input
                 className="mb-1 border border-gray-200 rounded px-3 py-1 text-sm w-full"
-                placeholder=""
+                placeholder="e.g. Black"
+                value={formData.color}
+                onChange={(e) => handleFieldChange("color", e.target.value)}
               />
               <label className="block text-xs font-medium mb-1">
                 General Description <span className="text-red-600">*</span>
@@ -422,6 +568,10 @@ const AddItem = ({ onClose }) => {
                 className="border border-gray-200 rounded px-3 py-1 text-xs w-full"
                 rows={4}
                 placeholder="Include important details such as material, features, and any special conditions."
+                value={formData.description}
+                onChange={(e) =>
+                  handleFieldChange("description", e.target.value)
+                }
               />
             </div>
             <div className="bg-white rounded-xl shadow p-4 flex-1 min-h-[110px]">
@@ -432,6 +582,10 @@ const AddItem = ({ onClose }) => {
                 className="border border-gray-200 rounded px-3 py-1 text-xs w-full"
                 rows={12}
                 placeholder="List down item accessories included if applicable."
+                value={formData.includedAccessories}
+                onChange={(e) =>
+                  handleFieldChange("includedAccessories", e.target.value)
+                }
               />
             </div>
           </div>
@@ -454,7 +608,7 @@ const AddItem = ({ onClose }) => {
                     pattern="[0-9]*[.]?[0-9]*"
                     className="w-full border border-gray-200 rounded pl-3 pr-7 py-1 text-sm placeholder-gray-400"
                     placeholder="e.g. 50"
-                    value={downpayment}
+                    value={formData.downpayment}
                     onChange={handleDownpaymentChange}
                   />
                   <span className="absolute right-2 top-1/2 -translate-y-1/2 text-[11px] text-gray-500">
@@ -469,6 +623,10 @@ const AddItem = ({ onClose }) => {
                 <input
                   className="w-full border border-gray-200 rounded px-3 py-1 text-sm"
                   placeholder="e.g. Sampaloc, Metro Manila"
+                  value={formData.pickupLocation}
+                  onChange={(e) =>
+                    handleFieldChange("pickupLocation", e.target.value)
+                  }
                 />
               </div>
             </div>
@@ -521,48 +679,6 @@ const AddItem = ({ onClose }) => {
                     />
                     <img src={paymayaLogo} alt="PayMaya" className="h-5" />
                   </label>
-
-                  {/* Card (Mastercard) */}
-                  {/* <label className="inline-flex items-center gap-2 px-2 py-1 bg-white rounded-md border border-gray-300 shadow-sm cursor-pointer">
-                    <input
-                      type="checkbox"
-                      className="sr-only"
-                      checked={paymentMethods.card}
-                      onChange={() =>
-                        setPaymentMethods((p) => ({ ...p, card: !p.card }))
-                      }
-                    />
-                    <span
-                      className={`w-3 h-3 rounded-sm border ${
-                        paymentMethods.card
-                          ? "bg-[#6C4BF4] border-[#6C4BF4]"
-                          : "bg-white border-gray-300"
-                      }`}
-                    />
-                    <img src={mastercardLogo} alt="Card" className="h-5" />
-                  </label> */}
-
-                  {/* Bank Transfer (text badge) */}
-                  {/* <label className="inline-flex items-center gap-2 px-2 py-1 bg-white rounded-md border border-gray-300 shadow-sm cursor-pointer">
-                    <input
-                      type="checkbox"
-                      className="sr-only"
-                      checked={paymentMethods.bank}
-                      onChange={() =>
-                        setPaymentMethods((p) => ({ ...p, bank: !p.bank }))
-                      }
-                    />
-                    <span
-                      className={`w-3 h-3 rounded-sm border ${
-                        paymentMethods.bank
-                          ? "bg-[#6C4BF4] border-[#6C4BF4]"
-                          : "bg-white border-gray-300"
-                      }`}
-                    />
-                    <span className="text-[10px] font-semibold border rounded px-2 py-0.5 text-gray-700">
-                      BANK TRANSFER
-                    </span>
-                  </label> */}
                 </div>
               </div>
               <div className="flex-1">
@@ -571,8 +687,10 @@ const AddItem = ({ onClose }) => {
                 </label>
                 <select
                   className="w-full rounded-md border border-gray-300 px-3 py-2 text-xs bg-white focus:border-black focus:ring-1 focus:ring-black"
-                  value={deliveryOption}
-                  onChange={(e) => setDeliveryOption(e.target.value)}
+                  value={formData.deliveryOption}
+                  onChange={(e) =>
+                    handleFieldChange("deliveryOption", e.target.value)
+                  }
                 >
                   <option value="" disabled>
                     Select delivery option
@@ -602,6 +720,8 @@ const AddItem = ({ onClose }) => {
               type="text"
               placeholder="e.g. iPhone 14 Pro Max"
               className="mb-2 w-full rounded-md border border-gray-300 px-3 py-1 text-xs focus:border-black focus:ring-1 focus:ring-black"
+              value={formData.name}
+              onChange={(e) => handleFieldChange("name", e.target.value)}
             />
 
             {/* Item Category */}
@@ -610,8 +730,8 @@ const AddItem = ({ onClose }) => {
             </label>
             <select
               className="mb-2 w-full rounded-md border border-gray-300 px-3 py-1 text-xs bg-white focus:border-black focus:ring-1 focus:ring-black"
-              value={category}
-              onChange={(e) => setCategory(e.target.value)}
+              value={formData.category}
+              onChange={(e) => handleFieldChange("category", e.target.value)}
             >
               <option value="" disabled>
                 Select a category
@@ -635,9 +755,10 @@ const AddItem = ({ onClose }) => {
                     type="number"
                     step="0.01"
                     min="0.01"
-                    defaultValue="0.00"
+                    value={formData.price}
                     placeholder="0.00"
                     className="w-full border-0 px-2 py-1 text-xs focus:ring-0 focus:outline-none"
+                    onChange={handlePriceChange}
                     onBlur={validatePriceInput}
                   />
                 </div>
@@ -649,7 +770,10 @@ const AddItem = ({ onClose }) => {
                 </label>
                 <select
                   className="w-full rounded-md border border-gray-300 px-3 py-1 text-xs bg-white focus:border-black focus:ring-1 focus:ring-black"
-                  defaultValue=""
+                  value={formData.dealOption}
+                  onChange={(e) =>
+                    handleFieldChange("dealOption", e.target.value)
+                  }
                 >
                   <option value="" disabled>
                     Select deal option
@@ -671,6 +795,8 @@ const AddItem = ({ onClose }) => {
               type="text"
               placeholder="e.g. Quezon City, Metro Manila"
               className="w-full rounded-md border border-gray-300 px-3 py-1 text-xs focus:border-black focus:ring-1 focus:ring-black"
+              value={formData.location}
+              onChange={(e) => handleFieldChange("location", e.target.value)}
             />
           </div>
           {/* Terms and Conditions */}
@@ -701,11 +827,13 @@ const AddItem = ({ onClose }) => {
               className="border border-gray-200 rounded px-3 py-2 text-xs w-full"
               rows={6}
               placeholder="Custom Rules"
+              value={formData.customTerms}
+              onChange={(e) => handleFieldChange("customTerms", e.target.value)}
             />
           </div>
         </div>
       </div>
-    </div>
+    </form>
   );
 };
 

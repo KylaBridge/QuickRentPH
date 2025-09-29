@@ -1,6 +1,15 @@
 const Item = require("../models/item");
 const fs = require("fs");
 
+const getAllItems = async (req, res) => {
+  try {
+    const items = await Item.find({});
+    res.status(200).json({ message: "Items fetched successfully", items });
+  } catch (error) {
+    res.status(400).json({ error: error.message });
+  }
+};
+
 const getUserItems = async (req, res) => {
   try {
     const items = await Item.find({ owner: req.userId });
@@ -101,4 +110,4 @@ const deleteItem = async (req, res) => {
   }
 };
 
-module.exports = { getUserItems, addItem, updateItem, deleteItem };
+module.exports = { getAllItems, getUserItems, addItem, updateItem, deleteItem };

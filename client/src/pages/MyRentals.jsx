@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useState, useContext, useEffect } from "react";
+import { UserContext } from "../context/userContext";
 import Sidebar from "../components/Sidebar";
 import PageHeader from "../components/PageHeader";
 import ItemsTab from "../components/myRentals/ItemsTab";
@@ -58,6 +59,7 @@ const CustomDropdown = ({ label, options, onSelect, isOpen, onToggle }) => {
 };
 
 const MyRentals = () => {
+  const { getUserItems, deleteItem } = useContext(UserContext);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [activeTab, setActiveTab] = useState("items");
   // New state to manage which dropdown is open. It will store the label of the open dropdown.
@@ -71,309 +73,29 @@ const MyRentals = () => {
   // State for row dropdowns
   const [rowDropdown, setRowDropdown] = useState({});
 
-  // State for items data (to allow updating availability/status)
-  const [itemsData, setItemsData] = useState([
-    {
-      id: 1,
-      item: "Electric Drill",
-      model: "X-2500",
-      category: "Tools",
-      price: "850.00",
-      availability: "Available",
-      status: "Active",
-      image: "https://placehold.co/60x60/3277a8/ffffff?text=Drill",
-    },
-    {
-      id: 2,
-      item: "Telescope",
-      model: "Celestron 130EQ",
-      category: "Outdoor",
-      price: "1200.00",
-      availability: "Rented Out",
-      status: "Active",
-      image: "https://placehold.co/60x60/4c4c87/ffffff?text=Scope",
-    },
-    {
-      id: 3,
-      item: "DJ Controller",
-      model: "Pioneer DDJ-400",
-      category: "Electronics",
-      price: "1500.00",
-      availability: "Rented Out",
-      status: "Inactive",
-      image: "https://placehold.co/60x60/8b4513/ffffff?text=DJ",
-    },
-    {
-      id: 4,
-      item: "Kayak",
-      model: "Seahawk II",
-      category: "Outdoor",
-      price: "2000.00",
-      availability: "Available",
-      status: "Active",
-      image: "https://placehold.co/60x60/008080/ffffff?text=Kayak",
-    },
-    {
-      id: 5,
-      item: "Camping Tent",
-      model: "Outfitter 4P",
-      category: "Outdoor",
-      price: "600.00",
-      availability: "Available",
-      status: "Active",
-      image: "https://placehold.co/60x60/5C8A8A/ffffff?text=Tent",
-    },
-    {
-      id: 6,
-      item: "Camera Lens",
-      model: "Canon 50mm",
-      category: "Electronics",
-      price: "950.00",
-      availability: "Rented Out",
-      status: "Active",
-      image: "https://placehold.co/60x60/7689A4/ffffff?text=Lens",
-    },
-    {
-      id: 7,
-      item: "Pressure Washer",
-      model: "PowerClean 3000",
-      category: "Tools",
-      price: "1100.00",
-      availability: "Available",
-      status: "Active",
-      image: "https://placehold.co/60x60/8C92AC/ffffff?text=Washer",
-    },
-    {
-      id: 8,
-      item: "GoPro Camera",
-      model: "Hero 9",
-      category: "Electronics",
-      price: "1300.00",
-      availability: "Rented Out",
-      status: "Active",
-      image: "https://placehold.co/60x60/6A5ACD/ffffff?text=GoPro",
-    },
-    {
-      id: 9,
-      item: "Mountain Bike",
-      model: "Trailmaster 29",
-      category: "Outdoor",
-      price: "1800.00",
-      availability: "Available",
-      status: "Active",
-      image: "https://placehold.co/60x60/9C549F/ffffff?text=Bike",
-    },
-    {
-      id: 10,
-      item: "Inflatable Boat",
-      model: "Explorer Pro",
-      category: "Outdoor",
-      price: "2200.00",
-      availability: "Available",
-      status: "Active",
-      image: "https://placehold.co/60x60/B47291/ffffff?text=Boat",
-    },
-    {
-      id: 11,
-      item: "Portable Projector",
-      model: "MiniBeam P7",
-      category: "Electronics",
-      price: "700.00",
-      availability: "Rented Out",
-      status: "Inactive",
-      image: "https://placehold.co/60x60/B2A0A1/ffffff?text=Projector",
-    },
-    {
-      id: 12,
-      item: "Car Roof Rack",
-      model: "Thule Aero",
-      category: "Vehicles and Transport",
-      price: "500.00",
-      availability: "Available",
-      status: "Active",
-      image: "https://placehold.co/60x60/957DAD/ffffff?text=Rack",
-    },
-    {
-      id: 13,
-      item: "Concrete Mixer",
-      model: "ProMix 1.5",
-      category: "Tools",
-      price: "2500.00",
-      availability: "Rented Out",
-      status: "Active",
-      image: "https://placehold.co/60x60/B2BEB2/ffffff?text=Mixer",
-    },
-    {
-      id: 14,
-      item: "Snowboard",
-      model: "Burton Custom",
-      category: "Sports Essentials",
-      price: "1400.00",
-      availability: "Available",
-      status: "Active",
-      image: "https://placehold.co/60x60/C9C0BB/ffffff?text=Snowboard",
-    },
-    {
-      id: 15,
-      item: "Leaf Blower",
-      model: "Husqvarna 125B",
-      category: "Tools",
-      price: "400.00",
-      availability: "Available",
-      status: "Active",
-      image: "https://placehold.co/60x60/D1B891/ffffff?text=Blower",
-    },
-    {
-      id: 16,
-      item: "Karaoke Machine",
-      model: "Singsation All-In-One",
-      category: "Events and Parties",
-      price: "900.00",
-      availability: "Rented Out",
-      status: "Active",
-      image: "https://placehold.co/60x60/C19B81/ffffff?text=Karaoke",
-    },
-    {
-      id: 17,
-      item: "Portable Sound System",
-      model: "JBL PartyBox",
-      category: "Events and Parties",
-      price: "1600.00",
-      availability: "Available",
-      status: "Active",
-      image: "https://placehold.co/60x60/B47081/ffffff?text=Sound",
-    },
-    {
-      id: 18,
-      item: "Paddleboard",
-      model: "Aqua Marina",
-      category: "Outdoor",
-      price: "1300.00",
-      availability: "Available",
-      status: "Active",
-      image: "https://placehold.co/60x60/20B2AA/ffffff?text=Board",
-    },
-    {
-      id: 19,
-      item: "Drone",
-      model: "DJI Mini 3",
-      category: "Electronics",
-      price: "2500.00",
-      availability: "Rented Out",
-      status: "Active",
-      image: "https://placehold.co/60x60/708090/ffffff?text=Drone",
-    },
-    {
-      id: 20,
-      item: "Sewing Machine",
-      model: "Brother CS6000i",
-      category: "Home and Appliances",
-      price: "750.00",
-      availability: "Available",
-      status: "Inactive",
-      image: "https://placehold.co/60x60/FF69B4/ffffff?text=Sew",
-    },
-    {
-      id: 21,
-      item: "Electric Guitar",
-      model: "Fender Strat",
-      category: "Media and Hobbies",
-      price: "1800.00",
-      availability: "Available",
-      status: "Active",
-      image: "https://placehold.co/60x60/8A2BE2/ffffff?text=Guitar",
-    },
-    {
-      id: 22,
-      item: "Treadmill",
-      model: "NordicTrack T 6.5S",
-      category: "Sports Essentials",
-      price: "3000.00",
-      availability: "Rented Out",
-      status: "Active",
-      image: "https://placehold.co/60x60/5F9EA0/ffffff?text=Treadmill",
-    },
-    {
-      id: 23,
-      item: "3D Printer",
-      model: "Creality Ender 3",
-      category: "Electronics",
-      price: "1500.00",
-      availability: "Available",
-      status: "Active",
-      image: "https://placehold.co/60x60/DEB887/ffffff?text=3DPrint",
-    },
-    {
-      id: 24,
-      item: "Wetsuit",
-      model: "O'Neill Epic 4/3mm",
-      category: "Outdoor",
-      price: "800.00",
-      availability: "Available",
-      status: "Active",
-      image: "https://placehold.co/60x60/4682B4/ffffff?text=Wetsuit",
-    },
-    {
-      id: 25,
-      item: "Fog Machine",
-      model: "ADJ Fog Fury",
-      category: "Events and Parties",
-      price: "500.00",
-      availability: "Rented Out",
-      status: "Active",
-      image: "https://placehold.co/60x60/A9A9A9/ffffff?text=Fog",
-    },
-    {
-      id: 26,
-      item: "Chainsaw",
-      model: "Stihl MS 271",
-      category: "Tools",
-      price: "1200.00",
-      availability: "Available",
-      status: "Active",
-      image: "https://placehold.co/60x60/FFA500/ffffff?text=Saw",
-    },
-    {
-      id: 27,
-      item: "VR Headset",
-      model: "Oculus Quest 2",
-      category: "Electronics",
-      price: "1700.00",
-      availability: "Rented Out",
-      status: "Inactive",
-      image: "https://placehold.co/60x60/DDA0DD/ffffff?text=VR",
-    },
-    {
-      id: 28,
-      item: "Air Compressor",
-      model: "Craftsman 6 Gallon",
-      category: "Tools",
-      price: "600.00",
-      availability: "Available",
-      status: "Active",
-      image: "https://placehold.co/60x60/B0C4DE/ffffff?text=Air",
-    },
-    {
-      id: 29,
-      item: "Binoculars",
-      model: "Nikon Prostaff",
-      category: "Outdoor",
-      price: "450.00",
-      availability: "Available",
-      status: "Active",
-      image: "https://placehold.co/60x60/8FBC8F/ffffff?text=Binos",
-    },
-    {
-      id: 30,
-      item: "Popcorn Machine",
-      model: "Great Northern",
-      category: "Events and Parties",
-      price: "700.00",
-      availability: "Rented Out",
-      status: "Active",
-      image: "https://placehold.co/60x60/FFD700/ffffff?text=Popcorn",
-    },
-  ]);
+  // State for items data
+  const [itemsData, setItemsData] = useState([]);
+  const [itemsLoading, setItemsLoading] = useState(true);
+  const [itemsError, setItemsError] = useState(null);
+
+  // Fetch user items on component mount
+  useEffect(() => {
+    const fetchItems = async () => {
+      try {
+        setItemsLoading(true);
+        const items = await getUserItems();
+        setItemsData(items);
+        setItemsError(null);
+      } catch (error) {
+        setItemsError(error);
+        setItemsData([]);
+      } finally {
+        setItemsLoading(false);
+      }
+    };
+
+    fetchItems();
+  }, [getUserItems]);
 
   // Removed: state for removed items since 'Removed' tab is no longer present
 
@@ -660,9 +382,24 @@ const MyRentals = () => {
     }));
   };
 
-  const handleRemoveItem = (itemId) => {
-    // Simply remove the item from the list
-    setItemsData((prev) => prev.filter((item) => item.id !== itemId));
+  const handleRemoveItem = async (itemId) => {
+    try {
+      await deleteItem(itemId);
+      // Remove from local state after successful deletion
+      setItemsData((prev) => prev.filter((item) => item._id !== itemId));
+    } catch (error) {
+      console.error("Failed to delete item:", error);
+      // Could add error notification here
+    }
+  };
+
+  const refreshItems = async () => {
+    try {
+      const items = await getUserItems();
+      setItemsData(items);
+    } catch (error) {
+      console.error("Failed to refresh items:", error);
+    }
   };
 
   const tabComponents = {
@@ -680,6 +417,8 @@ const MyRentals = () => {
         currentPage={currentPage}
         totalPages={totalPages}
         onAddItem={() => setShowAddItem(true)}
+        loading={itemsLoading}
+        error={itemsError}
       />
     ),
     earnings: (
@@ -707,7 +446,13 @@ const MyRentals = () => {
         >
           {showAddItem ? (
             // Completely override the MyRentals container with AddItem
-            <AddItem onClose={() => setShowAddItem(false)} />
+            <AddItem
+              onClose={() => setShowAddItem(false)}
+              onSuccess={() => {
+                setShowAddItem(false);
+                refreshItems();
+              }}
+            />
           ) : (
             <div className="w-full bg-white rounded-lg shadow-xl p-8 flex-1 flex flex-col">
               {/* Tab Navigation Section */}

@@ -15,7 +15,17 @@ export function UserProvider({ children }) {
       }
       return res.data.user;
     } catch (error) {
-      throw error.response?.data?.error || "Profile update failed";
+      throw error.response.data.error || "Profile update failed";
+    }
+  };
+
+  // Fetch all items
+  const getAllItems = async () => {
+    try {
+      const res = await api.get("/api/rentals/items");
+      return res.data.items || [];
+    } catch (error) {
+      throw error.response.data.error || "Failed to fetch items";
     }
   };
 
@@ -25,7 +35,7 @@ export function UserProvider({ children }) {
       const res = await api.get("/api/rentals/items");
       return res.data.items || [];
     } catch (error) {
-      throw error.response?.data?.error || "Failed to fetch items";
+      throw error.response.data.error || "Failed to fetch items";
     }
   };
 
@@ -54,7 +64,7 @@ export function UserProvider({ children }) {
       );
       return res.data.item;
     } catch (error) {
-      throw error.response?.data?.error || "Add item failed";
+      throw error.response.data.error || "Add item failed";
     }
   };
 
@@ -68,7 +78,7 @@ export function UserProvider({ children }) {
       );
       return res.data.item;
     } catch (error) {
-      throw error.response?.data?.error || "Update item failed";
+      throw error.response.data.error || "Update item failed";
     }
   };
 
@@ -78,7 +88,7 @@ export function UserProvider({ children }) {
       const res = await api.delete(`/api/rentals/items/${itemId}`);
       return res.data;
     } catch (error) {
-      throw error.response?.data?.error || "Delete item failed";
+      throw error.response.data.error || "Delete item failed";
     }
   };
 
@@ -86,6 +96,7 @@ export function UserProvider({ children }) {
     <UserContext.Provider
       value={{
         changeProfile,
+        getAllItems,
         getUserItems,
         addItem,
         updateItem,
