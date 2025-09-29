@@ -11,7 +11,7 @@ const {
   updateItem,
 } = require("../controllers/rentalController");
 
-router.get("/items", requireAuth, getAllItems);
+router.get("/items/all", getAllItems);
 router.get("/items", requireAuth, getUserItems);
 router.post("/items", requireAuth, upload.array("images", 5), addItem);
 router.put("/items/:id", requireAuth, upload.array("images", 5), updateItem);

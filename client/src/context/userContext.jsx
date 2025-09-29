@@ -22,10 +22,10 @@ export function UserProvider({ children }) {
   // Fetch all items
   const getAllItems = async () => {
     try {
-      const res = await api.get("/api/rentals/items");
+      const res = await api.get("/api/rentals/items/all");
       return res.data.items || [];
     } catch (error) {
-      throw error.response.data.error || "Failed to fetch items";
+      throw error.response?.data?.error || "Failed to fetch items";
     }
   };
 
@@ -35,7 +35,7 @@ export function UserProvider({ children }) {
       const res = await api.get("/api/rentals/items");
       return res.data.items || [];
     } catch (error) {
-      throw error.response.data.error || "Failed to fetch items";
+      throw error.response?.data?.error || "Failed to fetch items";
     }
   };
 

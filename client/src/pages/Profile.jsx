@@ -31,6 +31,11 @@ const Profile = () => {
   const [showGender, setShowGender] = useState(false);
   const [showDate, setShowDate] = useState(false);
   const [errors, setErrors] = useState({});
+  const [notification, setNotification] = useState({
+    show: false,
+    message: "",
+    type: "",
+  });
   const fileInputRef = useRef();
   const navigate = useNavigate();
 
@@ -38,13 +43,28 @@ const Profile = () => {
   const validate = (field, value) => {
     let err = "";
     if (field === "email") {
-      if (!/^[\w-.]+@([\w-]+\.)+[\w-]{2,4}$/.test(value))
+      if (value && !/^[\w-.]+@([\w-]+\.)+[\w-]{2,4}$/.test(value))
         err = "Invalid email address";
     }
     if (field === "mobileNumber") {
-      if (!/^09\d{9}$/.test(value)) err = "Invalid PH mobile number";
+      // Only validate if mobile number is provided and not empty/default
+      if (value && value !== "0" && value !== "") {
+        if (!/^09\d{9}$/.test(value)) {
+          err =
+            "Mobile number must be in format 09XXXXXXXXX (11 digits starting with 09)";
+        }
+      }
     }
     return err;
+  };
+
+  // Show notification helper
+  const showNotification = (message, type = "success") => {
+    setNotification({ show: true, message, type });
+    setTimeout(
+      () => setNotification({ show: false, message: "", type: "" }),
+      4000
+    );
   };
 
   const handleChange = (field, value) => {
@@ -69,9 +89,31 @@ const Profile = () => {
   };
 
   const handleSave = async () => {
-    await changeProfile(editProfile);
-    setProfile(editProfile);
-    setChanged(false);
+    try {
+      // Prepare data for saving - handle default mobile number
+      const saveData = { ...editProfile };
+
+      // If mobile number is empty, 0, or invalid default, don't include it in the update
+      if (
+        !saveData.mobileNumber ||
+        saveData.mobileNumber === "0" ||
+        saveData.mobileNumber === ""
+      ) {
+        // Keep the existing mobile number from the database
+        saveData.mobileNumber = user?.mobileNumber || "";
+      }
+
+      await changeProfile(saveData);
+      setProfile(editProfile);
+      setChanged(false);
+      showNotification("Profile updated successfully!", "success");
+    } catch (error) {
+      console.error("Profile save error:", error);
+      showNotification(
+        error || "Failed to update profile. Please try again.",
+        "error"
+      );
+    }
   };
 
   const openFilePicker = () => fileInputRef.current.click();
@@ -123,6 +165,52 @@ const Profile = () => {
               {showToast && (
                 <div className="fixed top-4 left-1/2 -translate-x-1/2 bg-[#6C4BF4] text-white px-4 py-2 rounded shadow z-50 transition">
                   QuickRent ID copied!
+                </div>
+              )}
+
+              {/* Notification */}
+              {notification.show && (
+                <div
+                  className={`fixed top-4 left-1/2 -translate-x-1/2 px-6 py-3 rounded-lg shadow-lg z-50 transition-all duration-300 max-w-md text-center ${
+                    notification.type === "success"
+                      ? "bg-green-500 text-white"
+                      : "bg-red-500 text-white"
+                  }`}
+                >
+                  <div className="flex items-center gap-2 justify-center">
+                    {notification.type === "success" ? (
+                      <svg
+                        className="w-5 h-5"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M5 13l4 4L19 7"
+                        />
+                      </svg>
+                    ) : (
+                      <svg
+                        className="w-5 h-5"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M6 18L18 6M6 6l12 12"
+                        />
+                      </svg>
+                    )}
+                    <span className="text-sm font-medium">
+                      {notification.message}
+                    </span>
+                  </div>
                 </div>
               )}
 
@@ -264,17 +352,28 @@ const Profile = () => {
                   <div className="flex items-center gap-2">
                     <input
                       type="tel"
-                      className="flex-1 border-b border-gray-200 focus:border-[#6C4BF4] outline-none py-2 text-gray-900 text-base bg-transparent"
+                      className={`flex-1 border-b focus:border-[#6C4BF4] outline-none py-2 text-gray-900 text-base bg-transparent ${
+                        errors.mobileNumber
+                          ? "border-red-500"
+                          : "border-gray-200"
+                      }`}
                       value={editProfile.mobileNumber}
                       onChange={(e) =>
                         handleChange("mobileNumber", e.target.value)
                       }
-                      placeholder="Mobile Number"
+                      placeholder="09XXXXXXXXX"
                     />
                   </div>
-                  {errors.mobileNumber && (
+                  {errors.mobileNumber ? (
                     <div className="text-xs text-red-500 mt-1">
                       {errors.mobileNumber}
+                    </div>
+                  ) : (
+                    <div className="text-xs text-gray-400 mt-1">
+                      {!editProfile.mobileNumber ||
+                      editProfile.mobileNumber === "0"
+                        ? "You can skip this field and add it later"
+                        : "Format: 09XXXXXXXXX (11 digits)"}
                     </div>
                   )}
                 </div>

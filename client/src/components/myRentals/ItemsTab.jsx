@@ -122,26 +122,40 @@ const ItemsTab = ({
             const firstImage =
               item.images && item.images.length > 0 ? item.images[0] : null;
 
+            // Category-based placeholder colors
+            const getCategoryColor = (category) => {
+              const colors = {
+                "Electronics and Gadgets": "bg-blue-100 text-blue-600",
+                "Home and Appliances": "bg-green-100 text-green-600",
+                "Events and Parties": "bg-pink-100 text-pink-600",
+                "Outdoor and Travel": "bg-yellow-100 text-yellow-600",
+                "Media and Hobbies": "bg-purple-100 text-purple-600",
+                "Clothing and Fashion": "bg-red-100 text-red-600",
+                "Vehicles and Transport": "bg-gray-100 text-gray-600",
+                "Equipment and Tools": "bg-orange-100 text-orange-600",
+                "Sports Essentials": "bg-teal-100 text-teal-600",
+                "Seasonal Item": "bg-indigo-100 text-indigo-600",
+                Books: "bg-amber-100 text-amber-600",
+                Vehicles: "bg-slate-100 text-slate-600",
+              };
+              return colors[category] || "bg-gray-100 text-gray-600";
+            };
+
             return (
               <div
                 key={item._id}
-                className="grid grid-cols-6 gap-4 items-center pl-2 pr-4 pt-2 pb-2 bg-white rounded-lg hover:bg-gray-100 transition-colors duration-150"
+                className="grid grid-cols-6 gap-4 items-center pl-2 pr-4 py-2 bg-white rounded-lg hover:bg-gray-100 transition-colors duration-150"
               >
                 <div className="flex justify-center">
-                  {firstImage ? (
-                    <img
-                      src={`${
-                        import.meta.env.VITE_API_URL?.replace("/api", "") ||
-                        "http://localhost:8000"
-                      }/${firstImage}`}
-                      alt={item.name}
-                      className="w-8.5 h-8.5 rounded-lg object-cover"
-                    />
-                  ) : (
-                    <div className="w-8.5 h-8.5 rounded-lg bg-gray-200 flex items-center justify-center">
-                      <span className="text-xs text-gray-500">No Image</span>
-                    </div>
-                  )}
+                  <div
+                    className={`w-12 h-12 rounded-lg flex items-center justify-center border border-gray-200 ${getCategoryColor(
+                      item.category
+                    )}`}
+                  >
+                    <span className="text-xs font-semibold">
+                      {item.name.substring(0, 2).toUpperCase()}
+                    </span>
+                  </div>
                 </div>
                 <div className="text-center text-black">
                   <p className="font-regular text-sm text-black">{item.name}</p>

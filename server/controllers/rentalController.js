@@ -3,7 +3,10 @@ const fs = require("fs");
 
 const getAllItems = async (req, res) => {
   try {
-    const items = await Item.find({});
+    const items = await Item.find({}).populate(
+      "owner",
+      "firstName lastName username"
+    );
     res.status(200).json({ message: "Items fetched successfully", items });
   } catch (error) {
     res.status(400).json({ error: error.message });
@@ -12,7 +15,10 @@ const getAllItems = async (req, res) => {
 
 const getUserItems = async (req, res) => {
   try {
-    const items = await Item.find({ owner: req.userId });
+    const items = await Item.find({ owner: req.userId }).populate(
+      "owner",
+      "firstName lastName username"
+    );
     res.status(200).json({ items });
   } catch (error) {
     res.status(400).json({ error: error.message });
