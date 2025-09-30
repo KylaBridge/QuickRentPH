@@ -60,8 +60,8 @@ const updateItem = async (req, res) => {
 
     let updatedImages = item.images;
 
-    // Handle images: combination of existing and new images
-    if (req.body.existingImages || (req.files && req.files.length > 0)) {
+    // Handle images only if images are being explicitly updated
+    if (req.body.existingImages !== undefined || (req.files && req.files.length > 0)) {
       const existingImages = req.body.existingImages
         ? Array.isArray(req.body.existingImages)
           ? req.body.existingImages
@@ -69,39 +69,50 @@ const updateItem = async (req, res) => {
         : [];
       const newImages = req.files ? req.files.map((file) => file.path) : [];
 
-      // Combine existing and new images
-      updatedImages = [...existingImages, ...newImages];
+      // Helper function to normalize paths for comparison
+      const normalizePath = (path) => {
+        // Extract just the filename for comparison
+        return path.replace(/^.*[\\\/]/, '');
+      };
 
-      // Remove old images that are no longer used
+      // Map existing images back to their full paths
+      const mappedExistingImages = existingImages.map((existingImg) => {
+        // Find the corresponding full path from current item images
+        const matchingImage = item.images.find((itemImg) => {
+          const existingFilename = normalizePath(existingImg);
+          const itemFilename = normalizePath(itemImg);
+          return existingFilename === itemFilename;
+        });
+        return matchingImage || existingImg; // Use original if no match found
+      });
+
+      // Combine mapped existing and new images
+      updatedImages = [...mappedExistingImages, ...newImages];
+
+      // Only delete images that are not in the mapped existing images
       if (Array.isArray(item.images)) {
-        const imagesToDelete = item.images.filter(
-          (imgPath) => !existingImages.includes(imgPath)
-        );
+        const imagesToDelete = item.images.filter((imgPath) => {
+          return !mappedExistingImages.includes(imgPath);
+        });
+        
         await Promise.all(
           imagesToDelete.map((imgPath) =>
             fs.promises.unlink(imgPath).catch(() => null)
           )
         );
       }
-    } else if (req.files && req.files.length > 0) {
-      // If no existingImages specified but new files uploaded, replace all images
-      if (Array.isArray(item.images)) {
-        await Promise.all(
-          item.images.map((imgPath) =>
-            fs.promises.unlink(imgPath).catch(() => null)
-          )
-        );
-      }
-      updatedImages = req.files.map((file) => file.path);
     }
 
     const updatedData = {
       ...req.body,
-      images: updatedImages,
     };
 
-    // Remove existingImages from the data before saving to database
-    delete updatedData.existingImages;
+    // Only update images if they were explicitly modified
+    if (req.body.existingImages !== undefined || (req.files && req.files.length > 0)) {
+      updatedData.images = updatedImages;
+      // Remove existingImages from the data before saving to database
+      delete updatedData.existingImages;
+    }
 
     const updatedItem = await Item.findByIdAndUpdate(id, updatedData, {
       new: true,

@@ -40,7 +40,7 @@ export const validateForm = (formData, paymentMethods, images) => {
   return errors;
 };
 
-export const buildItemData = (formData, paymentMethods, images, isEditMode) => {
+export const buildItemData = (formData, paymentMethods, images, isEditMode, hasImageChanges = false) => {
   const selectedPayments = Object.entries(paymentMethods)
     .filter(([, v]) => v)
     .map(([k]) => k)
@@ -70,21 +70,24 @@ export const buildItemData = (formData, paymentMethods, images, isEditMode) => {
   // Handle images for both create and edit modes
   if (images.length > 0) {
     if (isEditMode) {
-      const existingImages = images
-        .filter((img) => img.isExisting)
-        .map((img) => {
-          if (img.url.includes(`${import.meta.env.VITE_API_URL}/`)) {
-            return img.url.replace(`${import.meta.env.VITE_API_URL}/`, "");
-          }
-          return img.url;
-        });
-      const newImages = images
-        .filter((img) => !img.isExisting && img.file)
-        .map((img) => img.file);
+      // Only include image data if there are actual changes
+      if (hasImageChanges) {
+        const existingImages = images
+          .filter((img) => img.isExisting)
+          .map((img) => {
+            if (img.url.includes(`${import.meta.env.VITE_API_URL}/`)) {
+              return img.url.replace(`${import.meta.env.VITE_API_URL}/`, "");
+            }
+            return img.url;
+          });
+        const newImages = images
+          .filter((img) => !img.isExisting && img.file)
+          .map((img) => img.file);
 
-      itemData.existingImages = existingImages;
-      if (newImages.length > 0) {
-        itemData.images = newImages;
+        itemData.existingImages = existingImages;
+        if (newImages.length > 0) {
+          itemData.images = newImages;
+        }
       }
     } else {
       itemData.images = images.slice(0, 5).map(({ file }) => file);

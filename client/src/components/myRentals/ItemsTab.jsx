@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { IoAdd, IoPencil, IoTrash } from "react-icons/io5";
 import SearchFilterSection from "../SearchFilterSection";
 import ConfirmationModal from "../ConfirmationModal";
+import { getImageUrl } from "../../utils/imageUtils";
 
 const ItemsTab = ({
   currentItems,
@@ -116,8 +117,27 @@ const ItemsTab = ({
             const availability = item.availability || "Available";
             const isRentedOut = availability === "Rented Out";
             const canModify = availability === "Available";
-            const firstImage =
-              item.images && item.images.length > 0 ? item.images[0] : null;
+            
+            // Get the first image URL
+            const getItemImageUrl = () => {
+              if (item.images && item.images.length > 0) {
+                const firstImage = item.images[0];
+                // Handle both new format (object) and legacy format (string)
+                if (typeof firstImage === 'string' && firstImage.startsWith('http')) {
+                  return firstImage;
+                } else {
+                  return getImageUrl(firstImage);
+                }
+              } else if (item.image) {
+                // Fallback to legacy single image field
+                return typeof item.image === 'string' && item.image.startsWith('http') 
+                  ? item.image 
+                  : getImageUrl(item.image);
+              }
+              return null;
+            };
+
+            const imageUrl = getItemImageUrl();
 
             // Category-based placeholder colors
             const getCategoryColor = (category) => {
@@ -144,12 +164,23 @@ const ItemsTab = ({
                 className="grid grid-cols-6 gap-4 items-center pl-2 pr-4 py-2 bg-white rounded-lg hover:bg-gray-100 transition-colors duration-150"
               >
                 <div className="flex justify-center">
-                  <div
-                    className={`w-12 h-12 rounded-lg flex items-center justify-center border border-gray-200 ${getCategoryColor(
-                      item.category
-                    )}`}
-                  >
-                    <span className="text-xs font-semibold">
+                  <div className={`w-12 h-12 rounded-lg flex items-center justify-center border border-gray-200 overflow-hidden ${getCategoryColor(item.category)}`}>
+                    {imageUrl ? (
+                      <img
+                        src={imageUrl}
+                        alt={item.name}
+                        className="w-full h-full object-cover"
+                        onError={(e) => {
+                          // Fallback to initials if image fails to load
+                          e.target.style.display = 'none';
+                          e.target.nextSibling.style.display = 'block';
+                        }}
+                      />
+                    ) : null}
+                    <span 
+                      className={`text-xs font-semibold ${imageUrl ? 'hidden' : 'block'}`}
+                      style={{ display: imageUrl ? 'none' : 'block' }}
+                    >
                       {item.name.substring(0, 2).toUpperCase()}
                     </span>
                   </div>

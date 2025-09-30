@@ -106,7 +106,8 @@ const AddItem = ({ onClose, onSuccess, editingItem = null }) => {
         formData,
         paymentMethods,
         images,
-        isEditMode
+        isEditMode,
+        hasImageChanges
       );
 
       if (isEditMode) {

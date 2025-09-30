@@ -43,7 +43,12 @@ export function UserProvider({ children }) {
     const formData = new FormData();
     Object.keys(item).forEach((key) => {
       if (key !== "images" && item[key] !== undefined && item[key] !== null) {
-        formData.append(key, item[key]);
+        // Handle arrays properly by appending each element
+        if (Array.isArray(item[key])) {
+          item[key].forEach((value) => formData.append(key, value));
+        } else {
+          formData.append(key, item[key]);
+        }
       }
     });
     if (item.images && Array.isArray(item.images)) {
