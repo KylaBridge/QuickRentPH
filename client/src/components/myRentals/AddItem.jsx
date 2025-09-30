@@ -32,6 +32,7 @@ const AddItem = ({ onClose, onSuccess, editingItem = null }) => {
     handleFieldChange,
     handlePriceChange,
     validatePriceInput,
+    updateFormData,
   } = useFormData(editingItem);
 
   const imageManagement = useImageManagement(editingItem);
@@ -77,9 +78,7 @@ const AddItem = ({ onClose, onSuccess, editingItem = null }) => {
 
   // Helper function for downpayment input using utility
   const handleDownpaymentInputChange = (e) => {
-    handleDownpaymentChange(e, formData.price, (updatedFormData) => {
-      handleFieldChange("downpayment", updatedFormData.downpayment);
-    });
+    handleDownpaymentChange(e, formData.price, updateFormData);
   };
 
   // Calculate derived values
@@ -320,7 +319,7 @@ const AddItem = ({ onClose, onSuccess, editingItem = null }) => {
                         <button
                           type="button"
                           className="bg-white text-gray-800 px-3 py-1 rounded font-semibold mb-1 text-xs shadow"
-                          onClick={() => replaceInputRefs.current[idx].click()}
+                          onClick={() => replaceInputRefs.current[startIdx + idx]?.click()}
                         >
                           Replace
                         </button>
@@ -335,7 +334,7 @@ const AddItem = ({ onClose, onSuccess, editingItem = null }) => {
                           type="file"
                           accept="image/*"
                           className="hidden"
-                          ref={(el) => (replaceInputRefs.current[idx] = el)}
+                          ref={(el) => (replaceInputRefs.current[startIdx + idx] = el)}
                           onChange={(e) => {
                             const file = e.target.files?.[0];
                             if (file) handleReplace(startIdx + idx, file);
@@ -459,7 +458,7 @@ const AddItem = ({ onClose, onSuccess, editingItem = null }) => {
                     pattern="[0-9]*[.]?[0-9]*"
                     className="w-full border border-gray-200 rounded pl-3 pr-7 py-1 text-sm placeholder-gray-400"
                     placeholder="e.g. 50"
-                    value={formData.downpayment}
+                    value={formData.downpaymentPercentage}
                     onChange={handleDownpaymentInputChange}
                   />
                   <span className="absolute right-2 top-1/2 -translate-y-1/2 text-[11px] text-gray-500">

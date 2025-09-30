@@ -14,25 +14,52 @@ import {
 } from "react-icons/io5";
 import { TbTruckDelivery } from "react-icons/tb";
 import { getImageUrl } from "../utils/imageUtils";
+import { useMemo } from "react";
 
 const REVIEWS_PER_PAGE = 3;
 
 const ItemDetailView = ({ item, onBack }) => {
   if (!item) return null;
 
-  // Process images - handle both new and legacy formats
-  const images =
-    item.images && item.images.length > 0
-      ? item.images.map((img) =>
-          typeof img === "string" && img.startsWith("http")
-            ? img
-            : getImageUrl(img)
-        )
-      : [item.image].filter(Boolean);
+  // Process images - handle both new and legacy formats with memoization
+  const images = useMemo(() => {
+    if (item.images && item.images.length > 0) {
+      return item.images.map((img) =>
+        typeof img === "string" && img.startsWith("http")
+          ? img
+          : getImageUrl(img)
+      );
+    }
+    return [item.image].filter(Boolean);
+  }, [item.images, item.image]);
 
   // Use our custom hooks
   const carousel = useImageCarousel(images);
   const reviewsPagination = usePagination(item.reviews || [], REVIEWS_PER_PAGE);
+
+  // Helper function to get downpayment display
+  const getDownpaymentDisplay = () => {
+    const downpaymentValue = item.downpayment;
+    const priceValue = item.price;
+    
+    // Check if downpayment exists and is greater than 0
+    if (!downpaymentValue || parseFloat(downpaymentValue) <= 0) {
+      return null;
+    }
+    
+    const amount = parseFloat(downpaymentValue);
+    const price = parseFloat(priceValue);
+    
+    // Calculate percentage if we have both values
+    const percentage = price > 0 ? Math.round((amount / price) * 100) : 0;
+    
+    return {
+      amount: `₱${amount.toFixed(2)}`,
+      percentage: percentage > 0 ? `${percentage}%` : null
+    };
+  };
+
+  const downpaymentInfo = getDownpaymentDisplay();
 
   // Map AddItem fields to display data
   const itemData = {
@@ -45,14 +72,12 @@ const ItemDetailView = ({ item, onBack }) => {
     color: item.color,
     description: item.description,
     includedAccessories: item.includedAccessories,
-    downpayment: item.downpayment
-      ? `₱${parseFloat(item.downpayment).toFixed(2)}`
-      : "",
     pickupLocation: item.pickupLocation,
     paymentMethod: item.paymentMethod,
     deliveryOption: item.deliveryOption,
     customTerms: item.customTerms,
     postedDate: getPostedDate(item),
+    createdAt: item.createdAt,
     availability: item.availability || "Available",
   };
 
@@ -75,11 +100,17 @@ const ItemDetailView = ({ item, onBack }) => {
           <div className="bg-white border border-gray-200 rounded-lg p-4 lg:col-span-2 flex flex-col">
             <div
               className="relative h-64 md:h-80 bg-gray-100 rounded flex items-center justify-center overflow-hidden"
-              onMouseLeave={carousel.stopAutoSlide}
             >
+              {/* Loading indicator */}
+              {(carousel.isTransitioning || !carousel.imageLoaded) && (
+                <div className="absolute inset-0 flex items-center justify-center bg-gray-100 z-10">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#6C4BF4]"></div>
+                </div>
+              )}
+
               {/* Counter */}
               {carousel.hasMultipleImages && (
-                <div className="absolute left-2 top-2 text-xs text-gray-700 bg-white/70 rounded px-2 py-0.5 shadow">
+                <div className="absolute left-2 top-2 text-xs text-gray-700 bg-white/70 rounded px-2 py-0.5 shadow z-20">
                   {carousel.currentImage + 1}/{carousel.totalImages}
                 </div>
               )}
@@ -87,32 +118,69 @@ const ItemDetailView = ({ item, onBack }) => {
               <img
                 src={images[carousel.currentImage]}
                 alt={itemData.name}
-                className="w-full h-full object-contain transition-all duration-200"
+                className={`w-full h-full object-contain transition-opacity duration-300 ease-in-out ${
+                  carousel.isTransitioning || !carousel.imageLoaded ? 'opacity-0' : 'opacity-100'
+                }`}
+                onLoad={() => {
+                  // This ensures the image is visible once it's fully loaded
+                  if (!carousel.isTransitioning) {
+                    // Image loaded successfully
+                  }
+                }}
+                onError={() => {
+                  console.error('Failed to load image:', images[carousel.currentImage]);
+                }}
               />
 
               {/* Prev Button */}
               {carousel.hasMultipleImages && (
                 <button
-                  className="absolute left-2 top-1/2 -translate-y-1/2 bg-white/90 hover:bg-white text-[#6C4BF4] rounded-full p-2 shadow"
-                  onClick={carousel.goToPrev}
-                  onMouseEnter={() => carousel.startAutoSlide("prev")}
-                  onMouseLeave={carousel.stopAutoSlide}
+                  className={`absolute left-2 top-1/2 -translate-y-1/2 bg-white/90 hover:bg-white text-[#6C4BF4] rounded-full p-2 shadow transition-all duration-200 z-30 ${
+                    carousel.isTransitioning || !carousel.imageLoaded
+                      ? 'opacity-50 cursor-not-allowed' 
+                      : 'hover:scale-110 hover:shadow-lg'
+                  }`}
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    if (!carousel.isTransitioning && carousel.imageLoaded) {
+                      carousel.goToPrev();
+                    }
+                  }}
+                  disabled={carousel.isTransitioning || !carousel.imageLoaded}
                   tabIndex={0}
                 >
-                  <IoChevronBack className="w-5 h-5" />
+                  {carousel.isTransitioning ? (
+                    <div className="w-5 h-5 animate-spin rounded-full border-2 border-[#6C4BF4] border-t-transparent"></div>
+                  ) : (
+                    <IoChevronBack className="w-5 h-5" />
+                  )}
                 </button>
               )}
 
               {/* Next Button */}
               {carousel.hasMultipleImages && (
                 <button
-                  className="absolute right-2 top-1/2 -translate-y-1/2 bg-white/90 hover:bg-white text-[#6C4BF4] rounded-full p-2 shadow"
-                  onClick={carousel.goToNext}
-                  onMouseEnter={() => carousel.startAutoSlide("next")}
-                  onMouseLeave={carousel.stopAutoSlide}
+                  className={`absolute right-2 top-1/2 -translate-y-1/2 bg-white/90 hover:bg-white text-[#6C4BF4] rounded-full p-2 shadow transition-all duration-200 z-30 ${
+                    carousel.isTransitioning || !carousel.imageLoaded
+                      ? 'opacity-50 cursor-not-allowed'
+                      : 'hover:scale-110 hover:shadow-lg'
+                  }`}
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    if (!carousel.isTransitioning && carousel.imageLoaded) {
+                      carousel.goToNext();
+                    }
+                  }}
+                  disabled={carousel.isTransitioning || !carousel.imageLoaded}
                   tabIndex={0}
                 >
-                  <IoChevronForward className="w-5 h-5" />
+                  {carousel.isTransitioning ? (
+                    <div className="w-5 h-5 animate-spin rounded-full border-2 border-[#6C4BF4] border-t-transparent"></div>
+                  ) : (
+                    <IoChevronForward className="w-5 h-5" />
+                  )}
                 </button>
               )}
             </div>
@@ -123,11 +191,20 @@ const ItemDetailView = ({ item, onBack }) => {
                 {images.map((_, idx) => (
                   <button
                     key={idx}
-                    onClick={() => carousel.goToImage(idx)}
-                    className={`h-2.5 w-2.5 rounded-full transition-colors ${
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      if (!carousel.isTransitioning && carousel.imageLoaded && idx !== carousel.currentImage) {
+                        carousel.goToImage(idx);
+                      }
+                    }}
+                    disabled={carousel.isTransitioning || !carousel.imageLoaded || carousel.currentImage === idx}
+                    className={`h-2.5 w-2.5 rounded-full transition-all duration-300 ${
                       carousel.currentImage === idx
-                        ? "bg-[#6C4BF4]"
-                        : "bg-gray-300"
+                        ? "bg-[#6C4BF4] scale-110"
+                        : carousel.isTransitioning || !carousel.imageLoaded
+                        ? "bg-gray-200 cursor-not-allowed"
+                        : "bg-gray-300 hover:bg-gray-400 hover:scale-125"
                     }`}
                     aria-label={`Go to image ${idx + 1}`}
                   />
@@ -264,11 +341,16 @@ const ItemDetailView = ({ item, onBack }) => {
           <div className="bg-white border border-gray-200 rounded-lg p-4">
             <h3 className="font-semibold mb-2">Booking Details</h3>
             <div className="text-sm text-gray-700 space-y-2">
-              {itemData.downpayment && (
+              {downpaymentInfo && (
                 <div>
                   <span className="font-medium">Downpayment Required:</span>{" "}
                   <span className="text-[#6C4BF4] font-semibold">
-                    {itemData.downpayment}
+                    {downpaymentInfo.amount}
+                    {downpaymentInfo.percentage && (
+                      <span className="text-gray-500 text-xs ml-1">
+                        ({downpaymentInfo.percentage})
+                      </span>
+                    )}
                   </span>
                 </div>
               )}
@@ -291,6 +373,21 @@ const ItemDetailView = ({ item, onBack }) => {
                 <div>
                   <span className="font-medium">Payment Methods:</span>{" "}
                   {itemData.paymentMethod}
+                </div>
+              )}
+
+              {itemData.createdAt && (
+                <div>
+                  <span className="font-medium">Listed on:</span>{" "}
+                  <span className="text-gray-600">
+                    {new Date(itemData.createdAt).toLocaleDateString("en-US", {
+                      year: "numeric",
+                      month: "long",
+                      day: "numeric",
+                      hour: "2-digit",
+                      minute: "2-digit"
+                    })}
+                  </span>
                 </div>
               )}
             </div>

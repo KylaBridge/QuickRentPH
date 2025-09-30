@@ -20,6 +20,7 @@ export const useImageManagement = (editingItem = null) => {
   const containerRef = useRef();
   const fileInputRef = useRef();
   const replaceInputRefs = useRef([]);
+  const cleanupUrlsRef = useRef(new Set()); // Track blob URLs for cleanup
 
   const [images, setImages] = useState([]);
   const [originalImages, setOriginalImages] = useState([]);
@@ -37,7 +38,7 @@ export const useImageManagement = (editingItem = null) => {
         existingImages = editingItem.images.map((imageUrl) => ({
           url: imageUrl.startsWith("http")
             ? imageUrl
-            : `${import.meta.env.VITE_API_URL}/${imageUrl}`,
+            : `${import.meta.env.VITE_API_URL}/user_rentals/${imageUrl.replace(/^.*[\\\/]/, '')}`,
           file: null,
           isExisting: true,
         }));
@@ -81,11 +82,23 @@ export const useImageManagement = (editingItem = null) => {
     setHasImageChanges(imagesChanged());
   }, [images, originalImages, editingItem]);
 
+  // Manage replace input refs array size
+  useEffect(() => {
+    // Ensure the refs array has the right length
+    replaceInputRefs.current = replaceInputRefs.current.slice(0, images.length);
+    while (replaceInputRefs.current.length < images.length) {
+      replaceInputRefs.current.push(null);
+    }
+  }, [images.length]);
+
   // Calculate visible boxes dynamically
   useEffect(() => {
     if (!containerRef.current) return;
 
     const calcBoxes = () => {
+      // Add null check to prevent error when component unmounts
+      if (!containerRef.current) return;
+      
       const width = containerRef.current.offsetWidth;
       let calculatedMax = 2;
 
@@ -102,21 +115,27 @@ export const useImageManagement = (editingItem = null) => {
 
     calcBoxes();
     const resizeObserver = new ResizeObserver(calcBoxes);
-    resizeObserver.observe(containerRef.current);
+    const currentContainer = containerRef.current;
+    
+    if (currentContainer) {
+      resizeObserver.observe(currentContainer);
+    }
 
-    return () => resizeObserver.disconnect();
+    return () => {
+      resizeObserver.disconnect();
+    };
   }, []);
 
-  // Cleanup object URLs on unmount
+  // Cleanup blob URLs on unmount
   useEffect(() => {
     return () => {
-      images.forEach((img) => {
-        if (!img.isExisting && img.url.startsWith("blob:")) {
-          URL.revokeObjectURL(img.url);
-        }
+      // Cleanup all tracked blob URLs on unmount
+      cleanupUrlsRef.current.forEach((url) => {
+        URL.revokeObjectURL(url);
       });
+      cleanupUrlsRef.current.clear();
     };
-  }, [images]);
+  }, []);
 
   // Handle file input (click or drag)
   const handleFiles = (files) => {
@@ -144,13 +163,23 @@ export const useImageManagement = (editingItem = null) => {
     }
 
     if (validFiles.length > 0) {
-      const newImages = validFiles.map((file) => ({
-        url: URL.createObjectURL(file),
-        file,
-        isExisting: false,
-      }));
-      setImages((prev) => [...newImages, ...prev]);
-      setPage(0);
+      const newImages = validFiles.map((file) => {
+        const url = URL.createObjectURL(file);
+        // Track blob URL for cleanup
+        cleanupUrlsRef.current.add(url);
+        return {
+          url,
+          file,
+          isExisting: false,
+        };
+      });
+      setImages((prev) => [...prev, ...newImages]);
+      // If we're adding images and current page would be empty, go to last page
+      setPage((currentPage) => {
+        const totalImagesAfterAdd = images.length + newImages.length;
+        const newTotalPages = Math.ceil(totalImagesAfterAdd / maxVisible);
+        return Math.min(currentPage, newTotalPages - 1);
+      });
     }
   };
 
@@ -173,12 +202,20 @@ export const useImageManagement = (editingItem = null) => {
       imageToRemove.url.startsWith("blob:")
     ) {
       URL.revokeObjectURL(imageToRemove.url);
+      // Remove from cleanup tracking
+      cleanupUrlsRef.current.delete(imageToRemove.url);
     }
 
     setImages((prev) => prev.filter((_, i) => i !== idx));
-    if (page > 0 && page * maxVisible >= images.length - 1) {
-      setPage(page - 1);
-    }
+    
+    // Adjust page if necessary after removal
+    setPage((currentPage) => {
+      const remainingImages = images.length - 1;
+      if (remainingImages === 0) return 0;
+      
+      const newTotalPages = Math.ceil(remainingImages / maxVisible);
+      return Math.min(currentPage, newTotalPages - 1);
+    });
   };
 
   // Replace image
@@ -188,9 +225,14 @@ export const useImageManagement = (editingItem = null) => {
     const oldImage = images[idx];
     if (oldImage && !oldImage.isExisting && oldImage.url.startsWith("blob:")) {
       URL.revokeObjectURL(oldImage.url);
+      // Remove old URL from cleanup tracking
+      cleanupUrlsRef.current.delete(oldImage.url);
     }
 
     const url = URL.createObjectURL(file);
+    // Track new blob URL for cleanup
+    cleanupUrlsRef.current.add(url);
+    
     setImages((prev) =>
       prev.map((img, i) => (i === idx ? { url, file, isExisting: false } : img))
     );

@@ -16,8 +16,15 @@ export const validateForm = (formData, paymentMethods, images) => {
   if (!formData.size.trim()) errors.push("Size/Dimensions is required");
   if (!formData.color.trim()) errors.push("Color is required");
   if (!formData.description.trim()) errors.push("Description is required");
-  if (!formData.downpayment || isNaN(parseFloat(formData.downpayment)))
-    errors.push("Downpayment is required");
+  
+  // Check downpayment - validate percentage input but also check if amount exists
+  const hasDownpaymentPercentage = formData.downpaymentPercentage && parseFloat(formData.downpaymentPercentage) > 0;
+  const hasDownpaymentAmount = formData.downpayment && parseFloat(formData.downpayment) > 0;
+  
+  if (!hasDownpaymentPercentage && !hasDownpaymentAmount) {
+    errors.push("Downpayment required (%) is required");
+  }
+  
   if (!formData.pickupLocation.trim())
     errors.push("Pickup Location is required");
   if (!formData.deliveryOption) errors.push("Delivery Option is required");
@@ -87,7 +94,7 @@ export const buildItemData = (formData, paymentMethods, images, isEditMode) => {
   return itemData;
 };
 
-//Handles downpayment input with real-time validation and formatting
+//Handles downpayment input with percentage to amount conversion
 export const handleDownpaymentChange = (e, price, setFormData) => {
   let value = e.target.value;
 
@@ -105,15 +112,22 @@ export const handleDownpaymentChange = (e, price, setFormData) => {
     value = parts[0] + "." + parts[1].substring(0, 2);
   }
 
-  const numericValue = parseFloat(value) || 0;
+  const percentageValue = parseFloat(value) || 0;
   const priceValue = parseFloat(price) || 0;
 
-  // If the value is greater than the price, set it to 100% of price
-  if (numericValue > priceValue && priceValue > 0) {
-    value = priceValue.toFixed(2);
-  }
+  // Cap percentage at 100%
+  const cappedPercentage = Math.min(percentageValue, 100);
+  
+  // Convert percentage to actual amount
+  const downpaymentAmount = (cappedPercentage / 100) * priceValue;
 
-  setFormData((prev) => ({ ...prev, downpayment: value }));
+  // Update the form with the calculated amount and the input percentage
+  setFormData((prev) => ({ 
+    ...prev, 
+    downpayment: downpaymentAmount.toFixed(2),
+    // Store the actual typed percentage (not the capped one) for display
+    downpaymentPercentage: value
+  }));
 };
 
 //Calculates downpayment as percentage of total price

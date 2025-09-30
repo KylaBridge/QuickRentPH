@@ -4,57 +4,81 @@ import { useState, useRef, useEffect } from "react";
 
 export const useImageCarousel = (images = []) => {
   const [currentImage, setCurrentImage] = useState(0);
-  const autoSlideRef = useRef();
+  const [isTransitioning, setIsTransitioning] = useState(false);
+  const [imageLoaded, setImageLoaded] = useState(true);
+  const isNavigatingRef = useRef(false);
 
   // Reset to first image when images change
   useEffect(() => {
     setCurrentImage(0);
+    setImageLoaded(true);
   }, [images]);
 
-  // Cleanup interval on unmount
-  useEffect(() => {
-    return () => {
-      if (autoSlideRef.current) {
-        clearInterval(autoSlideRef.current);
-      }
-    };
-  }, []);
+  // Helper function to preload an image
+  const preloadImage = (src) => {
+    return new Promise((resolve, reject) => {
+      const img = new Image();
+      img.onload = () => resolve(img);
+      img.onerror = () => reject(new Error(`Failed to load image: ${src}`));
+      img.src = src;
+    });
+  };
+
+  const navigateToImage = async (newIndex) => {
+    if (isNavigatingRef.current || images.length <= 1 || newIndex === currentImage) return;
+    
+    isNavigatingRef.current = true;
+    setIsTransitioning(true);
+    setImageLoaded(false);
+
+    try {
+      // Start fade out
+      await new Promise(resolve => setTimeout(resolve, 150));
+      
+      // Preload the new image
+      await preloadImage(images[newIndex]);
+      
+      // Change to new image
+      setCurrentImage(newIndex);
+      setImageLoaded(true);
+      
+      // Complete fade in
+      await new Promise(resolve => setTimeout(resolve, 50));
+      
+    } catch (error) {
+      console.error('Error loading image:', error);
+      // Fallback: change image anyway
+      setCurrentImage(newIndex);
+      setImageLoaded(true);
+    } finally {
+      setIsTransitioning(false);
+      isNavigatingRef.current = false;
+    }
+  };
 
   const goToPrev = () => {
-    setCurrentImage((prev) => (prev === 0 ? images.length - 1 : prev - 1));
+    const newIndex = currentImage === 0 ? images.length - 1 : currentImage - 1;
+    navigateToImage(newIndex);
   };
 
   const goToNext = () => {
-    setCurrentImage((prev) => (prev === images.length - 1 ? 0 : prev + 1));
+    const newIndex = currentImage === images.length - 1 ? 0 : currentImage + 1;
+    navigateToImage(newIndex);
   };
 
   const goToImage = (index) => {
     if (index >= 0 && index < images.length) {
-      setCurrentImage(index);
-    }
-  };
-
-  const startAutoSlide = (direction, interval = 300) => {
-    stopAutoSlide();
-    autoSlideRef.current = setInterval(() => {
-      direction === "next" ? goToNext() : goToPrev();
-    }, interval);
-  };
-
-  const stopAutoSlide = () => {
-    if (autoSlideRef.current) {
-      clearInterval(autoSlideRef.current);
-      autoSlideRef.current = null;
+      navigateToImage(index);
     }
   };
 
   return {
     currentImage,
+    isTransitioning,
+    imageLoaded,
     goToPrev,
     goToNext,
     goToImage,
-    startAutoSlide,
-    stopAutoSlide,
     hasMultipleImages: images.length > 1,
     totalImages: images.length,
   };
