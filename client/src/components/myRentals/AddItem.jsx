@@ -1,5 +1,6 @@
 import React, { useRef, useState, useEffect, useContext } from "react";
 import { UserContext } from "../../context/userContext";
+import { CATEGORIES, DEAL_OPTIONS } from "../../constants/categories";
 import gcashLogo from "../../assets/GCash-Logo.png";
 import paymayaLogo from "../../assets/paymaya-logo.png";
 import mastercardLogo from "../../assets/Mastercard-logo.svg.png";
@@ -8,23 +9,6 @@ const MIN_BOX_WIDTH = 160; // px
 const BOX_GAP = 16; // px (gap-4)
 const UPLOAD_BOX_WIDTH = 160; // px
 
-const CATEGORIES = [
-  "Electronics",
-  "Sports",
-  "Music",
-  "Tools",
-  "Books",
-  "Clothing",
-  "Furniture",
-  "Vehicles",
-];
-const DEAL_OPTIONS = [
-  "Standard Delivery",
-  "Express / Same-day Delivery",
-  "Scheduled Delivery",
-  "Drop-off Point / Locker Delivery",
-  "Return via Courier Pickup",
-];
 const DEFAULT_TERMS = [
   { label: "Minimum rental period", value: "3 days" },
   { label: "Late fee", value: "₱300/day" },
@@ -61,6 +45,7 @@ const AddItem = ({ onClose, onSuccess }) => {
     customTerms: "",
   });
   const [errors, setErrors] = useState([]);
+  const [fileErrors, setFileErrors] = useState([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [successMsg, setSuccessMsg] = useState("");
 
@@ -95,16 +80,42 @@ const AddItem = ({ onClose, onSuccess }) => {
 
   // Handle file input (click or drag)
   const handleFiles = (files) => {
-    const validFiles = Array.from(files).filter((file) =>
-      file.type.startsWith("image/")
-    );
-    const newImages = validFiles.map((file) => ({
-      url: URL.createObjectURL(file),
-      file,
-    }));
-    // Add new images to the front so most recent is first
-    setImages((prev) => [...newImages, ...prev]);
-    setPage(0);
+    const MAX_FILE_SIZE = 2 * 1024 * 1024; // 2MB in bytes
+    const validFiles = [];
+    const errors = [];
+
+    Array.from(files).forEach((file) => {
+      // Check file type
+      if (!file.type.startsWith("image/")) {
+        errors.push(`${file.name}: Only image files are allowed`);
+        return;
+      }
+
+      // Check file size
+      if (file.size > MAX_FILE_SIZE) {
+        errors.push(`${file.name}: File size exceeds 2MB limit`);
+        return;
+      }
+
+      validFiles.push(file);
+    });
+
+    // Show errors if any
+    if (errors.length > 0) {
+      setFileErrors(errors);
+      setTimeout(() => setFileErrors([]), 5000); // Clear error after 5 seconds
+    }
+
+    // Process valid files
+    if (validFiles.length > 0) {
+      const newImages = validFiles.map((file) => ({
+        url: URL.createObjectURL(file),
+        file,
+      }));
+      // Add new images to the front so most recent is first
+      setImages((prev) => [...newImages, ...prev]);
+      setPage(0);
+    }
   };
 
   // Drag & drop handlers
@@ -150,14 +161,18 @@ const AddItem = ({ onClose, onSuccess }) => {
 
   // Size/Dimensions dynamic placeholders per category
   const DIM_PLACEHOLDERS = {
-    Electronics: "e.g., 6.1 in x 2.9 in x 0.3 in",
-    Sports: "e.g., Ball diameter: 22 cm, Racket length: 68 cm",
-    Music: "e.g., Guitar: 40 in length, 15 in width",
-    Tools: "e.g., 12 in x 5 in x 3 in",
+    "Electronics and Gadgets": "e.g., 6.1 in x 2.9 in x 0.3 in",
+    "Sports Essentials": "e.g., Ball diameter: 22 cm, Racket length: 68 cm",
+    "Media and Hobbies": "e.g., Guitar: 40 in length, 15 in width",
+    "Equipment and Tools": "e.g., 12 in x 5 in x 3 in",
     Books: "e.g., 8.5 in x 11 in",
-    Clothing: "e.g., S, M, L, XL",
+    "Clothing and Fashion": "e.g., S, M, L, XL",
     Furniture: "e.g., 180 cm x 90 cm x 40 cm",
-    Vehicles: "e.g., 4.5 m x 1.8 m x 1.6 m",
+    "Vehicles and Transport": "e.g., 4.5 m x 1.8 m x 1.6 m",
+    "Home and Appliances": "e.g., 50 cm x 40 cm x 30 cm",
+    "Events and Parties": "e.g., 2 m x 1.5 m x 1 m",
+    "Outdoor and Travel": "e.g., 60 cm x 40 cm x 20 cm",
+    "Seasonal Item": "e.g., 100 cm x 80 cm",
   };
   const DEFAULT_DIM_PLACEHOLDER =
     "Enter product size/dimensions (e.g., Length x Width x Height)";
@@ -438,8 +453,44 @@ const AddItem = ({ onClose, onSuccess }) => {
                     Click to Upload
                   </span>{" "}
                   or drag and drop <span className="text-[#ff0000]">*</span>
+                  <br />
+                  <span className="text-gray-500 text-xs">
+                    Max 2MB per image
+                  </span>
                 </span>
               </div>
+
+              {/* File Upload Errors */}
+              {fileErrors.length > 0 && (
+                <div className="mt-2 p-3 bg-red-50 border border-red-200 rounded-lg">
+                  <div className="flex items-start">
+                    <svg
+                      className="w-5 h-5 text-red-500 mt-0.5 mr-2"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                      />
+                    </svg>
+                    <div>
+                      <p className="text-red-800 font-medium text-sm">
+                        Upload Failed:
+                      </p>
+                      <ul className="text-red-700 text-xs mt-1 space-y-1">
+                        {fileErrors.map((error, index) => (
+                          <li key={index}>• {error}</li>
+                        ))}
+                      </ul>
+                    </div>
+                  </div>
+                </div>
+              )}
+
               {/* Images/Placeholders */}
               <div className="flex gap-3 items-center min-h-[160px]">
                 {/* Previous Arrow */}
@@ -556,7 +607,7 @@ const AddItem = ({ onClose, onSuccess }) => {
                 Color <span className="text-red-600">*</span>
               </label>
               <input
-                className="mb-1 border border-gray-200 rounded px-3 py-1 text-sm w-full"
+                className="mb-1 border border-gray-200 rounded px-3 py-1 text-xs w-full"
                 placeholder="e.g. Black"
                 value={formData.color}
                 onChange={(e) => handleFieldChange("color", e.target.value)}

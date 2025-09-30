@@ -12,6 +12,8 @@ const ItemList = ({
   onRent,
   compact = false,
   onCardClick,
+  filters = {},
+  searchTerm = "",
 }) => {
   const navigate = useNavigate();
   const { getAllItems } = useContext(UserContext);
@@ -87,7 +89,77 @@ const ItemList = ({
     };
   }; // Use provided items or fetched items
   const sourceItems = items || allItems.map(transformItem);
-  const displayItems = sourceItems.slice(0, maxItems);
+
+  // Apply filters and search
+  const filteredItems = sourceItems.filter((item) => {
+    // Search term filter
+    if (searchTerm && searchTerm.trim()) {
+      const searchLower = searchTerm.toLowerCase().trim();
+      const matchesSearch =
+        item.title.toLowerCase().includes(searchLower) ||
+        item.category.toLowerCase().includes(searchLower) ||
+        item.renter.toLowerCase().includes(searchLower) ||
+        item.location.toLowerCase().includes(searchLower);
+      if (!matchesSearch) return false;
+    }
+
+    // Category filter
+    if (filters.categories && filters.categories.trim()) {
+      if (item.category !== filters.categories) return false;
+    }
+
+    // Price filter
+    if (filters.price && filters.price.trim()) {
+      const priceRange = filters.price.match(/₱(\d+) - ₱([\d,]+)/);
+      if (priceRange) {
+        const minPrice = parseInt(priceRange[1]);
+        const maxPrice = parseInt(priceRange[2].replace(/,/g, ""));
+        // Safely handle price parsing
+        const priceStr = String(item.price || "0");
+        const itemPrice = parseInt(priceStr.replace(/[₱,\s]/g, "")) || 0;
+        if (itemPrice < minPrice || itemPrice > maxPrice) return false;
+      }
+    }
+
+    // Deal option filter
+    if (filters.dealOption && filters.dealOption.trim()) {
+      if (item.dealOption !== filters.dealOption) return false;
+    }
+
+    return true;
+  });
+
+  // Apply sorting
+  const sortedItems = [...filteredItems];
+  if (filters.sort) {
+    sortedItems.sort((a, b) => {
+      switch (filters.sort) {
+        case "Price: Low to High":
+          // Safely parse price - handle both string and number formats
+          const priceA =
+            parseFloat(String(a.price || "0").replace(/[₱,\s]/g, "")) || 0;
+          const priceB =
+            parseFloat(String(b.price || "0").replace(/[₱,\s]/g, "")) || 0;
+          return priceA - priceB;
+        case "Price: High to Low":
+          const priceA2 =
+            parseFloat(String(a.price || "0").replace(/[₱,\s]/g, "")) || 0;
+          const priceB2 =
+            parseFloat(String(b.price || "0").replace(/[₱,\s]/g, "")) || 0;
+          return priceB2 - priceA2;
+        case "Oldest First":
+          return new Date(a.createdAt || 0) - new Date(b.createdAt || 0);
+        case "Most Popular":
+          // Sort by rating, then by number of rentals (fallback to rating for now)
+          return (b.rating || 0) - (a.rating || 0);
+        case "Newest First":
+        default:
+          return new Date(b.createdAt || 0) - new Date(a.createdAt || 0);
+      }
+    });
+  }
+
+  const displayItems = sortedItems.slice(0, maxItems);
 
   const renderStars = (rating) => {
     return Array.from({ length: 5 }, (_, index) => (
@@ -175,118 +247,132 @@ const ItemList = ({
           </div>
         )}
 
-        {/* Items Grid */}
-        <div className={gridClasses}>
-          {displayItems.map((item) => (
-            <div
-              key={item.id}
-              className={cardClasses}
-              onClick={() => onCardClick && onCardClick(item)}
-            >
-              {/* Renter and Location - Fixed height */}
-              <div className="px-2 sm:px-3 py-2 border-b border-gray-100 flex-shrink-0">
-                <div className="flex justify-between items-center">
-                  <span className="text-[10px] sm:text-xs font-medium text-gray-900 font-poppins truncate max-w-[60%]">
-                    {item.renter}
-                  </span>
-                  <span className="text-[10px] sm:text-xs text-gray-500 font-poppins truncate max-w-[35%]">
-                    {item.location}
-                  </span>
-                </div>
-              </div>
-
-              {/* Item Image - Fixed height */}
-              <div
-                className={`${imageWrapper} bg-gray-100 flex items-center justify-center flex-shrink-0`}
-              >
-                <img
-                  src={item.image}
-                  alt={item.title}
-                  className="w-full h-full object-cover rounded"
-                />
-              </div>
-
-              {/* Item Details - Flexible content */}
-              <div className="px-2 sm:px-3 py-2 flex-1 flex flex-col justify-between min-h-0">
-                <div className="flex-1">
-                  {/* Title */}
-                  <h3
-                    className={`${titleClasses} text-gray-900 mb-2 font-poppins line-clamp-2`}
-                  >
-                    {item.title}
-                  </h3>
-
-                  {/* Price */}
-                  <div className="flex items-center justify-between mb-2">
-                    <span
-                      className={`${priceClasses} text-[#6C4BF4] font-poppins`}
-                    >
-                      {item.price} / {item.period}
-                    </span>
-                  </div>
-
-                  {/* Rating */}
-                  <div className="flex items-center mb-2">
-                    <div className="flex items-center space-x-0.5 sm:space-x-1">
-                      {renderStars(item.rating)}
-                    </div>
-                  </div>
-
-                  {/* Bottom section with time and heart */}
-                  <div className="flex items-center justify-between mb-2">
-                    <span className="text-[10px] sm:text-xs text-gray-500 font-poppins truncate">
-                      {item.timeAgo}
-                    </span>
-                    <button
-                      className="text-gray-400 hover:text-red-500 transition-colors flex-shrink-0"
-                      onClick={(e) => e.stopPropagation()}
-                    >
-                      <svg
-                        className="w-3.5 h-3.5 sm:w-4 sm:h-4"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"
-                        />
-                      </svg>
-                    </button>
-                  </div>
-                </div>
-
-                {/* Action buttons - Fixed at the bottom */}
-                {showActions && (
-                  <div className="mt-auto pt-2 flex-shrink-0">
-                    <div className="grid grid-cols-2 gap-2">
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          onView ? onView(item) : null;
-                        }}
-                        className={`bg-white border border-gray-300 rounded ${actionPadding} font-medium hover:bg-gray-50`}
-                      >
-                        VIEW
-                      </button>
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          onRent ? onRent(item) : null;
-                        }}
-                        className={`bg-[#6C4BF4] text-white rounded ${actionPadding} font-medium hover:bg-[#7857FD]`}
-                      >
-                        RENT
-                      </button>
-                    </div>
-                  </div>
-                )}
+        {/* Empty state when no items match filters */}
+        {displayItems.length === 0 && !loading && !error ? (
+          <div className="flex justify-center items-center py-12">
+            <div className="text-center">
+              <div className="text-gray-600 mb-2">No items found</div>
+              <div className="text-sm text-gray-500">
+                {Object.values(filters).some((f) => f && f.trim()) || searchTerm
+                  ? "Try adjusting your filters or search terms"
+                  : "No items are currently available"}
               </div>
             </div>
-          ))}
-        </div>
+          </div>
+        ) : (
+          /* Items Grid */
+          <div className={gridClasses}>
+            {displayItems.map((item) => (
+              <div
+                key={item.id}
+                className={cardClasses}
+                onClick={() => onCardClick && onCardClick(item)}
+              >
+                {/* Renter and Location - Fixed height */}
+                <div className="px-2 sm:px-3 py-2 border-b border-gray-100 flex-shrink-0">
+                  <div className="flex justify-between items-center">
+                    <span className="text-[10px] sm:text-xs font-medium text-gray-900 font-poppins truncate max-w-[60%]">
+                      {item.renter}
+                    </span>
+                    <span className="text-[10px] sm:text-xs text-gray-500 font-poppins truncate max-w-[35%]">
+                      {item.location}
+                    </span>
+                  </div>
+                </div>
+
+                {/* Item Image - Fixed height */}
+                <div
+                  className={`${imageWrapper} bg-gray-100 flex items-center justify-center flex-shrink-0`}
+                >
+                  <img
+                    src={item.image}
+                    alt={item.title}
+                    className="w-full h-full object-cover rounded"
+                  />
+                </div>
+
+                {/* Item Details - Flexible content */}
+                <div className="px-2 sm:px-3 py-2 flex-1 flex flex-col justify-between min-h-0">
+                  <div className="flex-1">
+                    {/* Title */}
+                    <h3
+                      className={`${titleClasses} text-gray-900 mb-2 font-poppins line-clamp-2`}
+                    >
+                      {item.title}
+                    </h3>
+
+                    {/* Price */}
+                    <div className="flex items-center justify-between mb-2">
+                      <span
+                        className={`${priceClasses} text-[#6C4BF4] font-poppins`}
+                      >
+                        {item.price} / {item.period}
+                      </span>
+                    </div>
+
+                    {/* Rating */}
+                    <div className="flex items-center mb-2">
+                      <div className="flex items-center space-x-0.5 sm:space-x-1">
+                        {renderStars(item.rating)}
+                      </div>
+                    </div>
+
+                    {/* Bottom section with time and heart */}
+                    <div className="flex items-center justify-between mb-2">
+                      <span className="text-[10px] sm:text-xs text-gray-500 font-poppins truncate">
+                        {item.timeAgo}
+                      </span>
+                      <button
+                        className="text-gray-400 hover:text-red-500 transition-colors flex-shrink-0"
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        <svg
+                          className="w-3.5 h-3.5 sm:w-4 sm:h-4"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"
+                          />
+                        </svg>
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Action buttons - Fixed at the bottom */}
+                  {showActions && (
+                    <div className="mt-auto pt-2 flex-shrink-0">
+                      <div className="grid grid-cols-2 gap-2">
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            onView ? onView(item) : null;
+                          }}
+                          className={`bg-white border border-gray-300 rounded ${actionPadding} font-medium hover:bg-gray-50`}
+                        >
+                          VIEW
+                        </button>
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            onRent ? onRent(item) : null;
+                          }}
+                          className={`bg-[#6C4BF4] text-white rounded ${actionPadding} font-medium hover:bg-[#7857FD]`}
+                        >
+                          RENT
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
     </section>
   );

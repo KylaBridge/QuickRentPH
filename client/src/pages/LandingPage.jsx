@@ -132,10 +132,19 @@ const LandingPage = () => {
       </section>
 
       {/* Filter Section */}
-      <SearchFilterSection onFilterChange={handleFilterChange} />
+      <SearchFilterSection
+        onFilterChange={handleFilterChange}
+        showFilters={["categories", "sort", "price", "dealOption"]}
+      />
 
       {/* Featured Items Section */}
-      <ItemList title="Featured Items" showSeeMore={true} maxItems={6} />
+      <ItemList
+        title="Featured Items"
+        showSeeMore={true}
+        maxItems={6}
+        filters={filters}
+        searchTerm={searchQuery}
+      />
 
       {/* How It Works Section */}
       <section className="w-full px-4 sm:px-6 lg:px-8 py-16 bg-white">

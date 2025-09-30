@@ -1,12 +1,8 @@
-import React from "react";
+import React, { useState } from "react";
+import SearchFilterSection from "../SearchFilterSection";
 
 const ItemsTab = ({
   currentItems,
-  CustomDropdown,
-  openDropdown,
-  handleDropdownToggle,
-  handleCategorySelect,
-  handleAvailabilitySelect,
   paginate,
   pageNumbers,
   currentPage,
@@ -15,45 +11,29 @@ const ItemsTab = ({
   onAddItem,
   loading,
   error,
+  onFilterChange,
 }) => {
+  const handleFilterChange = (filters) => {
+    if (onFilterChange) {
+      onFilterChange(filters);
+    }
+  };
   return (
     <div className="flex-1 flex flex-col">
       {/* Filters + Add Button */}
       <div className="-mt-4 -mb-1 pr-4 flex flex-col md:flex-row items-start md:items-center justify-between space-y-4 md:space-y-0">
-        <div className="flex text-sm flex-col md:flex-row space-y-2 md:space-y-0 md:space-x-4 w-full md:w-auto">
-          <CustomDropdown
-            label="Categories"
-            options={[
-              "Electronics and Gadgets",
-              "Home and Appliances",
-              "Events and Parties",
-              "Outdoor and Travel",
-              "Media and Hobbies",
-              "Clothing and Fashion",
-              "Vehicles and Transport",
-              "Equipment and Tools",
-              "Sports Essentials",
-              "Seasonal Item",
-            ]}
-            onSelect={handleCategorySelect}
-            isOpen={openDropdown === "Categories"}
-            onToggle={() => handleDropdownToggle("Categories")}
-            width="md:w-48"
-          />
-          <CustomDropdown
-            label="Availability"
-            options={["Available", "Rented Out"]}
-            onSelect={handleAvailabilitySelect}
-            isOpen={openDropdown === "Availability"}
-            onToggle={() => handleDropdownToggle("Availability")}
-            width="md:w-40"
+        <div className="flex-1">
+          <SearchFilterSection
+            onFilterChange={handleFilterChange}
+            showFilters={["categories", "availability"]}
+            layout="horizontal"
           />
         </div>
 
         {/* Add an Item button */}
         <button
           onClick={onAddItem}
-          className="bg-[#6C4BF4] text-white px-6 py-2 rounded-lg font-semibold shadow-md hover:bg-[#3300FFFF] active:bg-[#5f46c6] transition-colors duration-200 w-full md:w-auto flex items-center gap-2"
+          className="bg-[#6C4BF4] text-white px-6 py-2 rounded-lg font-semibold shadow-md hover:bg-[#3300FFFF] active:bg-[#5f46c6] transition-colors duration-200 w-full md:w-auto flex items-center gap-2 ml-4"
         >
           <svg
             className="w-5 h-5"

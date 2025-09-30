@@ -62,21 +62,20 @@ const MyRentals = () => {
   const { getUserItems, deleteItem } = useContext(UserContext);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [activeTab, setActiveTab] = useState("items");
-  // New state to manage which dropdown is open. It will store the label of the open dropdown.
-  const [openDropdown, setOpenDropdown] = useState(null);
   const [showAddItem, setShowAddItem] = useState(false);
 
   // State for pagination
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage] = useState(6);
 
-  // State for row dropdowns
-  const [rowDropdown, setRowDropdown] = useState({});
-
   // State for items data
   const [itemsData, setItemsData] = useState([]);
   const [itemsLoading, setItemsLoading] = useState(true);
   const [itemsError, setItemsError] = useState(null);
+  const [itemsFilters, setItemsFilters] = useState({
+    categories: "",
+    availability: "",
+  });
 
   // Fetch user items on component mount
   useEffect(() => {
@@ -96,8 +95,6 @@ const MyRentals = () => {
 
     fetchItems();
   }, [getUserItems]);
-
-  // Removed: state for removed items since 'Removed' tab is no longer present
 
   // State for earnings data
   const [earningsData] = useState([
@@ -301,11 +298,29 @@ const MyRentals = () => {
     },
   ]);
 
-  // Pagination Logic
+  // Pagination Logic with filtering
+  const filteredItems = itemsData.filter((item) => {
+    console.log("Current filters:", itemsFilters); // Debug log
+    console.log("Item category:", item.category); // Debug log
+
+    // Category filter - SearchFilterSection uses "categories" property
+    if (itemsFilters.categories && itemsFilters.categories.trim()) {
+      if (item.category !== itemsFilters.categories) return false;
+    }
+
+    // Availability filter
+    if (itemsFilters.availability && itemsFilters.availability.trim()) {
+      const itemAvailability = item.availability || "Available";
+      if (itemAvailability !== itemsFilters.availability) return false;
+    }
+
+    return true;
+  });
+
   const indexOfLastItem = currentPage * itemsPerPage;
   const indexOfFirstItem = indexOfLastItem - itemsPerPage;
-  const currentItems = itemsData.slice(indexOfFirstItem, indexOfLastItem);
-  const totalPages = Math.ceil(itemsData.length / itemsPerPage);
+  const currentItems = filteredItems.slice(indexOfFirstItem, indexOfLastItem);
+  const totalPages = Math.ceil(filteredItems.length / itemsPerPage);
   const paginate = (pageNumber) => setCurrentPage(pageNumber);
   const pageNumbers = [];
   for (let i = 1; i <= totalPages; i++) {
@@ -333,53 +348,11 @@ const MyRentals = () => {
   );
   const paginateEarnings = (pageNumber) => setEarningsCurrentPage(pageNumber);
 
-  // Removed: pagination logic for Removed Items
-
   const toggleSidebar = () => setSidebarOpen(!sidebarOpen);
-
-  // Placeholder functions for dropdown selection
-  const handleCategorySelect = (category) => {
-    console.log("Selected category:", category);
-  };
-
-  const handleAvailabilitySelect = (availability) => {
-    console.log("Selected availability:", availability);
-  };
 
   const handleEarningsStatusSelect = (status) => {
     console.log("Selected earnings status:", status);
     setEarningsStatusFilter(status);
-  };
-
-  // This function handles the toggle logic for any dropdown.
-  // It closes the current dropdown if it's already open, otherwise it opens it.
-  const handleDropdownToggle = (label) => {
-    setOpenDropdown(openDropdown === label ? null : label);
-  };
-
-  // Handlers for row dropdowns
-  const handleRowDropdownToggle = (rowId, type) => {
-    setRowDropdown((prev) => {
-      const key = `${rowId}-${type}`;
-      // If already open, close it. Otherwise, open only this one.
-      if (prev[key]) {
-        return {};
-      } else {
-        return { [key]: true };
-      }
-    });
-  };
-
-  const handleRowSelect = (rowId, type, value) => {
-    setItemsData((prev) =>
-      prev.map((item) =>
-        item.id === rowId ? { ...item, [type]: value } : item
-      )
-    );
-    setRowDropdown((prev) => ({
-      ...prev,
-      [`${rowId}-${type}`]: false,
-    }));
   };
 
   const handleRemoveItem = async (itemId) => {
@@ -406,11 +379,6 @@ const MyRentals = () => {
     items: (
       <ItemsTab
         currentItems={currentItems}
-        CustomDropdown={CustomDropdown}
-        openDropdown={openDropdown}
-        handleDropdownToggle={handleDropdownToggle}
-        handleCategorySelect={handleCategorySelect}
-        handleAvailabilitySelect={handleAvailabilitySelect}
         paginate={paginate}
         pageNumbers={pageNumbers}
         onRemoveItem={handleRemoveItem}
@@ -419,6 +387,7 @@ const MyRentals = () => {
         onAddItem={() => setShowAddItem(true)}
         loading={itemsLoading}
         error={itemsError}
+        onFilterChange={setItemsFilters}
       />
     ),
     earnings: (

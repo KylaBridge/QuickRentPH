@@ -11,6 +11,7 @@ const ItemsForRent = () => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [filters, setFilters] = useState({});
   const [selectedItem, setSelectedItem] = useState(null);
+  const [searchTerm, setSearchTerm] = useState("");
 
   const toggleSidebar = () => setSidebarOpen(!sidebarOpen);
 
@@ -42,6 +43,8 @@ const ItemsForRent = () => {
                       type="text"
                       placeholder="Search items for rent"
                       className="w-full border border-gray-300 rounded-lg pl-4 pr-10 py-2 focus:outline-none focus:ring-2 focus:ring-[#6C4BF4]"
+                      value={searchTerm}
+                      onChange={(e) => setSearchTerm(e.target.value)}
                     />
                     <button className="absolute right-2 top-1/2 -translate-y-1/2 text-white bg-[#6C4BF4] rounded p-2 hover:bg-[#7857FD]">
                       <svg
@@ -61,7 +64,10 @@ const ItemsForRent = () => {
                   </div>
                 </div>
               </div>
-              <SearchFilterSection onFilterChange={setFilters} />
+              <SearchFilterSection
+                onFilterChange={setFilters}
+                showFilters={["categories", "sort", "price", "dealOption"]}
+              />
             </div>
           )}
           {/* Main body: list or detail */}
@@ -77,6 +83,8 @@ const ItemsForRent = () => {
                 onRent={handleRent}
                 onCardClick={handleView}
                 compact
+                filters={filters}
+                searchTerm={searchTerm}
               />
             )}
           </div>
