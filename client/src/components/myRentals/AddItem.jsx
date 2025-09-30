@@ -456,7 +456,7 @@ const AddItem = ({ onClose, onSuccess, editingItem = null }) => {
                     type="text"
                     inputMode="decimal"
                     pattern="[0-9]*[.]?[0-9]*"
-                    className="w-full border border-gray-200 rounded pl-3 pr-7 py-1 text-sm placeholder-gray-400"
+                    className="w-full border border-gray-200 rounded pl-3 pr-7 py-1 text-xs placeholder-gray-400"
                     placeholder="e.g. 50"
                     value={formData.downpaymentPercentage}
                     onChange={handleDownpaymentInputChange}
@@ -471,7 +471,7 @@ const AddItem = ({ onClose, onSuccess, editingItem = null }) => {
                   Pickup Location <span className="text-red-600">*</span>
                 </label>
                 <input
-                  className="w-full border border-gray-200 rounded px-3 py-1 text-sm"
+                  className="w-full border border-gray-200 rounded px-3 py-1 text-xs"
                   placeholder="e.g. Sampaloc, Metro Manila"
                   value={formData.pickupLocation}
                   onChange={(e) =>
