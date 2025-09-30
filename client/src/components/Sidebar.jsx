@@ -1,6 +1,19 @@
 import { useState, useContext } from "react";
 import { AuthContext } from "../context/authContext";
 import { Link, useLocation } from "react-router-dom";
+import {
+  IoGrid,
+  IoCube,
+  IoList,
+  IoNotifications,
+  IoChatbubbleEllipses,
+  IoHelpCircle,
+  IoChevronDown,
+  IoPersonOutline,
+  IoLogOut,
+  IoMenu,
+  IoClose,
+} from "react-icons/io5";
 
 const Sidebar = ({ isOpen, onToggle }) => {
   const { logoutUser } = useContext(AuthContext);
@@ -29,47 +42,13 @@ const Sidebar = ({ isOpen, onToggle }) => {
     {
       name: "Dashboard",
       path: "/dashboard",
-      icon: (
-        <svg
-          className="w-6 h-6"
-          fill="none"
-          stroke="currentColor"
-          viewBox="0 0 24 24"
-        >
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            strokeWidth={2}
-            d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2H5a2 2 0 00-2-2z"
-          />
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            strokeWidth={2}
-            d="M8 5v14"
-          />
-        </svg>
-      ),
+      icon: <IoGrid className="w-6 h-6" />,
     },
     {
       name: "Items for Rent",
       path: "/items-for-rent",
       hasSubmenu: true,
-      icon: (
-        <svg
-          className="w-6 h-6"
-          fill="none"
-          stroke="currentColor"
-          viewBox="0 0 24 24"
-        >
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            strokeWidth={2}
-            d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"
-          />
-        </svg>
-      ),
+      icon: <IoCube className="w-6 h-6" />,
       submenu: [
         { name: "My Requests", path: "/my-requests" },
         { name: "My Wishlist", path: "/my-wishlist" },
@@ -78,84 +57,22 @@ const Sidebar = ({ isOpen, onToggle }) => {
     {
       name: "My Rentals",
       path: "/my-rentals",
-      icon: (
-        <svg
-          className="w-6 h-6"
-          fill="none"
-          stroke="currentColor"
-          viewBox="0 0 24 24"
-        >
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            strokeWidth={2}
-            d="M4 6h16M4 12h16M4 18h16"
-          />
-        </svg>
-      ),
+      icon: <IoList className="w-6 h-6" />,
     },
     {
       name: "Notifications",
       path: "/notifications",
-      icon: (
-        <svg
-          className="w-6 h-6"
-          fill="none"
-          stroke="currentColor"
-          viewBox="0 0 24 24"
-        >
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            strokeWidth={2}
-            d="M15 17h5l-5 5v-5z"
-          />
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            strokeWidth={2}
-            d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z"
-          />
-        </svg>
-      ),
+      icon: <IoNotifications className="w-6 h-6" />,
     },
     {
       name: "Messages",
       path: "/messages",
-      icon: (
-        <svg
-          className="w-6 h-6"
-          fill="none"
-          stroke="currentColor"
-          viewBox="0 0 24 24"
-        >
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            strokeWidth={2}
-            d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"
-          />
-        </svg>
-      ),
+      icon: <IoChatbubbleEllipses className="w-6 h-6" />,
     },
     {
       name: "Help",
       path: "/help",
-      icon: (
-        <svg
-          className="w-6 h-6"
-          fill="none"
-          stroke="currentColor"
-          viewBox="0 0 24 24"
-        >
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            strokeWidth={2}
-            d="M8 10a4 4 0 118 0c0 2-2 3-2 3m-4 0s-2-1-2-3m2 7h.01"
-          />
-        </svg>
-      ),
+      icon: <IoHelpCircle className="w-6 h-6" />,
     },
   ];
 
@@ -216,21 +133,11 @@ const Sidebar = ({ isOpen, onToggle }) => {
                 title={isExpanded ? "Hide menu" : "Show menu"}
                 aria-expanded={isExpanded}
               >
-                <svg
+                <IoChevronDown
                   className={`w-4 h-4 transition-transform duration-200 ${
                     isExpanded ? "rotate-180" : ""
                   }`}
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M19 9l-7 7-7-7"
-                  />
-                </svg>
+                />
               </button>
             )}
           </div>
@@ -342,21 +249,11 @@ const Sidebar = ({ isOpen, onToggle }) => {
             className="p-2 rounded-lg hover:bg-[#977EFF] transition-colors duration-200"
             title={collapsed ? "Expand sidebar" : "Collapse sidebar"}
           >
-            <svg
+            <IoMenu
               className={`w-5 h-5 text-white transition-transform duration-200 ${
                 collapsed ? "rotate-180" : ""
               }`}
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M11 19l-7-7 7-7m8 14l-7-7 7-7"
-              />
-            </svg>
+            />
           </button>
         </div>
 
@@ -378,19 +275,7 @@ const Sidebar = ({ isOpen, onToggle }) => {
               ${collapsed ? "px-2" : "px-3"}
             `}
           >
-            <svg
-              className="w-5 h-5"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"
-              />
-            </svg>
+            <IoLogOut className="w-5 h-5" />
             {!collapsed && <span className="ml-2 font-medium">Logout</span>}
           </button>
         </div>

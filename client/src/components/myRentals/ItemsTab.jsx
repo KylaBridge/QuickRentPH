@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { IoAdd, IoPencil, IoTrash } from "react-icons/io5";
 import SearchFilterSection from "../SearchFilterSection";
 import ConfirmationModal from "../ConfirmationModal";
 
@@ -63,19 +64,7 @@ const ItemsTab = ({
           onClick={onAddItem}
           className="bg-[#6C4BF4] text-white px-6 py-2 rounded-lg font-semibold shadow-md hover:bg-[#3300FFFF] active:bg-[#5f46c6] transition-colors duration-200 w-full md:w-auto flex items-center gap-2 ml-4"
         >
-          <svg
-            className="w-5 h-5"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-            viewBox="0 0 24 24"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              d="M12 4v16m8-8H4"
-            />
-          </svg>
+          <IoAdd className="w-5 h-5" />
           <span>Add an Item</span>
         </button>
       </div>
@@ -201,19 +190,7 @@ const ItemsTab = ({
                         : "Cannot edit while unavailable"
                     }
                   >
-                    <svg
-                      className="w-4.5 h-4.5 mb-0.5"
-                      fill="none"
-                      stroke="#6C4BF4"
-                      strokeWidth="2"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"
-                      />
-                    </svg>
+                    <IoPencil className="w-4.5 h-4.5 mb-0.5 text-[#6C4BF4]" />
                   </button>
                   <button
                     disabled={!canModify}
@@ -228,19 +205,7 @@ const ItemsTab = ({
                         : "Cannot delete while rented out"
                     }
                   >
-                    <svg
-                      className="w-4.5 h-4.5 mb-0.5"
-                      fill="none"
-                      stroke="#6C4BF4"
-                      strokeWidth="2"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
-                      />
-                    </svg>
+                    <IoTrash className="w-4.5 h-4.5 mb-0.5 text-[#6C4BF4]" />
                   </button>
                 </div>
               </div>

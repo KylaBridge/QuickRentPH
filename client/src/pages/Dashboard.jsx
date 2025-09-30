@@ -1,5 +1,16 @@
 import { useState, useContext } from "react";
 import { AuthContext } from "../context/authContext";
+import {
+  IoCheckmarkCircle,
+  IoWarning,
+  IoChatbubbleEllipses,
+  IoCash,
+  IoDocument,
+} from "react-icons/io5";
+import {
+  getRecentNotifications,
+  getNotificationTypeColor,
+} from "../utils/notificationUtils";
 import Sidebar from "../components/Sidebar";
 import BarChart from "../components/BarChart";
 import { Link } from "react-router-dom";
@@ -63,43 +74,8 @@ const Dashboard = () => {
     { label: "Released Earnings", value: 3, bg: "bg-green-600" },
   ];
 
-  const notifications = [
-    {
-      id: 1,
-      type: "info",
-      title: "New rental request to DSLR Camera",
-      time: "2 hours ago",
-      color: "bg-blue-500",
-    },
-    {
-      id: 2,
-      type: "success",
-      title: "Your rental request for Laptop was approved",
-      time: "8 hours ago",
-      color: "bg-green-500",
-    },
-    {
-      id: 3,
-      type: "warning",
-      title: "Reminder to return the Mountain Bike tomorrow",
-      time: "1 day ago",
-      color: "bg-orange-500",
-    },
-    {
-      id: 4,
-      type: "message",
-      title: "You have a new message from @janedoe",
-      time: "3 days ago",
-      color: "bg-blue-500",
-    },
-    {
-      id: 5,
-      type: "payment",
-      title: "Payment for Karaoke Set already transferred",
-      time: "1 week ago",
-      color: "bg-blue-500",
-    },
-  ];
+  // Get recent notifications from shared data
+  const notifications = getRecentNotifications(5);
 
   const currentSummary =
     earningsActiveTab === "earnings"
@@ -111,92 +87,32 @@ const Dashboard = () => {
       case "success":
         return (
           <div className="w-8 h-8 bg-green-100 rounded-lg flex items-center justify-center flex-shrink-0">
-            <svg
-              className="w-5 h-5 text-green-600"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
-              />
-            </svg>
+            <IoCheckmarkCircle className="w-5 h-5 text-green-600" />
           </div>
         );
       case "warning":
         return (
           <div className="w-8 h-8 bg-orange-100 rounded-lg flex items-center justify-center flex-shrink-0">
-            <svg
-              className="w-5 h-5 text-orange-600"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
-              />
-            </svg>
+            <IoWarning className="w-5 h-5 text-orange-600" />
           </div>
         );
       case "message":
         return (
-          <div className="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center flex-shrink-0">
-            <svg
-              className="w-5 h-5 text-blue-600"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"
-              />
-            </svg>
+          <div className="w-8 h-8 bg-purple-100 rounded-lg flex items-center justify-center flex-shrink-0">
+            <IoChatbubbleEllipses className="w-5 h-5 text-purple-600" />
           </div>
         );
       case "payment":
         return (
           <div className="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center flex-shrink-0">
-            <svg
-              className="w-5 h-5 text-blue-600"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"
-              />
-            </svg>
+            <IoCash className="w-5 h-5 text-blue-600" />
           </div>
         );
       case "info":
       default:
         return (
           <div className="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center flex-shrink-0">
-            <svg
-              className="w-5 h-5 text-blue-600"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
-              />
-            </svg>
+            <IoDocument className="w-5 h-5 text-blue-600" />
           </div>
         );
     }
@@ -303,7 +219,9 @@ const Dashboard = () => {
                           <p className="text-xs text-gray-500">{n.time}</p>
                         </div>
                         <div
-                          className={`w-2 h-2 ${n.color} rounded-full mt-2`}
+                          className={`w-2 h-2 ${getNotificationTypeColor(
+                            n.type
+                          )} rounded-full mt-2`}
                         ></div>
                       </div>
                     ))}

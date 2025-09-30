@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { IoChevronDown } from "react-icons/io5";
 import {
   CATEGORIES,
   SORT_OPTIONS,
@@ -105,19 +106,7 @@ const SearchFilterSection = ({
         <div key={filterKey} className="relative">
           <button onClick={() => toggleDropdown(filterKey)} className={btn}>
             <span className="text-gray-900">{value}</span>
-            <svg
-              className="w-4 h-4"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M19 9l-7 7-7-7"
-              />
-            </svg>
+            <IoChevronDown className="w-4 h-4" />
           </button>
           {activeDropdown === filterKey && (
             <div className="absolute top-full left-0 mt-1 w-48 bg-white border border-gray-300 rounded-md shadow-lg z-10 max-h-60 overflow-y-auto">
@@ -169,19 +158,7 @@ const SearchFilterSection = ({
       <div key={filterKey} className="relative">
         <button onClick={() => toggleDropdown(filterKey)} className={btn}>
           <span className="text-gray-900">{value}</span>
-          <svg
-            className="w-4 h-4"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={2}
-              d="M19 9l-7 7-7-7"
-            />
-          </svg>
+          <IoChevronDown className="w-4 h-4" />
         </button>
         {activeDropdown === filterKey && (
           <div

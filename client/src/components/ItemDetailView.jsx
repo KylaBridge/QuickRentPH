@@ -1,49 +1,59 @@
-import { useState, useRef } from 'react';
+import { useImageCarousel } from "../hooks/useImageCarousel";
+import { usePagination } from "../hooks/usePagination";
+import { getPostedDate } from "../utils/dateUtils";
+import { DEFAULT_TERMS } from "../utils/placeholderUtils";
+import {
+  IoChevronBack,
+  IoLocationOutline,
+  IoCalendarOutline,
+  IoChatbubbleOutline,
+  IoChevronForward,
+  IoChevronDown,
+  IoStarSharp,
+  IoStarOutline,
+} from "react-icons/io5";
+import { TbTruckDelivery } from "react-icons/tb";
 
 const REVIEWS_PER_PAGE = 3;
 
 const ItemDetailView = ({ item, onBack }) => {
   if (!item) return null;
 
-  // Defensive: fallback to empty arrays if fields are missing
-  const images = item.images && item.images.length > 0 ? item.images : [item.image].filter(Boolean);
-  const specifications = item.specifications || [];
-  const accessories = item.accessories || [];
-  const terms = item.terms || [];
-  const reviews = item.reviews || [];
-  const bookingDetails = item.bookingDetails || [];
+  // Process images - handle both new and legacy formats
+  const images =
+    item.images && item.images.length > 0
+      ? item.images.map((img) =>
+          typeof img === "string" && img.startsWith("http")
+            ? img
+            : `http://localhost:8000/${img}`
+        )
+      : [item.image].filter(Boolean);
 
-  // Image carousel state
-  const [currentImage, setCurrentImage] = useState(0);
-  const autoSlideRef = useRef();
+  // Use our custom hooks
+  const carousel = useImageCarousel(images);
+  const reviewsPagination = usePagination(item.reviews || [], REVIEWS_PER_PAGE);
 
-  // Reviews pagination state
-  const [reviewPage, setReviewPage] = useState(0);
-  const totalReviewPages = Math.ceil(reviews.length / REVIEWS_PER_PAGE);
-
-  // Carousel handlers
-  const goToPrev = () => setCurrentImage((prev) => (prev === 0 ? images.length - 1 : prev - 1));
-  const goToNext = () => setCurrentImage((prev) => (prev === images.length - 1 ? 0 : prev + 1));
-
-  // Auto-slide on hover
-  const startAutoSlide = (direction) => {
-    stopAutoSlide();
-    autoSlideRef.current = setInterval(() => {
-      direction === 'next' ? goToNext() : goToPrev();
-    }, 300);
+  // Map AddItem fields to display data
+  const itemData = {
+    name: item.name || item.title,
+    category: item.category,
+    price: item.price ? `₱${parseFloat(item.price).toFixed(2)}` : "",
+    dealOption: item.dealOption,
+    location: item.location,
+    size: item.size,
+    color: item.color,
+    description: item.description,
+    includedAccessories: item.includedAccessories,
+    downpayment: item.downpayment
+      ? `₱${parseFloat(item.downpayment).toFixed(2)}`
+      : "",
+    pickupLocation: item.pickupLocation,
+    paymentMethod: item.paymentMethod,
+    deliveryOption: item.deliveryOption,
+    customTerms: item.customTerms,
+    postedDate: getPostedDate(item),
+    availability: item.availability || "Available",
   };
-  const stopAutoSlide = () => {
-    if (autoSlideRef.current) clearInterval(autoSlideRef.current);
-  };
-
-  // Review pagination handlers
-  const handlePrevReviewPage = () => setReviewPage((prev) => Math.max(prev - 1, 0));
-  const handleNextReviewPage = () => setReviewPage((prev) => Math.min(prev + 1, totalReviewPages - 1));
-
-  const pagedReviews = reviews.slice(
-    reviewPage * REVIEWS_PER_PAGE,
-    reviewPage * REVIEWS_PER_PAGE + REVIEWS_PER_PAGE
-  );
 
   return (
     <div className="px-4 sm:px-6 lg:px-8 py-4">
@@ -54,9 +64,7 @@ const ItemDetailView = ({ item, onBack }) => {
             onClick={onBack}
             className="text-[#6C4BF4] text-sm flex items-center gap-2 px-3 py-1"
           >
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-            </svg>
+            <IoChevronBack className="w-4 h-4" />
             Go Back
           </button>
         </div>
@@ -66,156 +74,276 @@ const ItemDetailView = ({ item, onBack }) => {
           <div className="bg-white border border-gray-200 rounded-lg p-4 lg:col-span-2 flex flex-col">
             <div
               className="relative h-64 md:h-80 bg-gray-100 rounded flex items-center justify-center overflow-hidden"
-              onMouseLeave={stopAutoSlide}
+              onMouseLeave={carousel.stopAutoSlide}
             >
               {/* Counter */}
-              {images.length > 0 && (
+              {carousel.hasMultipleImages && (
                 <div className="absolute left-2 top-2 text-xs text-gray-700 bg-white/70 rounded px-2 py-0.5 shadow">
-                  {currentImage + 1}/{images.length}
+                  {carousel.currentImage + 1}/{carousel.totalImages}
                 </div>
               )}
 
               <img
-                src={images[currentImage]}
-                alt={item.title}
+                src={images[carousel.currentImage]}
+                alt={itemData.name}
                 className="w-full h-full object-contain transition-all duration-200"
               />
 
               {/* Prev Button */}
-              {images.length > 1 && (
+              {carousel.hasMultipleImages && (
                 <button
                   className="absolute left-2 top-1/2 -translate-y-1/2 bg-white/90 hover:bg-white text-[#6C4BF4] rounded-full p-2 shadow"
-                  onClick={goToPrev}
-                  onMouseEnter={() => startAutoSlide('prev')}
-                  onMouseLeave={stopAutoSlide}
+                  onClick={carousel.goToPrev}
+                  onMouseEnter={() => carousel.startAutoSlide("prev")}
+                  onMouseLeave={carousel.stopAutoSlide}
                   tabIndex={0}
                 >
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-                  </svg>
+                  <IoChevronBack className="w-5 h-5" />
                 </button>
               )}
 
               {/* Next Button */}
-              {images.length > 1 && (
+              {carousel.hasMultipleImages && (
                 <button
                   className="absolute right-2 top-1/2 -translate-y-1/2 bg-white/90 hover:bg-white text-[#6C4BF4] rounded-full p-2 shadow"
-                  onClick={goToNext}
-                  onMouseEnter={() => startAutoSlide('next')}
-                  onMouseLeave={stopAutoSlide}
+                  onClick={carousel.goToNext}
+                  onMouseEnter={() => carousel.startAutoSlide("next")}
+                  onMouseLeave={carousel.stopAutoSlide}
                   tabIndex={0}
                 >
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                  </svg>
+                  <IoChevronForward className="w-5 h-5" />
                 </button>
               )}
             </div>
 
             {/* Dot Indicators */}
-            {images.length > 1 && (
+            {carousel.hasMultipleImages && (
               <div className="mt-3 flex items-center justify-center gap-2">
                 {images.map((_, idx) => (
                   <button
                     key={idx}
-                    onClick={() => setCurrentImage(idx)}
+                    onClick={() => carousel.goToImage(idx)}
                     className={`h-2.5 w-2.5 rounded-full transition-colors ${
-                      currentImage === idx ? 'bg-[#6C4BF4]' : 'bg-gray-300'
+                      carousel.currentImage === idx
+                        ? "bg-[#6C4BF4]"
+                        : "bg-gray-300"
                     }`}
                     aria-label={`Go to image ${idx + 1}`}
                   />
                 ))}
               </div>
             )}
+
+            {/* Item Information Below Image */}
+            <div className="mt-4">
+              {/* Location, Deal Option, Posted Date Row - All in one line */}
+              <div className="flex items-center justify-between text-sm flex-wrap gap-2">
+                {/* Location */}
+                <div className="flex items-center gap-1">
+                  <IoLocationOutline className="w-4 h-4 text-gray-500" />
+                  <span className="text-gray-600">{itemData.location}</span>
+                </div>
+
+                {/* Deal Option */}
+                {itemData.dealOption && (
+                  <div className="flex items-center gap-1">
+                    <TbTruckDelivery className="w-4 h-4 text-gray-500" />
+                    <span className="text-[#6C4BF4] font-medium">
+                      {itemData.dealOption}
+                    </span>
+                  </div>
+                )}
+
+                {/* Posted Date */}
+                <div className="flex items-center gap-1">
+                  <IoCalendarOutline className="w-4 h-4 text-gray-500" />
+                  <span className="text-gray-600">{itemData.postedDate}</span>
+                </div>
+              </div>
+            </div>
           </div>
 
           {/* Product Details Card */}
-          <div className="bg-white border border-gray-200 rounded-lg p-4 flex flex-col gap-2">
-            <h2 className="text-xl font-bold text-gray-900 mb-1">{item.title}</h2>
-            <p className="text-xs text-gray-500 mb-2">{item.category}</p>
-            <div className="flex items-end gap-2 mb-2">
-              <span className="text-2xl font-bold text-[#6C4BF4]">{item.price}</span>
-              <span className="text-sm text-gray-500">/ {item.period}</span>
+          <div className="bg-white border border-gray-200 rounded-lg p-4 flex flex-col gap-3">
+            <h2 className="text-xl font-bold text-gray-900">{itemData.name}</h2>
+            <p className="text-sm text-gray-600">{itemData.category}</p>
+
+            <div className="flex items-end gap-2">
+              <span className="text-2xl font-bold text-[#6C4BF4]">
+                {itemData.price}
+              </span>
+              <span className="text-sm text-gray-500">/ day</span>
             </div>
-            <div className="flex items-center gap-2 mb-2">
-              <span className="text-yellow-400 font-bold">{'★'.repeat(Math.round(item.rating || 0))}</span>
-              <span className="text-xs text-gray-500">({item.ratingCount || 0} reviews)</span>
+
+            {/* Product Specifications from AddItem */}
+            <div className="space-y-2">
+              <h3 className="text-sm font-semibold text-gray-900">
+                Specification
+              </h3>
+
+              {itemData.size && (
+                <div className="text-sm text-gray-700">
+                  <span className="font-medium">Size/Dimensions:</span>{" "}
+                  {itemData.size}
+                </div>
+              )}
+
+              {itemData.color && (
+                <div className="text-sm text-gray-700">
+                  <span className="font-medium">Color:</span> {itemData.color}
+                </div>
+              )}
+
+              {itemData.description && (
+                <div className="text-sm text-gray-700">
+                  <span className="font-medium">General Description:</span>
+                  <p className="mt-1 text-gray-600">{itemData.description}</p>
+                </div>
+              )}
             </div>
-            <div className="text-sm text-gray-700 mb-2">
-              <span className="font-semibold">Brand:</span> {item.brand}
+
+            <div className="text-sm text-gray-700">
+              <span className="font-medium">Availability:</span>
+              <span
+                className={`ml-2 px-2 py-1 rounded-full text-xs ${
+                  itemData.availability === "Available"
+                    ? "bg-green-100 text-green-700"
+                    : "bg-yellow-100 text-yellow-700"
+                }`}
+              >
+                {itemData.availability}
+              </span>
             </div>
-            <div className="text-sm text-gray-700 mb-2">
-              <span className="font-semibold">Model:</span> {item.model}
+
+            <div className="mt-4 flex gap-2">
+              <button className="flex-1 bg-[#6C4BF4] hover:bg-[#7857FD] text-white font-semibold rounded py-2 transition-colors">
+                RENT NOW
+              </button>
+              <button className="bg-[#6C4BF4] hover:bg-[#7857FD] text-white rounded py-2 px-3 transition-colors">
+                <IoChatbubbleOutline className="w-5 h-5" />
+              </button>
             </div>
-            <div className="text-sm text-gray-700 mb-2">
-              <span className="font-semibold">Specifications:</span>
-              <ul className="list-disc pl-5">
-                {specifications.map((spec, idx) => (
-                  <li key={idx}>{spec}</li>
-                ))}
-              </ul>
-            </div>
-            <div className="text-sm text-gray-700 mb-2">
-              <span className="font-semibold">Availability:</span> {item.availability}
-            </div>
-            <button className="mt-2 w-full bg-[#6C4BF4] hover:bg-[#7857FD] text-white font-semibold rounded py-2">
-              RENT NOW
-            </button>
           </div>
         </div>
 
-        {/* Accessories, Terms, Reviews */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 mt-4">
+        {/* Additional Information Row */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mt-4">
           {/* Included Accessories */}
-          <div className="bg-white border border-gray-200 rounded-lg p-4">
-            <h3 className="font-semibold mb-2">Included Accessories</h3>
-            <ul className="text-sm text-gray-700 list-disc pl-5 space-y-1">
-              {accessories.map((acc, idx) => (
-                <li key={idx}>{acc}</li>
-              ))}
-            </ul>
-          </div>
+          {itemData.includedAccessories && (
+            <div className="bg-white border border-gray-200 rounded-lg p-4">
+              <h3 className="font-semibold mb-2">Included Accessories</h3>
+              <div className="text-sm text-gray-700">
+                {itemData.includedAccessories}
+              </div>
+            </div>
+          )}
+
           {/* Terms and Conditions */}
           <div className="bg-white border border-gray-200 rounded-lg p-4">
             <h3 className="font-semibold mb-2">Terms and Conditions</h3>
-            <ul className="text-sm text-gray-700 list-disc pl-5 space-y-1">
-              {terms.map((term, idx) => (
-                <li key={idx}>{term}</li>
+            <div className="text-sm text-gray-700 space-y-1">
+              {DEFAULT_TERMS.map((term, index) => (
+                <div key={index}>
+                  {term.label && term.value
+                    ? `• ${term.label}: ${term.value}`
+                    : `• ${term.label || term}`}
+                </div>
               ))}
-            </ul>
+
+              {itemData.customTerms && (
+                <div className="mt-3 pt-2 border-t border-gray-100">
+                  <div className="font-medium">Additional Terms:</div>
+                  <div className="mt-1">{itemData.customTerms}</div>
+                </div>
+              )}
+            </div>
           </div>
-          {/* Reviews with Pagination */}
-          <div className="bg-white border border-gray-200 rounded-lg p-4 flex flex-col">
+
+          {/* Booking Details */}
+          <div className="bg-white border border-gray-200 rounded-lg p-4">
+            <h3 className="font-semibold mb-2">Booking Details</h3>
+            <div className="text-sm text-gray-700 space-y-2">
+              {itemData.downpayment && (
+                <div>
+                  <span className="font-medium">Downpayment Required:</span>{" "}
+                  <span className="text-[#6C4BF4] font-semibold">
+                    {itemData.downpayment}
+                  </span>
+                </div>
+              )}
+
+              {itemData.pickupLocation && (
+                <div>
+                  <span className="font-medium">Pickup Location:</span>{" "}
+                  {itemData.pickupLocation}
+                </div>
+              )}
+
+              {itemData.deliveryOption && (
+                <div>
+                  <span className="font-medium">Delivery Option:</span>{" "}
+                  {itemData.deliveryOption}
+                </div>
+              )}
+
+              {itemData.paymentMethod && (
+                <div>
+                  <span className="font-medium">Payment Methods:</span>{" "}
+                  {itemData.paymentMethod}
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+
+        {/* Reviews Section - Last on mobile */}
+        <div className="mt-4">
+          <div className="bg-white border border-gray-200 rounded-lg p-4">
             <h3 className="font-semibold mb-2">Reviews & Ratings</h3>
-            <div className="text-sm text-gray-700 space-y-3 flex-1">
-              {pagedReviews.map((review, idx) => (
-                <div key={idx} className="border-b border-gray-100 pb-2 mb-2 last:border-b-0 last:pb-0 last:mb-0">
-                  <div className="font-semibold text-gray-800">{review.user}</div>
-                  <div className="text-xs text-yellow-400">
-                    {'★'.repeat(review.rating)}{'☆'.repeat(5 - review.rating)}
+            <div className="text-sm text-gray-700 space-y-3">
+              {reviewsPagination.currentItems.map((review, idx) => (
+                <div
+                  key={idx}
+                  className="border-b border-gray-100 pb-2 mb-2 last:border-b-0 last:pb-0 last:mb-0"
+                >
+                  <div className="font-semibold text-gray-800">
+                    {review.user}
+                  </div>
+                  <div className="text-xs text-yellow-400 flex">
+                    {[...Array(5)].map((_, i) =>
+                      i < review.rating ? (
+                        <IoStarSharp key={i} className="w-3 h-3" />
+                      ) : (
+                        <IoStarOutline key={i} className="w-3 h-3" />
+                      )
+                    )}
                   </div>
                   <div>{review.comment}</div>
                 </div>
               ))}
-              {reviews.length === 0 && <div className="text-gray-400 italic">No reviews yet.</div>}
+              {reviewsPagination.totalItems === 0 && (
+                <div className="text-gray-400 italic">No reviews yet.</div>
+              )}
             </div>
+
             {/* Pagination Controls */}
-            {totalReviewPages > 1 && (
+            {reviewsPagination.totalPages > 1 && (
               <div className="flex justify-end items-center gap-2 mt-2">
                 <button
                   className="px-2 py-1 rounded bg-gray-100 text-gray-600 hover:bg-gray-200 disabled:opacity-50"
-                  onClick={handlePrevReviewPage}
-                  disabled={reviewPage === 0}
+                  onClick={reviewsPagination.goToPrevPage}
+                  disabled={!reviewsPagination.hasPrevPage}
                 >
                   Prev
                 </button>
                 <span className="text-xs text-gray-500">
-                  Page {reviewPage + 1} of {totalReviewPages}
+                  Page {reviewsPagination.currentPage} of{" "}
+                  {reviewsPagination.totalPages}
                 </span>
                 <button
                   className="px-2 py-1 rounded bg-gray-100 text-gray-600 hover:bg-gray-200 disabled:opacity-50"
-                  onClick={handleNextReviewPage}
-                  disabled={reviewPage === totalReviewPages - 1}
+                  onClick={reviewsPagination.goToNextPage}
+                  disabled={!reviewsPagination.hasNextPage}
                 >
                   Next
                 </button>
@@ -223,21 +351,9 @@ const ItemDetailView = ({ item, onBack }) => {
             )}
           </div>
         </div>
-
-        {/* Booking Details */}
-        <div className="bg-white border border-gray-200 rounded-lg p-4 mt-4 text-xs text-gray-600">
-          <h4 className="font-semibold mb-2">Booking Details</h4>
-          <ul className="list-disc pl-5 space-y-1">
-            {bookingDetails.map((detail, idx) => (
-              <li key={idx}>{detail}</li>
-            ))}
-          </ul>
-        </div>
       </div>
     </div>
   );
 };
 
 export default ItemDetailView;
-
-

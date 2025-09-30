@@ -1,5 +1,6 @@
 import { useState, useContext, useEffect } from "react";
 import { UserContext } from "../context/userContext";
+import { usePagination } from "../hooks/usePagination";
 import Sidebar from "../components/Sidebar";
 import PageHeader from "../components/PageHeader";
 import ItemsTab from "../components/myRentals/ItemsTab";
@@ -64,10 +65,6 @@ const MyRentals = () => {
   const [activeTab, setActiveTab] = useState("items");
   const [showAddItem, setShowAddItem] = useState(false);
   const [editingItem, setEditingItem] = useState(null);
-
-  // State for pagination
-  const [currentPage, setCurrentPage] = useState(1);
-  const [itemsPerPage] = useState(6);
 
   // State for items data
   const [itemsData, setItemsData] = useState([]);
@@ -299,11 +296,8 @@ const MyRentals = () => {
     },
   ]);
 
-  // Pagination Logic with filtering
+  // Filter items based on current filters
   const filteredItems = itemsData.filter((item) => {
-    console.log("Current filters:", itemsFilters); // Debug log
-    console.log("Item category:", item.category); // Debug log
-
     // Category filter - SearchFilterSection uses "categories" property
     if (itemsFilters.categories && itemsFilters.categories.trim()) {
       if (item.category !== itemsFilters.categories) return false;
@@ -318,36 +312,12 @@ const MyRentals = () => {
     return true;
   });
 
-  const indexOfLastItem = currentPage * itemsPerPage;
-  const indexOfFirstItem = indexOfLastItem - itemsPerPage;
-  const currentItems = filteredItems.slice(indexOfFirstItem, indexOfLastItem);
-  const totalPages = Math.ceil(filteredItems.length / itemsPerPage);
-  const paginate = (pageNumber) => setCurrentPage(pageNumber);
-  const pageNumbers = [];
-  for (let i = 1; i <= totalPages; i++) {
-    pageNumbers.push(i);
-  }
+  // Use pagination hooks
+  const itemsPagination = usePagination(filteredItems, 6);
+  const earningsPagination = usePagination(earningsData, 7);
 
-  // Pagination logic for Earnings
-  const [earningsCurrentPage, setEarningsCurrentPage] = useState(1);
-  const earningsItemsPerPage = 7;
-  const indexOfLastEarning = earningsCurrentPage * earningsItemsPerPage;
-  const indexOfFirstEarning = indexOfLastEarning - earningsItemsPerPage;
   // State for earnings status filter
   const [earningsStatusFilter, setEarningsStatusFilter] = useState("Status");
-
-  const currentEarnings = earningsData.slice(
-    indexOfFirstEarning,
-    indexOfLastEarning
-  );
-  const totalEarningsPages = Math.ceil(
-    earningsData.length / earningsItemsPerPage
-  );
-  const earningsPageNumbers = Array.from(
-    { length: totalEarningsPages },
-    (_, i) => i + 1
-  );
-  const paginateEarnings = (pageNumber) => setEarningsCurrentPage(pageNumber);
 
   const toggleSidebar = () => setSidebarOpen(!sidebarOpen);
 
@@ -384,12 +354,15 @@ const MyRentals = () => {
   const tabComponents = {
     items: (
       <ItemsTab
-        currentItems={currentItems}
-        paginate={paginate}
-        pageNumbers={pageNumbers}
+        currentItems={itemsPagination.currentItems}
+        paginate={itemsPagination.goToPage}
+        pageNumbers={Array.from(
+          { length: itemsPagination.totalPages },
+          (_, i) => i + 1
+        )}
         onRemoveItem={handleRemoveItem}
-        currentPage={currentPage}
-        totalPages={totalPages}
+        currentPage={itemsPagination.currentPage}
+        totalPages={itemsPagination.totalPages}
         onAddItem={() => setShowAddItem(true)}
         onEditItem={handleEditItem}
         loading={itemsLoading}
@@ -400,11 +373,14 @@ const MyRentals = () => {
     earnings: (
       <div className="flex-1 flex flex-col">
         <EarningsTab
-          currentEarnings={currentEarnings}
-          paginate={paginateEarnings}
-          pageNumbers={earningsPageNumbers}
-          currentPage={earningsCurrentPage}
-          totalPages={totalEarningsPages}
+          currentEarnings={earningsPagination.currentItems}
+          paginate={earningsPagination.goToPage}
+          pageNumbers={Array.from(
+            { length: earningsPagination.totalPages },
+            (_, i) => i + 1
+          )}
+          currentPage={earningsPagination.currentPage}
+          totalPages={earningsPagination.totalPages}
         />
       </div>
     ),

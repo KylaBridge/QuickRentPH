@@ -182,3 +182,23 @@ export const paginateItems = (items, currentPage, itemsPerPage) => {
     hasPrevPage: currentPage > 1,
   };
 };
+
+export const paginateArray = (items, currentPage, itemsPerPage) => {
+  const totalItems = items.length;
+  const totalPages = Math.ceil(totalItems / itemsPerPage);
+  const indexOfLastItem = currentPage * itemsPerPage;
+  const indexOfFirstItem = indexOfLastItem - itemsPerPage;
+  const currentItems = items.slice(indexOfFirstItem, indexOfLastItem);
+
+  return {
+    currentItems,
+    currentPage,
+    totalPages,
+    totalItems,
+    itemsPerPage,
+    hasNextPage: currentPage < totalPages,
+    hasPrevPage: currentPage > 1,
+    nextPage: currentPage < totalPages ? currentPage + 1 : null,
+    prevPage: currentPage > 1 ? currentPage - 1 : null,
+  };
+};

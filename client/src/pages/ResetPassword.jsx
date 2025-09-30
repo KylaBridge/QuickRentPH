@@ -1,5 +1,6 @@
 import React, { useState, useRef, useContext } from "react";
 import { useNavigate } from "react-router-dom";
+import { IoChevronBack } from "react-icons/io5";
 import ResetPasswordHeader from "../components/ResetPasswordHeader";
 import { AuthContext } from "../context/authContext";
 
@@ -105,19 +106,22 @@ const ResetPassword = () => {
   return (
     <div className="min-h-screen bg-gray-50">
       <ResetPasswordHeader title={headerTitle} />
-      <div className="flex items-center justify-center w-full h-full px-4" style={{ minHeight: "calc(100vh - 72px)" }}>
+      <div
+        className="flex items-center justify-center w-full h-full px-4"
+        style={{ minHeight: "calc(100vh - 72px)" }}
+      >
         <div className="bg-white rounded-lg shadow-lg p-6 sm:p-8 w-full max-w-md">
           <button
             type="button"
-            onClick={() => step === 1 ? navigate(-1) : setStep(1)}
+            onClick={() => (step === 1 ? navigate(-1) : setStep(1))}
             className="mb-4 text-[#6C4BF4] text-2xl focus:outline-none"
             aria-label="Go back"
           >
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-            </svg>
+            <IoChevronBack className="h-6 w-6" />
           </button>
-          <h2 className="text-2xl font-semibold text-center text-gray-900 mb-6">{cardTitle}</h2>
+          <h2 className="text-2xl font-semibold text-center text-gray-900 mb-6">
+            {cardTitle}
+          </h2>
           {step === 1 ? (
             <form onSubmit={handleSubmit} className="space-y-6">
               <input
@@ -128,7 +132,9 @@ const ResetPassword = () => {
                 required
                 className="w-full px-4 py-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#6C4BF4] focus:border-transparent"
               />
-              {error && <div className="text-red-500 text-sm text-center">{error}</div>}
+              {error && (
+                <div className="text-red-500 text-sm text-center">{error}</div>
+              )}
               <button
                 type="submit"
                 className="w-full bg-[#6C4BF4] text-white py-3 rounded-md font-semibold hover:bg-purple-700 transition-colors"
@@ -140,29 +146,37 @@ const ResetPassword = () => {
           ) : (
             <div className="space-y-8">
               <div className="text-center text-gray-700 mb-2">
-                Your verification code is sent via Email to<br />
+                Your verification code is sent via Email to
+                <br />
                 <span className="font-bold text-lg text-gray-900">{email}</span>
               </div>
               <div className="flex justify-center gap-3 mb-4">
                 {otpArr.map((digit, idx) => (
                   <input
                     key={idx}
-                    ref={el => otpInputs.current[idx] = el}
+                    ref={(el) => (otpInputs.current[idx] = el)}
                     type="text"
                     inputMode="numeric"
                     maxLength={1}
                     value={digit}
-                    onChange={e => handleOtpChange(idx, e.target.value)}
-                    onKeyDown={e => handleOtpKeyDown(idx, e)}
+                    onChange={(e) => handleOtpChange(idx, e.target.value)}
+                    onKeyDown={(e) => handleOtpKeyDown(idx, e)}
                     className="w-10 h-12 text-center text-xl border-b-2 border-gray-300 focus:border-[#6C4BF4] focus:outline-none"
                   />
                 ))}
               </div>
               <div className="text-center text-gray-400 mb-4 text-sm">
-                {resendCooldown > 0
-                  ? `Please wait ${resendCooldown} seconds to resend.`
-                  : <button type="button" onClick={handleResend} className="text-[#6C4BF4] font-medium">Resend</button>
-                }
+                {resendCooldown > 0 ? (
+                  `Please wait ${resendCooldown} seconds to resend.`
+                ) : (
+                  <button
+                    type="button"
+                    onClick={handleResend}
+                    className="text-[#6C4BF4] font-medium"
+                  >
+                    Resend
+                  </button>
+                )}
               </div>
               <button
                 type="button"
