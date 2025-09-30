@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useContext } from "react";
 import { useNavigate } from "react-router-dom";
 import { UserContext } from "../context/userContext";
+import { filterAndSortItems, searchItems } from "../utils/itemUtils";
 
 const ItemList = ({
   items,
@@ -90,76 +91,18 @@ const ItemList = ({
   }; // Use provided items or fetched items
   const sourceItems = items || allItems.map(transformItem);
 
-  // Apply filters and search
-  const filteredItems = sourceItems.filter((item) => {
-    // Search term filter
-    if (searchTerm && searchTerm.trim()) {
-      const searchLower = searchTerm.toLowerCase().trim();
-      const matchesSearch =
-        item.title.toLowerCase().includes(searchLower) ||
-        item.category.toLowerCase().includes(searchLower) ||
-        item.renter.toLowerCase().includes(searchLower) ||
-        item.location.toLowerCase().includes(searchLower);
-      if (!matchesSearch) return false;
-    }
+  // Apply search, filters, and sorting using utility functions
+  let processedItems = sourceItems;
 
-    // Category filter
-    if (filters.categories && filters.categories.trim()) {
-      if (item.category !== filters.categories) return false;
-    }
-
-    // Price filter
-    if (filters.price && filters.price.trim()) {
-      const priceRange = filters.price.match(/₱(\d+) - ₱([\d,]+)/);
-      if (priceRange) {
-        const minPrice = parseInt(priceRange[1]);
-        const maxPrice = parseInt(priceRange[2].replace(/,/g, ""));
-        // Safely handle price parsing
-        const priceStr = String(item.price || "0");
-        const itemPrice = parseInt(priceStr.replace(/[₱,\s]/g, "")) || 0;
-        if (itemPrice < minPrice || itemPrice > maxPrice) return false;
-      }
-    }
-
-    // Deal option filter
-    if (filters.dealOption && filters.dealOption.trim()) {
-      if (item.dealOption !== filters.dealOption) return false;
-    }
-
-    return true;
-  });
-
-  // Apply sorting
-  const sortedItems = [...filteredItems];
-  if (filters.sort) {
-    sortedItems.sort((a, b) => {
-      switch (filters.sort) {
-        case "Price: Low to High":
-          // Safely parse price - handle both string and number formats
-          const priceA =
-            parseFloat(String(a.price || "0").replace(/[₱,\s]/g, "")) || 0;
-          const priceB =
-            parseFloat(String(b.price || "0").replace(/[₱,\s]/g, "")) || 0;
-          return priceA - priceB;
-        case "Price: High to Low":
-          const priceA2 =
-            parseFloat(String(a.price || "0").replace(/[₱,\s]/g, "")) || 0;
-          const priceB2 =
-            parseFloat(String(b.price || "0").replace(/[₱,\s]/g, "")) || 0;
-          return priceB2 - priceA2;
-        case "Oldest First":
-          return new Date(a.createdAt || 0) - new Date(b.createdAt || 0);
-        case "Most Popular":
-          // Sort by rating, then by number of rentals (fallback to rating for now)
-          return (b.rating || 0) - (a.rating || 0);
-        case "Newest First":
-        default:
-          return new Date(b.createdAt || 0) - new Date(a.createdAt || 0);
-      }
-    });
+  // Apply search first
+  if (searchTerm && searchTerm.trim()) {
+    processedItems = searchItems(processedItems, searchTerm);
   }
 
-  const displayItems = sortedItems.slice(0, maxItems);
+  // Apply filters and sorting
+  processedItems = filterAndSortItems(processedItems, filters);
+
+  const displayItems = processedItems.slice(0, maxItems);
 
   const renderStars = (rating) => {
     return Array.from({ length: 5 }, (_, index) => (

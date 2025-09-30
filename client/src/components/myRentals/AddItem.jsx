@@ -1,334 +1,135 @@
-import React, { useRef, useState, useEffect, useContext } from "react";
+import React, { useRef, useState, useContext } from "react";
 import { UserContext } from "../../context/userContext";
 import { CATEGORIES, DEAL_OPTIONS } from "../../constants/categories";
+import { useFormData } from "../../hooks/useFormData";
+import { useImageManagement } from "../../hooks/useImageManagement";
+import { usePaymentMethods } from "../../hooks/usePaymentMethods";
+import {
+  validateForm,
+  buildItemData,
+  handleDownpaymentChange,
+  calculateDownpaymentPercentage,
+} from "../../utils/formUtils";
+import {
+  getSizePlaceholder,
+  DEFAULT_TERMS,
+} from "../../utils/placeholderUtils";
 import gcashLogo from "../../assets/GCash-Logo.png";
 import paymayaLogo from "../../assets/paymaya-logo.png";
-import mastercardLogo from "../../assets/Mastercard-logo.svg.png";
 
 const MIN_BOX_WIDTH = 160; // px
 const BOX_GAP = 16; // px (gap-4)
 const UPLOAD_BOX_WIDTH = 160; // px
 
-const DEFAULT_TERMS = [
-  { label: "Minimum rental period", value: "3 days" },
-  { label: "Late fee", value: "₱300/day" },
-  { label: "No international travel with the item" },
-  { label: "Handle with care; any damages will be deducted from deposit" },
-  { label: "Renter must present a valid government ID upon pickup" },
-];
+const AddItem = ({ onClose, onSuccess, editingItem = null }) => {
+  const { addItem, updateItem } = useContext(UserContext);
 
-const AddItem = ({ onClose, onSuccess }) => {
-  const { addItem } = useContext(UserContext);
-  const fileInputRef = useRef();
-  const containerRef = useRef();
-  const [images, setImages] = useState([]);
-  const [page, setPage] = useState(0);
-  const [maxVisible, setMaxVisible] = useState(2);
-  const [paymentMethods, setPaymentMethods] = useState({
-    gcash: false,
-    paymaya: false,
-  });
-  // Single form state object
-  const [formData, setFormData] = useState({
-    name: "",
-    category: "",
-    price: "0.00",
-    dealOption: "",
-    location: "",
-    size: "",
-    color: "",
-    description: "",
-    includedAccessories: "",
-    downpayment: "",
-    pickupLocation: "",
-    deliveryOption: "",
-    customTerms: "",
-  });
+  // Use custom hooks for state management
+  const {
+    formData,
+    hasChanges: hasFormChanges,
+    isEditMode,
+    handleFieldChange,
+    handlePriceChange,
+    validatePriceInput,
+  } = useFormData(editingItem);
+
+  const imageManagement = useImageManagement(editingItem);
+  const {
+    containerRef,
+    fileInputRef,
+    images,
+    hasImageChanges,
+    fileErrors,
+    page,
+    maxVisible,
+    visibleImages,
+    placeholders,
+    totalPages,
+    canNext,
+    canPrev,
+    startIdx,
+    hoverIdx,
+    handleFiles,
+    handleDrop,
+    handleDragOver,
+    handleRemove,
+    handleReplace,
+    setPage,
+    setHoverIdx,
+    replaceInputRefs,
+  } = imageManagement;
+
+  const {
+    paymentMethods,
+    hasPaymentChanges,
+    togglePaymentMethod,
+    getSelectedPaymentMethods,
+  } = usePaymentMethods(editingItem);
+
+  // Local state for UI
   const [errors, setErrors] = useState([]);
-  const [fileErrors, setFileErrors] = useState([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [successMsg, setSuccessMsg] = useState("");
 
-  // Dynamically calculate how many boxes fit in the image container
-  useEffect(() => {
-    if (!containerRef.current) return;
+  // Calculate total changes
+  const hasChanges = hasFormChanges || hasImageChanges || hasPaymentChanges;
 
-    const calcBoxes = () => {
-      const width = containerRef.current.offsetWidth;
-      let calculatedMax = 2;
-
-      if (width >= 600) {
-        const available = width - UPLOAD_BOX_WIDTH - BOX_GAP;
-        calculatedMax = Math.max(
-          1,
-          Math.floor((available + BOX_GAP) / (MIN_BOX_WIDTH + BOX_GAP))
-        );
-      }
-
-      setMaxVisible(calculatedMax);
-    };
-
-    // Run once on mount
-    calcBoxes();
-
-    // Use ResizeObserver instead of window resize
-    const resizeObserver = new ResizeObserver(calcBoxes);
-    resizeObserver.observe(containerRef.current);
-
-    return () => resizeObserver.disconnect();
-  }, []);
-
-  // Handle file input (click or drag)
-  const handleFiles = (files) => {
-    const MAX_FILE_SIZE = 2 * 1024 * 1024; // 2MB in bytes
-    const validFiles = [];
-    const errors = [];
-
-    Array.from(files).forEach((file) => {
-      // Check file type
-      if (!file.type.startsWith("image/")) {
-        errors.push(`${file.name}: Only image files are allowed`);
-        return;
-      }
-
-      // Check file size
-      if (file.size > MAX_FILE_SIZE) {
-        errors.push(`${file.name}: File size exceeds 2MB limit`);
-        return;
-      }
-
-      validFiles.push(file);
+  // Helper function for downpayment input using utility
+  const handleDownpaymentInputChange = (e) => {
+    handleDownpaymentChange(e, formData.price, (updatedFormData) => {
+      handleFieldChange("downpayment", updatedFormData.downpayment);
     });
-
-    // Show errors if any
-    if (errors.length > 0) {
-      setFileErrors(errors);
-      setTimeout(() => setFileErrors([]), 5000); // Clear error after 5 seconds
-    }
-
-    // Process valid files
-    if (validFiles.length > 0) {
-      const newImages = validFiles.map((file) => ({
-        url: URL.createObjectURL(file),
-        file,
-      }));
-      // Add new images to the front so most recent is first
-      setImages((prev) => [...newImages, ...prev]);
-      setPage(0);
-    }
   };
 
-  // Drag & drop handlers
-  const handleDrop = (e) => {
-    e.preventDefault();
-    if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
-      handleFiles(e.dataTransfer.files);
-    }
-  };
-  const handleDragOver = (e) => e.preventDefault();
+  // Calculate derived values
+  const downpaymentPercentage = calculateDownpaymentPercentage(
+    formData.downpayment,
+    formData.price
+  );
+  const sizePlaceholder = getSizePlaceholder(formData.category);
 
-  // Remove image
-  const handleRemove = (idx) => {
-    setImages((prev) => prev.filter((_, i) => i !== idx));
-    if (page > 0 && page * maxVisible >= images.length - 1) {
-      setPage(page - 1);
-    }
-  };
-
-  // Replace image
-  const handleReplace = (idx, file) => {
-    if (!file || !file.type.startsWith("image/")) return;
-    const url = URL.createObjectURL(file);
-    setImages((prev) =>
-      prev.map((img, i) => (i === idx ? { url, file } : img))
-    );
-  };
-
-  // Generic form field handler
-  const handleFieldChange = (field, value) => {
-    setFormData((prev) => ({ ...prev, [field]: value }));
-  };
-
-  // Validate price input formatting on blur
-  const validatePriceInput = () => {
-    const value = parseFloat(formData.price);
-    if (isNaN(value) || value <= 0) {
-      handleFieldChange("price", "0.00");
-    } else {
-      handleFieldChange("price", value.toFixed(2));
-    }
-  };
-
-  // Size/Dimensions dynamic placeholders per category
-  const DIM_PLACEHOLDERS = {
-    "Electronics and Gadgets": "e.g., 6.1 in x 2.9 in x 0.3 in",
-    "Sports Essentials": "e.g., Ball diameter: 22 cm, Racket length: 68 cm",
-    "Media and Hobbies": "e.g., Guitar: 40 in length, 15 in width",
-    "Equipment and Tools": "e.g., 12 in x 5 in x 3 in",
-    Books: "e.g., 8.5 in x 11 in",
-    "Clothing and Fashion": "e.g., S, M, L, XL",
-    Furniture: "e.g., 180 cm x 90 cm x 40 cm",
-    "Vehicles and Transport": "e.g., 4.5 m x 1.8 m x 1.6 m",
-    "Home and Appliances": "e.g., 50 cm x 40 cm x 30 cm",
-    "Events and Parties": "e.g., 2 m x 1.5 m x 1 m",
-    "Outdoor and Travel": "e.g., 60 cm x 40 cm x 20 cm",
-    "Seasonal Item": "e.g., 100 cm x 80 cm",
-  };
-  const DEFAULT_DIM_PLACEHOLDER =
-    "Enter product size/dimensions (e.g., Length x Width x Height)";
-  const sizePlaceholder = formData.category
-    ? DIM_PLACEHOLDERS[formData.category] || DEFAULT_DIM_PLACEHOLDER
-    : DEFAULT_DIM_PLACEHOLDER;
-
-  const handleDownpaymentChange = (e) => {
-    const raw = e.target.value;
-    // keep only digits and one decimal point
-    let sanitized = raw.replace(/[^0-9.]/g, "");
-    const parts = sanitized.split(".");
-    if (parts.length > 2) {
-      sanitized = parts[0] + "." + parts.slice(1).join("");
-    }
-
-    // allow empty while typing
-    if (sanitized === "" || sanitized === ".") {
-      handleFieldChange("downpayment", "");
-      return;
-    }
-
-    let num = parseFloat(sanitized);
-    if (isNaN(num)) {
-      handleFieldChange("downpayment", "");
-      return;
-    }
-
-    if (num > 100) {
-      handleFieldChange("downpayment", "100");
-      return;
-    }
-    if (num < 0) {
-      handleFieldChange("downpayment", "0");
-      return;
-    }
-
-    // keep user's decimal typing (e.g., 50.)
-    handleFieldChange("downpayment", sanitized);
-  };
-
-  // Paging
-  const totalPages = Math.ceil(images.length / maxVisible) || 1;
-  const canNext = page < totalPages - 1;
-  const canPrev = page > 0;
-  const startIdx = page * maxVisible;
-  const visibleImages = images.slice(startIdx, startIdx + maxVisible);
-
-  // Placeholders if no images
-  const placeholders = Array.from({
-    length: Math.max(0, maxVisible - visibleImages.length),
-  });
-
-  // Overlay state for hover
-  const [hoverIdx, setHoverIdx] = useState(null);
-
-  // Replace input ref for each image
-  const replaceInputRefs = useRef([]);
-
-  // Cleanup object URLs on unmount
-  useEffect(() => {
-    return () => {
-      images.forEach((img) => URL.revokeObjectURL(img.url));
-    };
-  }, [images]);
-
-  const validateForm = () => {
-    const errs = [];
-    if (!formData.name.trim()) errs.push("Product Name is required");
-    if (!formData.category) errs.push("Category is required");
-    if (!formData.price || parseFloat(formData.price) <= 0)
-      errs.push("Price must be greater than 0");
-    if (!formData.dealOption) errs.push("Deal Option is required");
-    if (!formData.location.trim()) errs.push("Location is required");
-    if (!formData.size.trim()) errs.push("Size/Dimensions is required");
-    if (!formData.color.trim()) errs.push("Color is required");
-    if (!formData.description.trim()) errs.push("Description is required");
-    if (!formData.downpayment || isNaN(parseFloat(formData.downpayment)))
-      errs.push("Downpayment is required");
-    if (!formData.pickupLocation.trim())
-      errs.push("Pickup Location is required");
-    if (!formData.deliveryOption) errs.push("Delivery Option is required");
-    const selectedPayments = Object.entries(paymentMethods)
-      .filter(([, v]) => v)
-      .map(([k]) => k);
-    if (selectedPayments.length === 0)
-      errs.push("At least one payment method is required");
-    if (images.length === 0) errs.push("At least one image is required");
-    return errs;
-  };
-
+  // Form submission handler
   const handleCreate = async (e) => {
     e.preventDefault();
     setErrors([]);
     setSuccessMsg("");
-    const validationErrors = validateForm();
+
+    const validationErrors = validateForm(formData, paymentMethods, images);
     if (validationErrors.length) {
       setErrors(validationErrors);
       return;
     }
+
     setIsSubmitting(true);
     try {
-      const selectedPayments = Object.entries(paymentMethods)
-        .filter(([, v]) => v)
-        .map(([k]) => k)
-        .join(",");
+      const itemData = buildItemData(
+        formData,
+        paymentMethods,
+        images,
+        isEditMode
+      );
 
-      const itemData = {
-        name: formData.name.trim(),
-        category: formData.category,
-        price: parseFloat(formData.price),
-        dealOption: formData.dealOption,
-        location: formData.location.trim(),
-        size: formData.size.trim(),
-        color: formData.color.trim(),
-        description: formData.description.trim(),
-        ...(formData.includedAccessories.trim() && {
-          includedAccessories: formData.includedAccessories.trim(),
-        }),
-        downpayment: parseFloat(formData.downpayment),
-        pickupLocation: formData.pickupLocation.trim(),
-        paymentMethod: selectedPayments,
-        deliveryOption: formData.deliveryOption,
-        images: images.slice(0, 5).map(({ file }) => file),
-      };
+      if (isEditMode) {
+        await updateItem(editingItem._id, itemData);
+        setSuccessMsg("Item updated successfully.");
+      } else {
+        await addItem(itemData);
+        setSuccessMsg("Item created successfully.");
+      }
 
-      await addItem(itemData);
-      setSuccessMsg("Item created successfully.");
-
-      // Call onSuccess callback if provided
       if (onSuccess) {
         onSuccess();
-      } else {
-        // Reset form using Object.fromEntries (only if no onSuccess callback)
-        setFormData(
-          Object.fromEntries(
-            Object.keys(formData).map((key) => [
-              key,
-              key === "price" ? "0.00" : "",
-            ])
-          )
-        );
-        setPaymentMethods({ gcash: false, paymaya: false });
-        setImages([]);
-        setPage(0);
       }
     } catch (err) {
-      const msg = typeof err === "string" ? err : "Failed to create item";
+      const msg =
+        typeof err === "string"
+          ? err
+          : `Failed to ${isEditMode ? "update" : "create"} item`;
       setErrors([msg]);
     } finally {
       setIsSubmitting(false);
     }
-  };
-
-  const handlePriceChange = (e) => {
-    handleFieldChange("price", e.target.value);
   };
 
   return (
@@ -347,27 +148,11 @@ const AddItem = ({ onClose, onSuccess }) => {
           </ul>
         </div>
       )}
-      {successMsg && (
-        <div className="mb-2 bg-green-50 border border-green-200 text-green-700 rounded p-2 text-xs">
-          {successMsg}
-        </div>
-      )}
-      {/* Header Section */}
-      <div className="flex justify-between items-center mb-2">
-        {/* Cancel Button */}
-        <button
-          className="text-[#6C4BF4] hover:underline text-base font-semibold"
-          onClick={onClose}
-        >
-          &lt; Cancel
-        </button>
-
-        {/* Product Preview + Create */}
-        <div className="flex items-center gap-6">
-          <div className="flex items-center gap-2 text-gray-400 font-semibold">
-            Product Preview
+      {fileErrors.length > 0 && (
+        <div className="mt-2 p-3 bg-red-50 border border-red-200 rounded-lg">
+          <div className="flex items-start">
             <svg
-              className="w-5 h-5"
+              className="w-5 h-5 text-red-500 mt-0.5 mr-2"
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"
@@ -376,17 +161,56 @@ const AddItem = ({ onClose, onSuccess }) => {
                 strokeLinecap="round"
                 strokeLinejoin="round"
                 strokeWidth={2}
-                d="M1.5 12s3.75-7.5 10.5-7.5S22.5 12 22.5 12s-3.75 7.5-10.5 7.5S1.5 12 1.5 12z"
+                d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
               />
-              <circle cx="12" cy="12" r="3" strokeWidth={2} />
             </svg>
+            <div>
+              <p className="text-red-800 font-medium text-sm">Upload Failed:</p>
+              <ul className="text-red-700 text-xs mt-1 space-y-1">
+                {fileErrors.map((error, index) => (
+                  <li key={index}>• {error}</li>
+                ))}
+              </ul>
+            </div>
           </div>
+        </div>
+      )}
+      {successMsg && (
+        <div className="mb-2 bg-green-50 border border-green-200 text-green-700 rounded p-2 text-xs">
+          {successMsg}
+        </div>
+      )}
+
+      {/* Header Section */}
+      <div className="flex justify-between items-center mb-2">
+        {/* Cancel Button */}
+        <button
+          type="button"
+          className="text-[#6C4BF4] hover:underline text-base font-semibold"
+          onClick={onClose}
+        >
+          &lt; Cancel
+        </button>
+
+        {/* Save/Create Button */}
+        <div className="flex items-center gap-6">
           <button
             type="submit"
-            disabled={isSubmitting}
-            className={`bg-[#6C4BF4] hover:bg-[#7857FD] text-white font-bold rounded-lg px-7 py-2 text-m shadow disabled:opacity-60 disabled:cursor-not-allowed`}
+            disabled={isSubmitting || (isEditMode && !hasChanges)}
+            className={`bg-[#6C4BF4] hover:bg-[#7857FD] text-white font-bold rounded-lg px-7 py-2 text-m shadow disabled:opacity-60 disabled:cursor-not-allowed ${
+              isEditMode && !hasChanges ? "hover:bg-[#6C4BF4]" : ""
+            }`}
+            title={isEditMode && !hasChanges ? "No changes to save" : ""}
           >
-            {isSubmitting ? "Creating..." : "Create"}
+            {isSubmitting
+              ? isEditMode
+                ? "Saving..."
+                : "Creating..."
+              : isEditMode && !hasChanges
+              ? "No Changes"
+              : isEditMode
+              ? "Save"
+              : "Create"}
           </button>
         </div>
       </div>
@@ -425,7 +249,7 @@ const AddItem = ({ onClose, onSuccess }) => {
                   className="hidden"
                   ref={fileInputRef}
                   onChange={(e) => {
-                    handleFiles(e.target.files);
+                    if (e.target.files) handleFiles(e.target.files);
                     e.target.value = "";
                   }}
                 />
@@ -460,42 +284,12 @@ const AddItem = ({ onClose, onSuccess }) => {
                 </span>
               </div>
 
-              {/* File Upload Errors */}
-              {fileErrors.length > 0 && (
-                <div className="mt-2 p-3 bg-red-50 border border-red-200 rounded-lg">
-                  <div className="flex items-start">
-                    <svg
-                      className="w-5 h-5 text-red-500 mt-0.5 mr-2"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-                      />
-                    </svg>
-                    <div>
-                      <p className="text-red-800 font-medium text-sm">
-                        Upload Failed:
-                      </p>
-                      <ul className="text-red-700 text-xs mt-1 space-y-1">
-                        {fileErrors.map((error, index) => (
-                          <li key={index}>• {error}</li>
-                        ))}
-                      </ul>
-                    </div>
-                  </div>
-                </div>
-              )}
-
               {/* Images/Placeholders */}
               <div className="flex gap-3 items-center min-h-[160px]">
                 {/* Previous Arrow */}
                 {canPrev && (
                   <button
+                    type="button"
                     className="mr-1 text-2xl text-gray-400 hover:text-[#6C4BF4] px-1"
                     onClick={() => setPage(page - 1)}
                   >
@@ -524,12 +318,14 @@ const AddItem = ({ onClose, onSuccess }) => {
                     {hoverIdx === startIdx + idx && (
                       <div className="absolute inset-0 bg-gray-900/40 flex flex-col items-center justify-center gap-2 transition">
                         <button
+                          type="button"
                           className="bg-white text-gray-800 px-3 py-1 rounded font-semibold mb-1 text-xs shadow"
                           onClick={() => replaceInputRefs.current[idx].click()}
                         >
                           Replace
                         </button>
                         <button
+                          type="button"
                           className="bg-white text-red-600 px-3 py-1 rounded font-semibold text-xs shadow"
                           onClick={() => handleRemove(startIdx + idx)}
                         >
@@ -541,7 +337,8 @@ const AddItem = ({ onClose, onSuccess }) => {
                           className="hidden"
                           ref={(el) => (replaceInputRefs.current[idx] = el)}
                           onChange={(e) => {
-                            handleReplace(startIdx + idx, e.target.files[0]);
+                            const file = e.target.files?.[0];
+                            if (file) handleReplace(startIdx + idx, file);
                             e.target.value = "";
                           }}
                         />
@@ -578,6 +375,7 @@ const AddItem = ({ onClose, onSuccess }) => {
                 {/* Next Arrow */}
                 {canNext && (
                   <button
+                    type="button"
                     className="ml-1 text-2xl text-gray-400 hover:text-[#6C4BF4] px-1"
                     onClick={() => setPage(page + 1)}
                   >
@@ -587,6 +385,7 @@ const AddItem = ({ onClose, onSuccess }) => {
               </div>
             </div>
           </div>
+
           {/* Product Specification & Included Accessories*/}
           <div className="flex gap-4">
             <div className="bg-white rounded-xl shadow p-4 flex-1 min-h-[110px]">
@@ -640,6 +439,7 @@ const AddItem = ({ onClose, onSuccess }) => {
               />
             </div>
           </div>
+
           {/* Booking Details (full width under the two cards above) */}
           <div className="bg-white rounded-xl shadow p-4 min-h-[90px]">
             <label className="font-semibold mb-2 block text-sm">
@@ -660,7 +460,7 @@ const AddItem = ({ onClose, onSuccess }) => {
                     className="w-full border border-gray-200 rounded pl-3 pr-7 py-1 text-sm placeholder-gray-400"
                     placeholder="e.g. 50"
                     value={formData.downpayment}
-                    onChange={handleDownpaymentChange}
+                    onChange={handleDownpaymentInputChange}
                   />
                   <span className="absolute right-2 top-1/2 -translate-y-1/2 text-[11px] text-gray-500">
                     %
@@ -694,9 +494,7 @@ const AddItem = ({ onClose, onSuccess }) => {
                       type="checkbox"
                       className="sr-only"
                       checked={paymentMethods.gcash}
-                      onChange={() =>
-                        setPaymentMethods((p) => ({ ...p, gcash: !p.gcash }))
-                      }
+                      onChange={() => togglePaymentMethod("gcash")}
                     />
                     <span
                       className={`w-3 h-3 rounded-sm border ${
@@ -714,12 +512,7 @@ const AddItem = ({ onClose, onSuccess }) => {
                       type="checkbox"
                       className="sr-only"
                       checked={paymentMethods.paymaya}
-                      onChange={() =>
-                        setPaymentMethods((p) => ({
-                          ...p,
-                          paymaya: !p.paymaya,
-                        }))
-                      }
+                      onChange={() => togglePaymentMethod("paymaya")}
                     />
                     <span
                       className={`w-3 h-3 rounded-sm border ${
@@ -756,6 +549,7 @@ const AddItem = ({ onClose, onSuccess }) => {
             </div>
           </div>
         </div>
+
         {/* Right Side: Basic Info and Terms */}
         <div className="flex flex-col gap-4 flex-1 min-w-0">
           {/* Basic Information (shorter card) */}
@@ -850,6 +644,7 @@ const AddItem = ({ onClose, onSuccess }) => {
               onChange={(e) => handleFieldChange("location", e.target.value)}
             />
           </div>
+
           {/* Terms and Conditions */}
           <div className="bg-white rounded-xl shadow p-4">
             <label className="font-semibold mb-2 block text-sm">

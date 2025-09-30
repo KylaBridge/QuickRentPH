@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import SearchFilterSection from "../SearchFilterSection";
+import ConfirmationModal from "../ConfirmationModal";
 
 const ItemsTab = ({
   currentItems,
@@ -9,13 +10,40 @@ const ItemsTab = ({
   totalPages,
   onRemoveItem,
   onAddItem,
+  onEditItem,
   loading,
   error,
   onFilterChange,
 }) => {
+  const [deleteConfirm, setDeleteConfirm] = useState({
+    show: false,
+    item: null,
+  });
+
   const handleFilterChange = (filters) => {
     if (onFilterChange) {
       onFilterChange(filters);
+    }
+  };
+
+  const handleDeleteClick = (item) => {
+    setDeleteConfirm({ show: true, item });
+  };
+
+  const handleDeleteConfirm = () => {
+    if (deleteConfirm.item && onRemoveItem) {
+      onRemoveItem(deleteConfirm.item._id);
+    }
+    setDeleteConfirm({ show: false, item: null });
+  };
+
+  const handleDeleteCancel = () => {
+    setDeleteConfirm({ show: false, item: null });
+  };
+
+  const handleEditClick = (item) => {
+    if (onEditItem) {
+      onEditItem(item);
     }
   };
   return (
@@ -160,7 +188,7 @@ const ItemsTab = ({
                 <div className="flex justify-center gap-4">
                   <button
                     disabled={!canModify}
-                    onClick={() => canModify && console.log("Edit", item._id)}
+                    onClick={() => canModify && handleEditClick(item)}
                     className={`flex flex-col items-center group ${
                       !canModify ? "opacity-40 cursor-not-allowed" : ""
                     }`}
@@ -189,7 +217,7 @@ const ItemsTab = ({
                   </button>
                   <button
                     disabled={!canModify}
-                    onClick={() => canModify && onRemoveItem(item._id)}
+                    onClick={() => canModify && handleDeleteClick(item)}
                     className={`flex flex-col items-center group ${
                       !canModify ? "opacity-40 cursor-not-allowed" : ""
                     }`}
@@ -253,6 +281,19 @@ const ItemsTab = ({
           Next
         </button>
       </div>
+
+      {/* Delete Confirmation Modal */}
+      <ConfirmationModal
+        isOpen={deleteConfirm.show}
+        onClose={handleDeleteCancel}
+        onConfirm={handleDeleteConfirm}
+        title="Delete Item"
+        message="Are you sure you want to remove"
+        itemName={deleteConfirm.item?.name}
+        confirmText="Delete"
+        cancelText="Cancel"
+        type="danger"
+      />
     </div>
   );
 };

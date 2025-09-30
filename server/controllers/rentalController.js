@@ -59,8 +59,32 @@ const updateItem = async (req, res) => {
     }
 
     let updatedImages = item.images;
-    if (req.files && req.files.length > 0) {
-      // Delete old images from disk
+
+    // Handle images: combination of existing and new images
+    if (req.body.existingImages || (req.files && req.files.length > 0)) {
+      const existingImages = req.body.existingImages
+        ? Array.isArray(req.body.existingImages)
+          ? req.body.existingImages
+          : [req.body.existingImages]
+        : [];
+      const newImages = req.files ? req.files.map((file) => file.path) : [];
+
+      // Combine existing and new images
+      updatedImages = [...existingImages, ...newImages];
+
+      // Remove old images that are no longer used
+      if (Array.isArray(item.images)) {
+        const imagesToDelete = item.images.filter(
+          (imgPath) => !existingImages.includes(imgPath)
+        );
+        await Promise.all(
+          imagesToDelete.map((imgPath) =>
+            fs.promises.unlink(imgPath).catch(() => null)
+          )
+        );
+      }
+    } else if (req.files && req.files.length > 0) {
+      // If no existingImages specified but new files uploaded, replace all images
       if (Array.isArray(item.images)) {
         await Promise.all(
           item.images.map((imgPath) =>
@@ -75,6 +99,9 @@ const updateItem = async (req, res) => {
       ...req.body,
       images: updatedImages,
     };
+
+    // Remove existingImages from the data before saving to database
+    delete updatedData.existingImages;
 
     const updatedItem = await Item.findByIdAndUpdate(id, updatedData, {
       new: true,

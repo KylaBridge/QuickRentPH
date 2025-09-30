@@ -63,6 +63,7 @@ const MyRentals = () => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [activeTab, setActiveTab] = useState("items");
   const [showAddItem, setShowAddItem] = useState(false);
+  const [editingItem, setEditingItem] = useState(null);
 
   // State for pagination
   const [currentPage, setCurrentPage] = useState(1);
@@ -375,6 +376,11 @@ const MyRentals = () => {
     }
   };
 
+  const handleEditItem = (item) => {
+    setEditingItem(item);
+    setShowAddItem(true);
+  };
+
   const tabComponents = {
     items: (
       <ItemsTab
@@ -385,6 +391,7 @@ const MyRentals = () => {
         currentPage={currentPage}
         totalPages={totalPages}
         onAddItem={() => setShowAddItem(true)}
+        onEditItem={handleEditItem}
         loading={itemsLoading}
         error={itemsError}
         onFilterChange={setItemsFilters}
@@ -416,9 +423,14 @@ const MyRentals = () => {
           {showAddItem ? (
             // Completely override the MyRentals container with AddItem
             <AddItem
-              onClose={() => setShowAddItem(false)}
+              editingItem={editingItem}
+              onClose={() => {
+                setShowAddItem(false);
+                setEditingItem(null);
+              }}
               onSuccess={() => {
                 setShowAddItem(false);
+                setEditingItem(null);
                 refreshItems();
               }}
             />
