@@ -37,7 +37,7 @@ export const useImageManagement = (editingItem = null) => {
         existingImages = editingItem.images.map((imageUrl) => ({
           url: imageUrl.startsWith("http")
             ? imageUrl
-            : `http://localhost:8000/${imageUrl}`,
+            : `${import.meta.env.VITE_API_URL}/${imageUrl}`,
           file: null,
           isExisting: true,
         }));

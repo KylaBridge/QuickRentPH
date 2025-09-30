@@ -1,8 +1,9 @@
-import React, { useState, useEffect, useContext } from "react";
+import { useState, useEffect, useContext } from "react";
 import { useNavigate } from "react-router-dom";
 import { IoStarSharp } from "react-icons/io5";
 import { UserContext } from "../context/userContext";
 import { filterAndSortItems, searchItems } from "../utils/itemUtils";
+import { getImageUrl } from "../utils/imageUtils";
 
 const ItemList = ({
   items,
@@ -48,8 +49,6 @@ const ItemList = ({
 
   // Transform database items to display format
   const transformItem = (dbItem) => {
-    // Debug logging
-    console.log("Debug - Item images:", dbItem.images);
 
     // Handle owner display logic
     let ownerDisplay = "Available";
@@ -78,13 +77,7 @@ const ItemList = ({
       price: `₱ ${parseFloat(dbItem.price).toFixed(0)}`,
       period: "day",
       rating: 5, // Default rating, you can add rating field to your schema
-      image:
-        dbItem.images && dbItem.images.length > 0
-          ? `http://localhost:3000/user_rentals/${dbItem.images[0].replace(
-              /^user_rentals[\/\\]/,
-              ""
-            )}`
-          : "https://images.unsplash.com/photo-1560472354-b33ff0c44a43?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80", // fallback
+      image: getImageUrl(dbItem.images[0]),
       timeAgo: "Available now",
       category: dbItem.category,
       ...dbItem, // Include all original properties

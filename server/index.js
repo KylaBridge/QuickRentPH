@@ -10,6 +10,7 @@ const userRoutes = require("./routes/userRoutes");
 const rentalRoutes = require("./routes/rentalRoutes");
 
 // Middleware packages
+app.use("/user_rentals", express.static("user_rentals"));
 app.use(express.json());
 app.use(cookieParser());
 app.use(

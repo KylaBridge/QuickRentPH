@@ -66,8 +66,8 @@ export const buildItemData = (formData, paymentMethods, images, isEditMode) => {
       const existingImages = images
         .filter((img) => img.isExisting)
         .map((img) => {
-          if (img.url.includes("localhost:8000/")) {
-            return img.url.replace("http://localhost:8000/", "");
+          if (img.url.includes(`${import.meta.env.VITE_API_URL}/`)) {
+            return img.url.replace(`${import.meta.env.VITE_API_URL}/`, "");
           }
           return img.url;
         });

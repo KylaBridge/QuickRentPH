@@ -13,6 +13,7 @@ import {
   IoStarOutline,
 } from "react-icons/io5";
 import { TbTruckDelivery } from "react-icons/tb";
+import { getImageUrl } from "../utils/imageUtils";
 
 const REVIEWS_PER_PAGE = 3;
 
@@ -25,7 +26,7 @@ const ItemDetailView = ({ item, onBack }) => {
       ? item.images.map((img) =>
           typeof img === "string" && img.startsWith("http")
             ? img
-            : `http://localhost:8000/${img}`
+            : getImageUrl(img)
         )
       : [item.image].filter(Boolean);
 
