@@ -22,7 +22,7 @@ export function UserProvider({ children }) {
   // Fetch all items
   const getAllItems = async () => {
     try {
-      const res = await api.get("/api/rentals/items/all");
+      const res = await api.get("/api/items/all");
       return res.data.items || [];
     } catch (error) {
       throw error.response?.data?.error || "Failed to fetch items";
@@ -32,7 +32,7 @@ export function UserProvider({ children }) {
   // Fetch all items owned by the current user
   const getUserItems = async () => {
     try {
-      const res = await api.get("/api/rentals/items");
+      const res = await api.get("/api/items");
       return res.data.items || [];
     } catch (error) {
       throw error.response?.data?.error || "Failed to fetch items";
@@ -61,7 +61,7 @@ export function UserProvider({ children }) {
   const addItem = async (newItem) => {
     try {
       const res = await api.post(
-        "/api/rentals/items",
+        "/api/items",
         buildItemFormData(newItem),
         {
           headers: { "Content-Type": "multipart/form-data" },
@@ -77,7 +77,7 @@ export function UserProvider({ children }) {
   const updateItem = async (id, updates) => {
     try {
       const res = await api.put(
-        `/api/rentals/items/${id}`,
+        `/api/items/${id}`,
         buildItemFormData(updates),
         { headers: { "Content-Type": "multipart/form-data" } }
       );
@@ -90,7 +90,7 @@ export function UserProvider({ children }) {
   // Delete an item
   const deleteItem = async (itemId) => {
     try {
-      const res = await api.delete(`/api/rentals/items/${itemId}`);
+      const res = await api.delete(`/api/items/${itemId}`);
       return res.data;
     } catch (error) {
       throw error.response.data.error || "Delete item failed";
