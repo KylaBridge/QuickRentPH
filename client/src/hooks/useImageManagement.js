@@ -38,7 +38,10 @@ export const useImageManagement = (editingItem = null) => {
         existingImages = editingItem.images.map((imageUrl) => ({
           url: imageUrl.startsWith("http")
             ? imageUrl
-            : `${import.meta.env.VITE_API_URL}/user_rentals/${imageUrl.replace(/^.*[\\\/]/, '')}`,
+            : `${import.meta.env.VITE_API_URL}/user_items/${imageUrl.replace(
+                /^.*[\\\/]/,
+                ""
+              )}`,
           file: null,
           isExisting: true,
         }));
@@ -98,7 +101,7 @@ export const useImageManagement = (editingItem = null) => {
     const calcBoxes = () => {
       // Add null check to prevent error when component unmounts
       if (!containerRef.current) return;
-      
+
       const width = containerRef.current.offsetWidth;
       let calculatedMax = 2;
 
@@ -116,7 +119,7 @@ export const useImageManagement = (editingItem = null) => {
     calcBoxes();
     const resizeObserver = new ResizeObserver(calcBoxes);
     const currentContainer = containerRef.current;
-    
+
     if (currentContainer) {
       resizeObserver.observe(currentContainer);
     }
@@ -207,12 +210,12 @@ export const useImageManagement = (editingItem = null) => {
     }
 
     setImages((prev) => prev.filter((_, i) => i !== idx));
-    
+
     // Adjust page if necessary after removal
     setPage((currentPage) => {
       const remainingImages = images.length - 1;
       if (remainingImages === 0) return 0;
-      
+
       const newTotalPages = Math.ceil(remainingImages / maxVisible);
       return Math.min(currentPage, newTotalPages - 1);
     });
@@ -232,7 +235,7 @@ export const useImageManagement = (editingItem = null) => {
     const url = URL.createObjectURL(file);
     // Track new blob URL for cleanup
     cleanupUrlsRef.current.add(url);
-    
+
     setImages((prev) =>
       prev.map((img, i) => (i === idx ? { url, file, isExisting: false } : img))
     );

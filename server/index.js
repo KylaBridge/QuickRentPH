@@ -13,7 +13,7 @@ const itemRoutes = require("./routes/itemRoutes");
 const wishlistRoutes = require("./routes/wishlistRoutes");
 
 // Middleware packages
-app.use("/user_rentals", express.static("user_rentals"));
+app.use("/user_items", express.static("user_items"));
 app.use(express.json());
 app.use(cookieParser());
 app.use(passport.initialize());
