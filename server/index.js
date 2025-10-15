@@ -10,6 +10,7 @@ const app = express();
 const authRoutes = require("./routes/authRoutes");
 const userRoutes = require("./routes/userRoutes");
 const itemRoutes = require("./routes/itemRoutes");
+const wishlistRoutes = require("./routes/wishlistRoutes");
 
 // Middleware packages
 app.use("/user_rentals", express.static("user_rentals"));
@@ -28,6 +29,7 @@ app.use(
 app.use("/api/auth", authRoutes);
 app.use("/api/user", userRoutes);
 app.use("/api/items", itemRoutes);
+app.use("/api/wishlist", wishlistRoutes);
 
 // The main shit
 mongoose

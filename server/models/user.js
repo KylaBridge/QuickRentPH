@@ -39,6 +39,13 @@ const userSchema = new Schema({
     match: [/^09\d{9}$/, "Invalid Philippine mobile number"],
     default: null,
   },
+  // Wishlist: array of Item ObjectId references
+  wishlist: [
+    {
+      type: Schema.Types.ObjectId,
+      ref: "Items",
+    },
+  ],
 });
 
 module.exports = mongoose.model("Users", userSchema);

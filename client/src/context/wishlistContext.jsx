@@ -1,5 +1,6 @@
 import { createContext, useContext, useState, useEffect } from "react";
 import { AuthContext } from "./authContext";
+import api from "../axios";
 
 const WishlistContext = createContext();
 
@@ -30,10 +31,18 @@ export const WishlistProvider = ({ children }) => {
 
     setLoading(true);
     try {
-      // TODO: Backend API call
-      // const response = await fetch(`/api/users/${user._id}/wishlist`);
-      // const data = await response.json();
-      // setWishlistItems(data.wishlistItems || []);
+      // Try loading from backend
+      const response = await api.get(`/api/wishlist/${user._id}/wishlist`);
+      const data = response?.data;
+      if (data && Array.isArray(data.wishlistItems)) {
+        setWishlistItems(data.wishlistItems);
+        // keep localStorage in sync
+        localStorage.setItem(
+          `wishlist_${user._id}`,
+          JSON.stringify(data.wishlistItems)
+        );
+        return;
+      }
 
       // For now, load from localStorage as fallback
       const savedWishlist = localStorage.getItem(`wishlist_${user._id}`);
@@ -55,7 +64,8 @@ export const WishlistProvider = ({ children }) => {
       };
 
     // Check if item already exists
-    if (wishlistItems.some((wishItem) => wishItem.id === item.id)) {
+    const getId = (obj) => (obj && (obj.id || obj._id)) || obj;
+    if (wishlistItems.some((wishItem) => getId(wishItem) === getId(item))) {
       return { success: false, message: "Item is already in your wishlist" };
     }
 
@@ -63,12 +73,9 @@ export const WishlistProvider = ({ children }) => {
     setWishlistItems(newWishlistItems);
 
     try {
-      // TODO: Backend API call
-      // await fetch(`/api/users/${user._id}/wishlist`, {
-      //   method: 'POST',
-      //   headers: { 'Content-Type': 'application/json' },
-      //   body: JSON.stringify({ itemId: item.id })
-      // });
+      // Call backend
+      const itemId = item.id || item._id;
+      await api.post(`/api/wishlist/${user._id}/wishlist`, { itemId });
 
       // For now, save to localStorage as fallback
       localStorage.setItem(
@@ -88,14 +95,18 @@ export const WishlistProvider = ({ children }) => {
   const removeFromWishlist = async (itemId) => {
     if (!user) return { success: false, message: "Please log in" };
 
-    const newWishlistItems = wishlistItems.filter((item) => item.id !== itemId);
+    const getId = (obj) => (obj && (obj.id || obj._id)) || obj;
+    const newWishlistItems = wishlistItems.filter(
+      (item) =>
+        getId(item) !== itemId &&
+        getId(item) !==
+          (itemId.id || itemId._id ? itemId.id || itemId._id : itemId)
+    );
     setWishlistItems(newWishlistItems);
 
     try {
-      // TODO: Backend API call
-      // await fetch(`/api/users/${user._id}/wishlist/${itemId}`, {
-      //   method: 'DELETE'
-      // });
+      // Call backend
+      await api.delete(`/api/wishlist/${user._id}/wishlist/${itemId}`);
 
       // For now, save to localStorage as fallback
       localStorage.setItem(
@@ -112,13 +123,20 @@ export const WishlistProvider = ({ children }) => {
     }
   };
 
+  const getId = (obj) => (obj && (obj.id || obj._id)) || obj;
+
   const isInWishlist = (itemId) => {
-    return wishlistItems.some((item) => item.id === itemId);
+    return wishlistItems.some(
+      (item) =>
+        getId(item) ===
+        (itemId.id || itemId._id ? itemId.id || itemId._id : itemId)
+    );
   };
 
   const toggleWishlist = async (item) => {
-    if (isInWishlist(item.id)) {
-      return await removeFromWishlist(item.id);
+    const id = getId(item);
+    if (isInWishlist(id)) {
+      return await removeFromWishlist(id);
     } else {
       return await addToWishlist(item);
     }

@@ -61,6 +61,9 @@ const ItemList = ({
 
   // Transform database items to display format
   const transformItem = (dbItem) => {
+    // Normalize id whether it's provided as `id` or `_id` from DB
+    const normalizedId =
+      dbItem.id || dbItem._id || (dbItem._id && String(dbItem._id));
     // Handle owner display logic
     let ownerDisplay = "Available";
 
@@ -75,28 +78,33 @@ const ItemList = ({
           ownerDisplay = dbItem.owner.firstName;
         }
       } else {
-        // Owner is just an ObjectId string
         ownerDisplay = "Owner";
       }
     }
 
     return {
-      id: dbItem._id,
+      // ensure id exists for list keys
+      id: normalizedId,
       renter: ownerDisplay,
       location: dbItem.location,
-      title: dbItem.name,
-      price: `₱ ${parseFloat(dbItem.price).toFixed(0)}`,
-      originalPrice: dbItem.price, // Keep original numeric price for filtering
-      period: "day",
-      rating: 5, // Default rating, you can add rating field to your schema
-      image: getImageUrl(dbItem.images[0]),
+      title: dbItem.title || dbItem.name,
+      price: dbItem.price
+        ? `₱ ${parseFloat(dbItem.price).toFixed(0)}`
+        : dbItem.price,
+      originalPrice: dbItem.originalPrice || dbItem.price, // Keep original numeric price for filtering
+      period: dbItem.period || "day",
+      rating: dbItem.rating || 5,
+      image:
+        dbItem.image || getImageUrl((dbItem.images && dbItem.images[0]) || ""),
       category: dbItem.category,
       // Add payment methods - use existing or add sample ones
       paymentMethod: dbItem.paymentMethod || "GCash, PayMaya",
       ...dbItem, // Include all original properties
     };
-  }; // Use provided items or fetched items
-  const sourceItems = items || allItems.map(transformItem);
+  };
+
+  // Use provided items or fetched items and normalize via transformItem so every item has `id`
+  const sourceItems = (items || allItems).map(transformItem);
 
   // Apply search, filters, and sorting using utility functions
   let processedItems = sourceItems;
@@ -315,18 +323,18 @@ const ItemList = ({
                     <div className="flex items-center justify-end mb-2">
                       <button
                         className={`transition-colors flex-shrink-0 ${
-                          isInWishlist(item.id)
+                          isInWishlist(item.id || item._id)
                             ? "text-red-500 hover:text-red-600"
                             : "text-gray-400 hover:text-red-500"
                         }`}
                         onClick={(e) => handleWishlistToggle(e, item)}
                         title={
-                          isInWishlist(item.id)
+                          isInWishlist(item.id || item._id)
                             ? "Remove from wishlist"
                             : "Add to wishlist"
                         }
                       >
-                        {isInWishlist(item.id) ? (
+                        {isInWishlist(item.id || item._id) ? (
                           <IoHeart className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                         ) : (
                           <IoHeartOutline className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
