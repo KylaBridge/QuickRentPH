@@ -88,6 +88,14 @@ const registerUser = async (req, res) => {
     const email = decoded.email;
     const password = decoded.password;
 
+    // Validate required profile fields
+    if (!firstName || String(firstName).trim() === "")
+      return res.status(400).json({ error: "First name is required" });
+    if (!lastName || String(lastName).trim() === "")
+      return res.status(400).json({ error: "Last name is required" });
+    if (!birthDate) return res.status(400).json({ error: "Birth date is required" });
+    if (!gender) return res.status(400).json({ error: "Gender is required" });
+
     const newUser = await User.create({
       email,
       password,

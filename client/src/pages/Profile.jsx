@@ -1,4 +1,4 @@
-import { useState, useRef, useContext } from "react";
+import { useState, useRef, useContext, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import Sidebar from "../components/Sidebar";
 import { AuthContext } from "../context/authContext";
@@ -9,6 +9,19 @@ const genderOptions = ["male", "female", "other"];
 const Profile = () => {
   const { user } = useContext(AuthContext);
   const { changeProfile } = useContext(UserContext);
+
+  // Helper to safely format birthDate for input value
+  const formatBirthDate = (bd) => {
+    if (!bd) return "";
+    try {
+      if (typeof bd === "string") return bd.slice(0, 10);
+      const d = new Date(bd);
+      if (!isNaN(d)) return d.toISOString().slice(0, 10);
+    } catch (e) {
+      // fall-through
+    }
+    return "";
+  };
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   // Use user context for initial values
@@ -21,7 +34,7 @@ const Profile = () => {
     mobileNumber: user?.mobileNumber || "",
     email: user?.email || "",
     gender: user?.gender || "",
-    birthDate: user?.birthDate.slice(0, 10) || "",
+    birthDate: formatBirthDate(user?.birthDate) || "",
   };
 
   const [profile, setProfile] = useState(initialProfile);
@@ -42,6 +55,11 @@ const Profile = () => {
   // Validation
   const validate = (field, value) => {
     let err = "";
+    // Required fields
+    const requiredFields = ["firstName", "lastName", "username", "gender", "birthDate"];
+    if (requiredFields.includes(field)) {
+      if (!value || String(value).trim() === "") return "This field is required";
+    }
     if (field === "email") {
       if (value && !/^[\w-.]+@([\w-]+\.)+[\w-]{2,4}$/.test(value))
         err = "Invalid email address";
@@ -56,6 +74,15 @@ const Profile = () => {
       }
     }
     return err;
+  };
+
+  const validateAll = (profileObj) => {
+    const errs = {};
+    const fieldsToCheck = ["firstName", "lastName", "username", "gender", "birthDate", "email", "mobileNumber"];
+    fieldsToCheck.forEach((f) => {
+      errs[f] = validate(f, profileObj[f]);
+    });
+    return errs;
   };
 
   // Show notification helper
@@ -117,6 +144,25 @@ const Profile = () => {
   };
 
   const openFilePicker = () => fileInputRef.current.click();
+
+  // Keep local state in sync when `user` becomes available/changes
+  useEffect(() => {
+    const updated = {
+      profilePic: user?.profilePic || "",
+      quickRentId: user?._id,
+      firstName: user?.firstName || "",
+      lastName: user?.lastName || "",
+      username: user?.username || "",
+      mobileNumber: user?.mobileNumber || "",
+      email: user?.email || "",
+      gender: user?.gender || "",
+      birthDate: formatBirthDate(user?.birthDate) || "",
+    };
+    setProfile(updated);
+    setEditProfile(updated);
+    // initialize errors for required fields
+    setErrors(validateAll(updated));
+  }, [user]);
 
   // Helper for initial letter
   const getInitial = (first, last) => {
@@ -221,7 +267,13 @@ const Profile = () => {
                     ? "bg-[#6C4BF4] text-white hover:bg-[#7857FD]"
                     : "bg-gray-200 text-gray-400 cursor-not-allowed"
                 }`}
-                disabled={!changed || Object.values(errors).some((e) => e)}
+                disabled={
+                  !changed || Object.values(errors).some((e) => e) ||
+                  // also disable when required fields are empty
+                  ["firstName","lastName","username","gender","birthDate"].some(
+                    (f) => !editProfile[f] || String(editProfile[f]).trim() === ""
+                  )
+                }
                 onClick={handleSave}
               >
                 Save

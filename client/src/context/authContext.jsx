@@ -67,6 +67,10 @@ export function AuthProvider({ children }) {
     }
   };
 
+  const signInWithGoogle = () => {
+    window.location.href = `${import.meta.env.VITE_API_URL}/api/auth/google`;
+  }
+
   const logoutUser = async () => {
     const res = await api.post("/api/auth/logout");
     setUser(null);
@@ -83,6 +87,7 @@ export function AuthProvider({ children }) {
         registerPassword,
         registerUser,
         loginUser,
+        signInWithGoogle,
         logoutUser,
       }}
     >

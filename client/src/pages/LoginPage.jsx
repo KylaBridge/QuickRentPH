@@ -8,7 +8,7 @@ import Footer from "../components/Footer";
 
 const LoginPage = () => {
   const navigate = useNavigate();
-  const { loginUser } = useContext(AuthContext);
+  const { loginUser, signInWithGoogle } = useContext(AuthContext);
   const [formData, setFormData] = useState({
     email: "",
     password: "",
@@ -221,6 +221,7 @@ const LoginPage = () => {
               <div className="grid grid-cols-1 gap-3">
                 <button
                   type="button"
+                  onClick={signInWithGoogle}
                   className="w-full flex items-center justify-center px-4 py-3 border border-gray-300 rounded-md shadow-sm bg-white text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors"
                 >
                   <FcGoogle className="w-5 h-5 mr-2" />

@@ -19,12 +19,10 @@ const userSchema = new Schema({
   },
   birthDate: {
     type: Date,
-    required: true,
   },
   gender: {
     type: String,
     enum: ["male", "female", "other"],
-    required: true,
   },
   email: {
     type: String,

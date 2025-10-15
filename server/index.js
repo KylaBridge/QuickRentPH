@@ -2,6 +2,8 @@ require("dotenv").config();
 const mongoose = require("mongoose");
 const cors = require("cors");
 const cookieParser = require("cookie-parser");
+const passport = require("passport");
+const { initPassport } = require("./config/passport");
 const express = require("express");
 const app = express();
 
@@ -13,6 +15,8 @@ const itemRoutes = require("./routes/itemRoutes");
 app.use("/user_rentals", express.static("user_rentals"));
 app.use(express.json());
 app.use(cookieParser());
+app.use(passport.initialize());
+initPassport();
 app.use(
   cors({
     origin: process.env.FRONTEND_URL,
