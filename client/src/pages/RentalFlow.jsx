@@ -237,7 +237,7 @@ const RentalFlow = () => {
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
-      <div className="bg-white shadow-sm border-b border-gray-200">
+      <div className="bg-white shadow-sm border-b border-gray-200 sticky top-0 z-50">
         <div className="max-w-7xl mx-auto px-4 py-4 flex items-center">
           <button
             onClick={() => navigate(-1)}
@@ -636,13 +636,20 @@ const RentalFlow = () => {
                     <label className="block text-sm font-medium text-gray-700 mb-2">
                       Upload 1 Valid ID *
                     </label>
-                    <input
-                      type="file"
-                      name="validId"
-                      onChange={handleInputChange}
-                      accept="image/*,.pdf"
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#6C4BF4]"
-                    />
+                    <div className="relative">
+                      <input
+                        type="file"
+                        name="validId"
+                        onChange={handleInputChange}
+                        accept="image/*"
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#6C4BF4] text-xs file:mr-4 file:py-2 file:px-4 file:rounded-l-md file:border-0 file:text-sm file:font-medium file:bg-[#6C4BF4] file:text-white hover:file:bg-[#5A3DE8] file:cursor-pointer"
+                      />
+                      {formData.validId && (
+                        <p className="text-xs text-green-600 mt-1">
+                          Selected: {formData.validId.name}
+                        </p>
+                      )}
+                    </div>
                     {errors.validId && (
                       <p className="text-red-500 text-sm mt-1">
                         {errors.validId}
@@ -651,7 +658,7 @@ const RentalFlow = () => {
                     <p className="text-xs text-gray-500 mt-1">
                       Please upload 1 valid government-issued ID. This can be:
                       Passport, Driver's License, PRC, UMID, Senior Citizen ID,
-                      Integrated Bar ID, ARC card for foreigners.
+                      Integrated Bar ID, ARC card for foreigners. (Images only)
                     </p>
                   </div>
 
@@ -659,20 +666,28 @@ const RentalFlow = () => {
                     <label className="block text-sm font-medium text-gray-700 mb-2">
                       Upload a selfie with your Valid ID *
                     </label>
-                    <input
-                      type="file"
-                      name="selfieWithId"
-                      onChange={handleInputChange}
-                      accept="image/*"
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#6C4BF4]"
-                    />
+                    <div className="relative">
+                      <input
+                        type="file"
+                        name="selfieWithId"
+                        onChange={handleInputChange}
+                        accept="image/*"
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#6C4BF4] text-xs file:mr-4 file:py-2 file:px-4 file:rounded-l-md file:border-0 file:text-sm file:font-medium file:bg-[#6C4BF4] file:text-white hover:file:bg-[#5A3DE8] file:cursor-pointer"
+                      />
+                      {formData.selfieWithId && (
+                        <p className="text-xs text-green-600 mt-1">
+                          Selected: {formData.selfieWithId.name}
+                        </p>
+                      )}
+                    </div>
                     {errors.selfieWithId && (
                       <p className="text-red-500 text-sm mt-1">
                         {errors.selfieWithId}
                       </p>
                     )}
                     <p className="text-xs text-gray-500 mt-1">
-                      Please take a selfie with your submitted valid ID.
+                      Please take a selfie with your submitted valid ID. (Images
+                      only)
                     </p>
                   </div>
 
@@ -680,13 +695,20 @@ const RentalFlow = () => {
                     <label className="block text-sm font-medium text-gray-700 mb-2">
                       Upload 1 Proof of Billing *
                     </label>
-                    <input
-                      type="file"
-                      name="proofOfBilling"
-                      onChange={handleInputChange}
-                      accept="image/*,.pdf"
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#6C4BF4]"
-                    />
+                    <div className="relative">
+                      <input
+                        type="file"
+                        name="proofOfBilling"
+                        onChange={handleInputChange}
+                        accept="image/*"
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#6C4BF4] text-xs file:mr-4 file:py-2 file:px-4 file:rounded-l-md file:border-0 file:text-sm file:font-medium file:bg-[#6C4BF4] file:text-white hover:file:bg-[#5A3DE8] file:cursor-pointer"
+                      />
+                      {formData.proofOfBilling && (
+                        <p className="text-xs text-green-600 mt-1">
+                          Selected: {formData.proofOfBilling.name}
+                        </p>
+                      )}
+                    </div>
                     {errors.proofOfBilling && (
                       <p className="text-red-500 text-sm mt-1">
                         {errors.proofOfBilling}
@@ -696,7 +718,7 @@ const RentalFlow = () => {
                       Please upload a picture of at least 1 proof of billing.
                       This can be a billing for: Meralco, MWSS/Maynilad, Credit
                       Card, Cable TV, PLDT, Mobile Postpaid Plan, Internet
-                      Service Provider.
+                      Service Provider. (Images only)
                     </p>
                   </div>
                 </div>

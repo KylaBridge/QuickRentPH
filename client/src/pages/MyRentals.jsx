@@ -312,9 +312,9 @@ const MyRentals = () => {
     return true;
   });
 
-  // Use pagination hooks
-  const itemsPagination = usePagination(filteredItems, 6);
-  const earningsPagination = usePagination(earningsData, 7);
+  // Use pagination hooks - reduced items per page for better UX
+  const itemsPagination = usePagination(filteredItems, 4);
+  const earningsPagination = usePagination(earningsData, 5);
 
   // State for earnings status filter
   const [earningsStatusFilter, setEarningsStatusFilter] = useState("Status");
@@ -363,6 +363,9 @@ const MyRentals = () => {
         onRemoveItem={handleRemoveItem}
         currentPage={itemsPagination.currentPage}
         totalPages={itemsPagination.totalPages}
+        totalItems={itemsPagination.totalItems}
+        startIndex={itemsPagination.startIndex}
+        endIndex={itemsPagination.endIndex}
         onAddItem={() => setShowAddItem(true)}
         onEditItem={handleEditItem}
         loading={itemsLoading}
@@ -381,6 +384,9 @@ const MyRentals = () => {
           )}
           currentPage={earningsPagination.currentPage}
           totalPages={earningsPagination.totalPages}
+          totalItems={earningsPagination.totalItems}
+          startIndex={earningsPagination.startIndex}
+          endIndex={earningsPagination.endIndex}
         />
       </div>
     ),

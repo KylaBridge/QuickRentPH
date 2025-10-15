@@ -1,0 +1,260 @@
+import { useState } from "react";
+import { IoEye, IoCash, IoCheckmarkCircle, IoClose } from "react-icons/io5";
+import Pagination from "../Pagination";
+import RequestDetailsModal from "../modals/RequestDetailsModal";
+import PaymentModal from "../modals/PaymentModal";
+
+const StatusTab = ({
+  userRequests = [],
+  pagination,
+  onUpdateRequest,
+  loading = false,
+  itemsPerPage = 4, // Exactly 4 cards to fit without scrolling
+}) => {
+  const [selectedRequest, setSelectedRequest] = useState(null);
+  const [showModal, setShowModal] = useState(false);
+  const [showPaymentModal, setShowPaymentModal] = useState(false);
+
+  // Use the requests data passed from parent (already paginated)
+  const requests = userRequests;
+
+  // Use the pagination data from parent
+  const displayedRequests = requests;
+  const paginationProps = pagination;
+
+  const getStatusDisplay = (status) => {
+    const statusMap = {
+      pending: {
+        text: "Pending Approval",
+        color: "bg-yellow-100 text-yellow-800",
+      },
+      approved: { text: "Approved", color: "bg-green-100 text-green-800" },
+      paid: { text: "Payment Confirmed", color: "bg-blue-100 text-blue-800" },
+      shipped: { text: "Item Shipped", color: "bg-purple-100 text-purple-800" },
+      received: {
+        text: "Item Received",
+        color: "bg-indigo-100 text-indigo-800",
+      },
+      pending_return: {
+        text: "Pending Return",
+        color: "bg-orange-100 text-orange-800",
+      },
+      returned: { text: "Returned", color: "bg-gray-100 text-gray-800" },
+      cancelled: { text: "Cancelled", color: "bg-red-100 text-red-800" },
+    };
+    return (
+      statusMap[status] || { text: status, color: "bg-gray-100 text-gray-800" }
+    );
+  };
+
+  const getActionButton = (request) => {
+    switch (request.status) {
+      case "pending":
+        return (
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              handleAction(request.id, "cancel");
+            }}
+            className="flex items-center gap-1 px-2 py-1 bg-red-600 text-white rounded hover:bg-red-700 transition-colors text-xs font-medium"
+          >
+            <IoClose className="w-3 h-3" />
+            Cancel
+          </button>
+        );
+      case "approved":
+        return (
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              setSelectedRequest(request);
+              setShowPaymentModal(true);
+            }}
+            className="flex items-center gap-1 px-2 py-1 bg-green-600 text-white rounded hover:bg-green-700 transition-colors text-xs font-medium"
+          >
+            <IoCash className="w-3 h-3" />
+            Pay
+          </button>
+        );
+      case "shipped":
+        return (
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              handleAction(request.id, "mark_received");
+            }}
+            className="flex items-center gap-1 px-2 py-1 bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors text-xs font-medium"
+          >
+            <IoCheckmarkCircle className="w-3 h-3" />
+            Received
+          </button>
+        );
+      case "pending_return":
+        return (
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              handleAction(request.id, "mark_shipped");
+            }}
+            className="flex items-center gap-1 px-2 py-1 bg-purple-600 text-white rounded hover:bg-purple-700 transition-colors text-xs font-medium"
+          >
+            <IoCheckmarkCircle className="w-3 h-3" />
+            Shipped
+          </button>
+        );
+      default:
+        return null;
+    }
+  };
+
+  const handleAction = (requestId, action) => {
+    console.log(`Action: ${action} for request: ${requestId}`);
+    // This will be connected to the actual API later
+    if (onUpdateRequest) {
+      onUpdateRequest(requestId, action);
+    }
+  };
+
+  const openModal = (request) => {
+    setSelectedRequest(request);
+    setShowModal(true);
+  };
+
+  const closeModal = () => {
+    setShowModal(false);
+    setSelectedRequest(null);
+  };
+
+  const closePaymentModal = () => {
+    setShowPaymentModal(false);
+    setSelectedRequest(null);
+  };
+
+  const handlePaymentConfirm = (requestId, paymentMethod) => {
+    console.log(
+      `Payment confirmed for request ${requestId} with ${paymentMethod}`
+    );
+    // Update request status to paid
+    if (onUpdateRequest) {
+      onUpdateRequest(requestId, "pay");
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center py-12">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#6C4BF4]"></div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="flex flex-col h-full">
+      {/* Requests List */}
+      {requests.length === 0 ? (
+        <div className="flex-1 flex items-center justify-center">
+          <p className="text-gray-500">No rental requests found</p>
+        </div>
+      ) : (
+        <div className="flex-1 flex flex-col min-h-0">
+          <div className="flex-1 space-y-4">
+            {displayedRequests.map((request) => {
+              const statusInfo = getStatusDisplay(request.status);
+              return (
+                <div
+                  key={request.id}
+                  className="bg-white rounded-lg border border-gray-200 p-3 hover:shadow-md transition-shadow cursor-pointer"
+                  onClick={() => openModal(request)}
+                >
+                  <div className="flex items-center justify-between">
+                    {/* Left Side - Item Info */}
+                    <div className="flex items-center space-x-3">
+                      {/* Item Image */}
+                      <div className="w-12 h-12 bg-gray-200 rounded-lg overflow-hidden flex-shrink-0">
+                        <img
+                          src={request.image}
+                          alt={request.itemName}
+                          className="w-full h-full object-cover"
+                          onError={(e) => {
+                            e.target.src =
+                              "data:image/svg+xml,%3Csvg width='48' height='48' xmlns='http://www.w3.org/2000/svg'%3E%3Crect width='100%25' height='100%25' fill='%23f3f4f6'/%3E%3Ctext x='50%25' y='50%25' dominant-baseline='middle' text-anchor='middle' fill='%236b7280' font-size='8'%3ENo Image%3C/text%3E%3C/svg%3E";
+                          }}
+                        />
+                      </div>
+
+                      {/* Item Details */}
+                      <div className="flex-1 min-w-0">
+                        <h4 className="text-sm font-semibold text-gray-900 truncate">
+                          [{request.owner}] {request.itemName}
+                        </h4>
+                        <p className="text-xs text-gray-500">
+                          {request.duration} • {request.dateRange}
+                        </p>
+                        <div className="mt-1">
+                          <span
+                            className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${statusInfo.color}`}
+                          >
+                            {statusInfo.text}{" "}
+                            {request.approvedDate &&
+                              `• ${request.approvedDate}`}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Right Side - Actions */}
+                    <div className="flex items-center space-x-2">
+                      {/* Message Owner Button */}
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          console.log(`Message owner: ${request.owner}`);
+                        }}
+                        className="px-2 py-1 text-blue-600 border border-blue-600 rounded hover:bg-blue-50 transition-colors text-xs font-medium"
+                      >
+                        Message
+                      </button>
+
+                      {/* Action Button */}
+                      {getActionButton(request)}
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+
+          {/* Pagination */}
+          <Pagination
+            currentPage={paginationProps.currentPage}
+            totalPages={paginationProps.totalPages}
+            totalItems={paginationProps.totalItems}
+            startIndex={paginationProps.startIndex}
+            endIndex={paginationProps.endIndex}
+            onPageChange={paginationProps.goToPage}
+            itemName="requests"
+            maxVisiblePages={5}
+          />
+        </div>
+      )}
+
+      {/* Request Details Modal */}
+      <RequestDetailsModal
+        isOpen={showModal}
+        onClose={closeModal}
+        request={selectedRequest}
+        getActionButton={getActionButton}
+      />
+
+      {/* Payment Modal */}
+      <PaymentModal
+        isOpen={showPaymentModal}
+        onClose={closePaymentModal}
+        request={selectedRequest}
+        onPaymentConfirm={handlePaymentConfirm}
+      />
+    </div>
+  );
+};
+
+export default StatusTab;

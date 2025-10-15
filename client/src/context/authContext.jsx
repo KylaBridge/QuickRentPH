@@ -69,12 +69,22 @@ export function AuthProvider({ children }) {
 
   const signInWithGoogle = () => {
     window.location.href = `${import.meta.env.VITE_API_URL}/api/auth/google`;
-  }
+  };
 
   const logoutUser = async () => {
     const res = await api.post("/api/auth/logout");
     setUser(null);
     return res.data;
+  };
+
+  // Check if user is admin
+  const isAdmin = () => {
+    return user && (user.role === "admin" || user.isAdmin === true);
+  };
+
+  // Check if user has admin privileges
+  const hasAdminAccess = () => {
+    return isAdmin();
   };
 
   return (
@@ -89,6 +99,9 @@ export function AuthProvider({ children }) {
         loginUser,
         signInWithGoogle,
         logoutUser,
+        logout: logoutUser, // Alias for consistency
+        isAdmin,
+        hasAdminAccess,
       }}
     >
       {children}

@@ -5,6 +5,7 @@ import ConfirmationModal from "../modals/ConfirmationModal";
 import { getImageUrl } from "../../utils/imageUtils";
 import { AuthContext } from "../../context/authContext";
 import { useNavigate } from "react-router-dom";
+import Pagination from "../Pagination";
 
 const ItemsTab = ({
   currentItems,
@@ -12,6 +13,9 @@ const ItemsTab = ({
   pageNumbers,
   currentPage,
   totalPages,
+  totalItems,
+  startIndex,
+  endIndex,
   onRemoveItem,
   onAddItem,
   onEditItem,
@@ -301,38 +305,16 @@ const ItemsTab = ({
       </div>
 
       {/* Pagination */}
-      <div
-        className="sticky left-0 z-10 flex justify-center items-center space-x-2"
-        style={{ marginTop: "auto", marginBottom: "-15px" }}
-      >
-        <button
-          onClick={() => paginate(currentPage - 1)}
-          disabled={currentPage === 1}
-          className="px-4 py-2 text-xs text-gray-700 bg-gray-200 rounded-lg shadow-sm disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-300 transition-colors duration-200"
-        >
-          Previous
-        </button>
-        {pageNumbers.map((number) => (
-          <button
-            key={number}
-            onClick={() => paginate(number)}
-            className={`px-4 py-2 text-xs rounded-lg shadow-sm font-semibold transition-colors duration-200 ${
-              currentPage === number
-                ? "bg-[#6C4BF4] text-white"
-                : "bg-white text-gray-700 hover:bg-gray-100"
-            }`}
-          >
-            {number}
-          </button>
-        ))}
-        <button
-          onClick={() => paginate(currentPage + 1)}
-          disabled={currentPage === totalPages}
-          className="px-4 py-2 text-xs text-gray-700 bg-gray-200 rounded-lg shadow-sm disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-300 transition-colors duration-200"
-        >
-          Next
-        </button>
-      </div>
+      <Pagination
+        currentPage={currentPage}
+        totalPages={totalPages}
+        totalItems={totalItems}
+        startIndex={startIndex}
+        endIndex={endIndex}
+        onPageChange={paginate}
+        itemName="items"
+        maxVisiblePages={5}
+      />
 
       {/* Delete Confirmation Modal */}
       <ConfirmationModal

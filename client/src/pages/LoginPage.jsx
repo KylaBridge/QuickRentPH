@@ -30,8 +30,17 @@ const LoginPage = () => {
     e.preventDefault();
     setError("");
     try {
-      await loginUser(formData.email, formData.password);
-      navigate("/dashboard");
+      const result = await loginUser(formData.email, formData.password);
+
+      // Check if user is admin and redirect accordingly
+      if (
+        result.user &&
+        (result.user.role === "admin" || result.user.isAdmin === true)
+      ) {
+        navigate("/admin/dashboard");
+      } else {
+        navigate("/dashboard");
+      }
     } catch (err) {
       // Directly map backend error strings to display messages
       switch (err) {

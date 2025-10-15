@@ -15,6 +15,9 @@ import Profile from "./pages/Profile.jsx";
 import Help from "./pages/Help.jsx";
 import AddItem from "./components/myRentals/AddItem.jsx";
 import ProtectedRoute from "./components/ProtectedRoute.jsx";
+import AdminProtectedRoute from "./components/AdminProtectedRoute.jsx";
+import AdminDashboard from "./pages/admin/AdminDashboard.jsx";
+import ProductManagement from "./pages/admin/ProductManagement.jsx";
 import { UserProvider } from "./context/userContext.jsx";
 import { ModalProvider, useModal } from "./context/modalContext.jsx";
 import { WishlistProvider } from "./context/wishlistContext.jsx";
@@ -165,9 +168,32 @@ function App() {
               </ProtectedRoute>
             }
           />
-        </Routes>
 
-        {/* Global modals rendered at app level to prevent backdrop issues */}
+          {/* Admin Routes */}
+          <Route
+            path="/admin/dashboard"
+            element={
+              <AdminProtectedRoute>
+                <AdminDashboard />
+              </AdminProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/admin/items"
+            element={
+              <AdminProtectedRoute>
+                <UserProvider>
+                  <ProductManagement />
+                </UserProvider>
+              </AdminProtectedRoute>
+            }
+          />
+
+          {/* Catch-all redirect for unknown routes */}
+          <Route path="*" element={<Navigate to="/" replace />} />
+        </Routes>
+        
         <GlobalModals />
       </WishlistProvider>
     </ModalProvider>
