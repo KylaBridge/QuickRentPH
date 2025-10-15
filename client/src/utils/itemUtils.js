@@ -23,7 +23,9 @@ export const parsePriceRange = (priceRange) => {
   }
 
   // Fallback: try to split on "-" for simple format like "50-149"
-  const [min, max] = priceRange.split("-").map((p) => parseFloat(p.replace(/[₱,\s]/g, "")));
+  const [min, max] = priceRange
+    .split("-")
+    .map((p) => parseFloat(p.replace(/[₱,\s]/g, "")));
   return { min: min || 0, max: max || Infinity };
 };
 
@@ -35,15 +37,35 @@ export const sortItems = (items, sortOption) => {
   switch (sortOption) {
     case "Price: Low to High":
       return sortedItems.sort((a, b) => {
-        const priceA = parseFloat((a.originalPrice || a.price || "0").toString().replace(/[₱,\s]/g, "")) || 0;
-        const priceB = parseFloat((b.originalPrice || b.price || "0").toString().replace(/[₱,\s]/g, "")) || 0;
+        const priceA =
+          parseFloat(
+            (a.originalPrice || a.price || "0")
+              .toString()
+              .replace(/[₱,\s]/g, "")
+          ) || 0;
+        const priceB =
+          parseFloat(
+            (b.originalPrice || b.price || "0")
+              .toString()
+              .replace(/[₱,\s]/g, "")
+          ) || 0;
         return priceA - priceB;
       });
 
     case "Price: High to Low":
       return sortedItems.sort((a, b) => {
-        const priceA = parseFloat((a.originalPrice || a.price || "0").toString().replace(/[₱,\s]/g, "")) || 0;
-        const priceB = parseFloat((b.originalPrice || b.price || "0").toString().replace(/[₱,\s]/g, "")) || 0;
+        const priceA =
+          parseFloat(
+            (a.originalPrice || a.price || "0")
+              .toString()
+              .replace(/[₱,\s]/g, "")
+          ) || 0;
+        const priceB =
+          parseFloat(
+            (b.originalPrice || b.price || "0")
+              .toString()
+              .replace(/[₱,\s]/g, "")
+          ) || 0;
         return priceB - priceA;
       });
 
@@ -91,7 +113,8 @@ export const filterItems = (items, filters) => {
       if (priceRange) {
         // Extract numeric value from price string (handles formats like "₱ 500", "₱500", "500")
         const priceString = item.price || item.originalPrice || "0";
-        const itemPrice = parseFloat(priceString.toString().replace(/[₱,\s]/g, "")) || 0;
+        const itemPrice =
+          parseFloat(priceString.toString().replace(/[₱,\s]/g, "")) || 0;
         if (itemPrice < priceRange.min || itemPrice > priceRange.max)
           return false;
       }
