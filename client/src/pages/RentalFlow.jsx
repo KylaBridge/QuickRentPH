@@ -1,107 +1,199 @@
 import { useState, useContext, useEffect } from "react";
-import { useParams, useNavigate } from "react-router-dom";
-import { IoArrowBack, IoCheckmarkCircle, IoWarning } from "react-icons/io5";
+import { useParams, useNavigate, useLocation } from "react-router-dom";
+import {
+  IoArrowBack,
+  IoLocationOutline,
+  IoPersonOutline,
+  IoCalendarOutline,
+  IoDocumentTextOutline,
+  IoCloudUploadOutline,
+  IoCheckmarkCircle,
+} from "react-icons/io5";
 import { AuthContext } from "../context/authContext";
-import { UserContext } from "../context/userContext";
+import { getImageUrl } from "../utils/imageUtils";
 
 const RentalFlow = () => {
   const { itemId } = useParams();
   const navigate = useNavigate();
+  const location = useLocation();
   const { user } = useContext(AuthContext);
-  const { getItemById } = useContext(UserContext);
 
-  const [item, setItem] = useState(null);
-  const [loading, setLoading] = useState(true);
+  // Get item from navigation state or set to null if not provided
+  const [item, setItem] = useState(location.state?.item || null);
+  const [loading, setLoading] = useState(!location.state?.item);
   const [currentStep, setCurrentStep] = useState(1);
 
   // Form states
-  const [rentalDetails, setRentalDetails] = useState({
-    startDate: "",
-    endDate: "",
-    duration: 0,
-    selectedAddress: null,
-    deliveryType: "pickup",
-    notes: "",
+  const [formData, setFormData] = useState({
+    // Personal Information
+    name: user?.firstName + " " + user?.lastName || "",
+    phone: user?.mobileNumber || "",
+    email: user?.email || "",
+    completeAddress: "",
+    addressLine1: "",
+    city: "",
+    stateProvince: "",
+    confirmEmail: user?.email || "",
+
+    // Rental Details
+    durationOfRent: "1", // Default to 1 day minimum
+    preferredStartDate: "",
+    reasonForRenting: "",
+
+    // ID Collection Agreement
+    idCollectionAgreed: false,
+
+    // File Uploads
+    validId: null,
+    selfieWithId: null,
+    proofOfBilling: null,
   });
 
-  const [paymentData, setPaymentData] = useState({
-    method: "gcash",
-    termsAccepted: false,
-    breakdown: {
-      rentalDays: 0,
-      rentalCost: 0,
-      serviceFee: 0,
-      taxes: 0,
-      total: 0,
-    },
-  });
+  const [errors, setErrors] = useState({});
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Fetch item data
+  // Handle case where no item data was passed
   useEffect(() => {
-    const fetchItem = async () => {
-      try {
-        const fetchedItem = await getItemById(itemId);
-        setItem(fetchedItem);
-      } catch (error) {
-        console.error("Failed to fetch item:", error);
-        navigate("/items-for-rent");
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    if (itemId) {
-      fetchItem();
+    if (!item && !loading) {
+      // If no item data was passed through navigation state, redirect back
+      console.error("No item data provided");
+      navigate("/items-for-rent");
+    } else if (item) {
+      setLoading(false);
     }
-  }, [itemId, getItemById, navigate]);
+  }, [item, loading, navigate]);
 
   // Calculate rental cost when dates change
-  useEffect(() => {
-    if (rentalDetails.startDate && rentalDetails.endDate && item?.price) {
-      const start = new Date(rentalDetails.startDate);
-      const end = new Date(rentalDetails.endDate);
-      const days = Math.ceil((end - start) / (1000 * 60 * 60 * 24));
-
+  const calculateCost = () => {
+    if (formData.preferredStartDate && formData.durationOfRent && item?.price) {
+      const days = parseInt(formData.durationOfRent);
       if (days > 0) {
-        const rentalCost = days * item.price;
+        const rentalCost = days * parseFloat(item.price);
         const serviceFee = rentalCost * 0.1; // 10% service fee
         const taxes = rentalCost * 0.12; // 12% tax
         const total = rentalCost + serviceFee + taxes;
 
-        setRentalDetails((prev) => ({ ...prev, duration: days }));
-        setPaymentData((prev) => ({
-          ...prev,
-          breakdown: {
-            rentalDays: days,
-            rentalCost,
-            serviceFee,
-            taxes,
-            total,
-          },
-        }));
+        return {
+          days,
+          rentalCost,
+          serviceFee,
+          taxes,
+          total,
+        };
       }
     }
-  }, [rentalDetails.startDate, rentalDetails.endDate, item?.price]);
-
-  const handleBack = () => {
-    navigate(-1);
+    return null;
   };
 
-  const handleNextStep = () => {
-    setCurrentStep((prev) => prev + 1);
+  const costBreakdown = calculateCost();
+
+  const handleInputChange = (e) => {
+    const { name, value, type, checked, files } = e.target;
+
+    if (type === "file") {
+      setFormData((prev) => ({
+        ...prev,
+        [name]: files[0],
+      }));
+    } else if (type === "checkbox") {
+      setFormData((prev) => ({
+        ...prev,
+        [name]: checked,
+      }));
+    } else if (name === "durationOfRent") {
+      // Ensure minimum value of 1 for duration
+      const numValue = parseInt(value) || 1;
+      setFormData((prev) => ({
+        ...prev,
+        [name]: Math.max(1, numValue).toString(),
+      }));
+    } else {
+      setFormData((prev) => ({
+        ...prev,
+        [name]: value,
+      }));
+    }
+
+    // Clear error when user starts typing
+    if (errors[name]) {
+      setErrors((prev) => ({
+        ...prev,
+        [name]: "",
+      }));
+    }
   };
 
-  const handlePrevStep = () => {
-    setCurrentStep((prev) => prev - 1);
+  const validateForm = () => {
+    const newErrors = {};
+
+    // Required fields validation
+    if (!formData.name.trim()) newErrors.name = "Name is required";
+    if (!formData.phone.trim()) newErrors.phone = "Phone number is required";
+    if (!formData.email.trim()) newErrors.email = "Email is required";
+    if (!formData.confirmEmail.trim())
+      newErrors.confirmEmail = "Please confirm your email";
+    if (formData.email !== formData.confirmEmail)
+      newErrors.confirmEmail = "Emails do not match";
+    if (!formData.completeAddress.trim())
+      newErrors.completeAddress = "Complete address is required";
+    if (!formData.durationOfRent.trim())
+      newErrors.durationOfRent = "Duration of rent is required";
+    if (parseInt(formData.durationOfRent) < 1)
+      newErrors.durationOfRent = "Minimum rental duration is 1 day";
+    if (!formData.preferredStartDate)
+      newErrors.preferredStartDate = "Preferred start date is required";
+    if (!formData.reasonForRenting.trim())
+      newErrors.reasonForRenting = "Reason for renting is required";
+
+    // ID Collection Agreement
+    if (!formData.idCollectionAgreed)
+      newErrors.idCollectionAgreed = "You must agree to ID collection";
+
+    // File uploads
+    if (!formData.validId) newErrors.validId = "Valid ID is required";
+    if (!formData.selfieWithId)
+      newErrors.selfieWithId = "Selfie with valid ID is required";
+    if (!formData.proofOfBilling)
+      newErrors.proofOfBilling = "Proof of billing is required";
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
   };
 
-  const handleCompleteRental = async () => {
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+
+    if (!validateForm()) {
+      return;
+    }
+
+    setIsSubmitting(true);
+
     try {
-      // TODO: Implement rental completion logic
-      console.log("Completing rental:", { rentalDetails, paymentData, item });
-      navigate("/my-rentals");
+      // TODO: Submit rental request to backend
+      console.log("Submitting rental request:", {
+        item: item,
+        formData: formData,
+        costBreakdown: costBreakdown,
+      });
+
+      // Simulate API call
+      await new Promise((resolve) => setTimeout(resolve, 2000));
+
+      // Navigate to confirmation or my-requests page
+      navigate("/my-requests", {
+        state: {
+          message:
+            "Rental request submitted successfully! Wait for the owner's approval.",
+        },
+      });
     } catch (error) {
-      console.error("Failed to complete rental:", error);
+      console.error("Failed to submit rental request:", error);
+      setErrors({
+        submit: "Failed to submit rental request. Please try again.",
+      });
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -123,7 +215,7 @@ const RentalFlow = () => {
       <div className="flex h-screen bg-gray-50">
         <div className="flex-1 flex items-center justify-center">
           <div className="text-center">
-            <IoWarning className="w-12 h-12 text-red-500 mx-auto mb-4" />
+            <div className="w-12 h-12 text-red-500 mx-auto mb-4">⚠️</div>
             <h2 className="text-xl font-semibold text-gray-900 mb-2">
               Item Not Found
             </h2>
@@ -143,172 +235,509 @@ const RentalFlow = () => {
   }
 
   return (
-    <div className="flex h-screen bg-gray-50">
-      <div className="flex-1 flex flex-col overflow-hidden">
-        {/* Header */}
-        <div className="bg-white shadow-sm border-b border-gray-200 px-4 py-3 flex items-center">
+    <div className="min-h-screen bg-gray-50">
+      {/* Header */}
+      <div className="bg-white shadow-sm border-b border-gray-200">
+        <div className="max-w-7xl mx-auto px-4 py-4 flex items-center">
           <button
-            onClick={handleBack}
-            className="mr-2 p-2 rounded-full hover:bg-gray-100 text-[#6C4BF4] focus:outline-none"
+            onClick={() => navigate(-1)}
+            className="mr-4 p-2 rounded-full hover:bg-gray-100 text-[#6C4BF4] focus:outline-none"
           >
             <IoArrowBack className="w-6 h-6" />
           </button>
-          <span className="text-xl font-semibold text-gray-900">
-            Rent: {item.name}
-          </span>
+          <h1 className="text-2xl font-bold text-gray-900">Rental Request</h1>
         </div>
+      </div>
 
-        {/* Progress Steps */}
-        <div className="bg-white border-b border-gray-200 px-4 py-4">
-          <div className="flex items-center justify-center space-x-8">
-            {[
-              { step: 1, label: "Rental Details" },
-              { step: 2, label: "Address" },
-              { step: 3, label: "Payment" },
-              { step: 4, label: "Confirmation" },
-            ].map(({ step, label }) => (
-              <div key={step} className="flex items-center">
-                <div
-                  className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium ${
-                    step <= currentStep
-                      ? "bg-[#6C4BF4] text-white"
-                      : "bg-gray-200 text-gray-600"
-                  }`}
-                >
-                  {step < currentStep ? (
-                    <IoCheckmarkCircle className="w-5 h-5" />
-                  ) : (
-                    step
-                  )}
-                </div>
-                <span
-                  className={`ml-2 text-sm font-medium ${
-                    step <= currentStep ? "text-[#6C4BF4]" : "text-gray-600"
-                  }`}
-                >
-                  {label}
-                </span>
+      <div className="max-w-7xl mx-auto px-4 py-8">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          {/* Left Column - Item Details */}
+          <div className="lg:col-span-1">
+            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 sticky top-8">
+              <h3 className="text-lg font-semibold text-gray-900 mb-4">
+                Rental Details
+              </h3>
+
+              {/* Item Image */}
+              <div className="w-full h-48 bg-gray-100 rounded-lg mb-4 overflow-hidden">
+                <img
+                  src={getImageUrl(item.images?.[0] || item.image)}
+                  alt={item.name || item.title}
+                  className="w-full h-full object-cover"
+                />
               </div>
-            ))}
-          </div>
-        </div>
 
-        {/* Content */}
-        <main className="flex-1 overflow-y-auto p-6">
-          <div className="max-w-2xl mx-auto">
-            {/* Step Content will be rendered here */}
-            {currentStep === 1 && (
-              <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-                <h2 className="text-xl font-semibold text-gray-900 mb-4">
-                  Rental Details
-                </h2>
-                <p className="text-gray-600 mb-6">
-                  Please specify your rental dates and preferences.
-                </p>
+              {/* Item Info */}
+              <div className="space-y-3">
+                <h4 className="font-semibold text-gray-900">
+                  {item.name || item.title}
+                </h4>
 
-                {/* Rental dates form content will go here */}
-                <div className="space-y-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Start Date
-                    </label>
-                    <input
-                      type="date"
-                      value={rentalDetails.startDate}
-                      onChange={(e) =>
-                        setRentalDetails((prev) => ({
-                          ...prev,
-                          startDate: e.target.value,
-                        }))
-                      }
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#6C4BF4]"
-                    />
+                <div className="flex items-center text-sm text-gray-600">
+                  <IoLocationOutline className="w-4 h-4 mr-2" />
+                  {item.location}
+                </div>
+
+                <div className="flex items-center text-sm text-gray-600">
+                  <IoPersonOutline className="w-4 h-4 mr-2" />
+                  {item.renter || "Item Owner"}
+                </div>
+
+                <div className="text-lg font-bold text-[#6C4BF4]">
+                  ₱{parseFloat(item.price).toFixed(2)} / day
+                </div>
+
+                {item.dealOption && (
+                  <div className="text-sm text-gray-600">
+                    <strong>Deal Option:</strong> {item.dealOption}
                   </div>
+                )}
 
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      End Date
-                    </label>
-                    <input
-                      type="date"
-                      value={rentalDetails.endDate}
-                      onChange={(e) =>
-                        setRentalDetails((prev) => ({
-                          ...prev,
-                          endDate: e.target.value,
-                        }))
-                      }
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#6C4BF4]"
-                    />
+                {item.deliveryOption && (
+                  <div className="text-sm text-gray-600">
+                    <strong>Delivery:</strong> {item.deliveryOption}
                   </div>
+                )}
 
-                  {rentalDetails.duration > 0 && (
-                    <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                      <h3 className="font-medium text-blue-900">
-                        Rental Summary
-                      </h3>
-                      <p className="text-sm text-blue-700">
-                        Duration: {rentalDetails.duration} day(s)
-                      </p>
-                      <p className="text-sm text-blue-700">
-                        Total Cost: ₱{paymentData.breakdown.total.toFixed(2)}
-                      </p>
+                {item.paymentMethod && (
+                  <div className="text-sm text-gray-600">
+                    <strong>Payment Methods:</strong> {item.paymentMethod}
+                  </div>
+                )}
+              </div>
+
+              {/* Cost Breakdown */}
+              {costBreakdown && (
+                <div className="mt-6 pt-4 border-t border-gray-200">
+                  <h5 className="font-semibold text-gray-900 mb-3">
+                    Cost Breakdown
+                  </h5>
+                  <div className="space-y-2 text-sm">
+                    <div className="flex justify-between">
+                      <span>Rental ({costBreakdown.days} days)</span>
+                      <span>₱{costBreakdown.rentalCost.toFixed(2)}</span>
                     </div>
-                  )}
+                    <div className="flex justify-between">
+                      <span>Service Fee (10%)</span>
+                      <span>₱{costBreakdown.serviceFee.toFixed(2)}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>Taxes (12%)</span>
+                      <span>₱{costBreakdown.taxes.toFixed(2)}</span>
+                    </div>
+                    <div className="flex justify-between font-semibold text-[#6C4BF4] pt-2 border-t">
+                      <span>Total</span>
+                      <span>₱{costBreakdown.total.toFixed(2)}</span>
+                    </div>
+                  </div>
                 </div>
-
-                <div className="mt-6 flex justify-end">
-                  <button
-                    onClick={handleNextStep}
-                    disabled={
-                      !rentalDetails.startDate || !rentalDetails.endDate
-                    }
-                    className="bg-[#6C4BF4] text-white px-6 py-2 rounded-md hover:bg-[#7857FD] disabled:opacity-50 disabled:cursor-not-allowed"
-                  >
-                    Continue
-                  </button>
-                </div>
-              </div>
-            )}
-
-            {/* Additional steps will be implemented here */}
-            {currentStep > 1 && (
-              <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-                <h2 className="text-xl font-semibold text-gray-900 mb-4">
-                  Step {currentStep} - Coming Soon
-                </h2>
-                <p className="text-gray-600 mb-6">
-                  This step is under development.
-                </p>
-
-                <div className="flex justify-between">
-                  <button
-                    onClick={handlePrevStep}
-                    className="bg-gray-200 text-gray-700 px-6 py-2 rounded-md hover:bg-gray-300"
-                  >
-                    Back
-                  </button>
-
-                  {currentStep < 4 ? (
-                    <button
-                      onClick={handleNextStep}
-                      className="bg-[#6C4BF4] text-white px-6 py-2 rounded-md hover:bg-[#7857FD]"
-                    >
-                      Continue
-                    </button>
-                  ) : (
-                    <button
-                      onClick={handleCompleteRental}
-                      className="bg-green-600 text-white px-6 py-2 rounded-md hover:bg-green-700"
-                    >
-                      Complete Rental
-                    </button>
-                  )}
-                </div>
-              </div>
-            )}
+              )}
+            </div>
           </div>
-        </main>
+
+          {/* Right Column - Rental Form */}
+          <div className="lg:col-span-2">
+            <form onSubmit={handleSubmit} className="space-y-6">
+              {/* Personal Information */}
+              <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+                <h3 className="text-lg font-semibold text-gray-900 mb-6 border-b border-gray-200 pb-3">
+                  Personal Information
+                </h3>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Name *
+                    </label>
+                    <input
+                      type="text"
+                      name="name"
+                      value={formData.name}
+                      onChange={handleInputChange}
+                      className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-[#6C4BF4] ${
+                        errors.name ? "border-red-500" : "border-gray-300"
+                      }`}
+                    />
+                    {errors.name && (
+                      <p className="text-red-500 text-sm mt-1">{errors.name}</p>
+                    )}
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Phone *
+                    </label>
+                    <input
+                      type="tel"
+                      name="phone"
+                      value={formData.phone}
+                      onChange={handleInputChange}
+                      className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-[#6C4BF4] ${
+                        errors.phone ? "border-red-500" : "border-gray-300"
+                      }`}
+                    />
+                    {errors.phone && (
+                      <p className="text-red-500 text-sm mt-1">
+                        {errors.phone}
+                      </p>
+                    )}
+                  </div>
+
+                  <div className="md:col-span-2">
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Complete Address *
+                    </label>
+                    <input
+                      type="text"
+                      name="completeAddress"
+                      value={formData.completeAddress}
+                      onChange={handleInputChange}
+                      className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-[#6C4BF4] ${
+                        errors.completeAddress
+                          ? "border-red-500"
+                          : "border-gray-300"
+                      }`}
+                    />
+                    {errors.completeAddress && (
+                      <p className="text-red-500 text-sm mt-1">
+                        {errors.completeAddress}
+                      </p>
+                    )}
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Address Line 1
+                    </label>
+                    <input
+                      type="text"
+                      name="addressLine1"
+                      value={formData.addressLine1}
+                      onChange={handleInputChange}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#6C4BF4]"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      City
+                    </label>
+                    <input
+                      type="text"
+                      name="city"
+                      value={formData.city}
+                      onChange={handleInputChange}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#6C4BF4]"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      State / Province / Region
+                    </label>
+                    <input
+                      type="text"
+                      name="stateProvince"
+                      value={formData.stateProvince}
+                      onChange={handleInputChange}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#6C4BF4]"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Email *
+                    </label>
+                    <input
+                      type="email"
+                      name="email"
+                      value={formData.email}
+                      onChange={handleInputChange}
+                      className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-[#6C4BF4] ${
+                        errors.email ? "border-red-500" : "border-gray-300"
+                      }`}
+                    />
+                    {errors.email && (
+                      <p className="text-red-500 text-sm mt-1">
+                        {errors.email}
+                      </p>
+                    )}
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Confirm Email *
+                    </label>
+                    <input
+                      type="email"
+                      name="confirmEmail"
+                      value={formData.confirmEmail}
+                      onChange={handleInputChange}
+                      className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-[#6C4BF4] ${
+                        errors.confirmEmail
+                          ? "border-red-500"
+                          : "border-gray-300"
+                      }`}
+                    />
+                    {errors.confirmEmail && (
+                      <p className="text-red-500 text-sm mt-1">
+                        {errors.confirmEmail}
+                      </p>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              {/* Rental Details */}
+              <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+                <h3 className="text-lg font-semibold text-gray-900 mb-6 border-b border-gray-200 pb-3">
+                  Rental Details
+                </h3>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Duration of Rent *
+                    </label>
+                    <input
+                      type="number"
+                      name="durationOfRent"
+                      value={formData.durationOfRent}
+                      onChange={handleInputChange}
+                      placeholder="Minimum 1 day"
+                      min="1"
+                      className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-[#6C4BF4] ${
+                        errors.durationOfRent
+                          ? "border-red-500"
+                          : "border-gray-300"
+                      }`}
+                    />
+                    {errors.durationOfRent && (
+                      <p className="text-red-500 text-sm mt-1">
+                        {errors.durationOfRent}
+                      </p>
+                    )}
+                    <p className="text-xs text-gray-500 mt-1">
+                      Minimum rental period is 1 day
+                    </p>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Preferred Rental Start Date *
+                    </label>
+                    <input
+                      type="date"
+                      name="preferredStartDate"
+                      value={formData.preferredStartDate}
+                      onChange={handleInputChange}
+                      min={new Date().toISOString().split("T")[0]}
+                      className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-[#6C4BF4] ${
+                        errors.preferredStartDate
+                          ? "border-red-500"
+                          : "border-gray-300"
+                      }`}
+                    />
+                    {errors.preferredStartDate && (
+                      <p className="text-red-500 text-sm mt-1">
+                        {errors.preferredStartDate}
+                      </p>
+                    )}
+                  </div>
+
+                  <div className="md:col-span-2">
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Reason for Renting *
+                    </label>
+                    <textarea
+                      name="reasonForRenting"
+                      value={formData.reasonForRenting}
+                      onChange={handleInputChange}
+                      rows={4}
+                      placeholder="Please let us know what you'll be using the rental for (ex. school, work, event, online exam)"
+                      className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-[#6C4BF4] ${
+                        errors.reasonForRenting
+                          ? "border-red-500"
+                          : "border-gray-300"
+                      }`}
+                    />
+                    {errors.reasonForRenting && (
+                      <p className="text-red-500 text-sm mt-1">
+                        {errors.reasonForRenting}
+                      </p>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              {/* ID Collection Agreement */}
+              <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+                <h3 className="text-lg font-semibold text-gray-900 mb-6 border-b border-gray-200 pb-3">
+                  Security Deposit & ID Collection
+                </h3>
+
+                <div className="mb-6">
+                  <p className="text-sm text-gray-600 mb-4">
+                    Aside from the Security Deposit, we will also be collecting
+                    your valid ID. We will hold onto your ID and return it at
+                    the end of the rental period. Are you okay with this?
+                  </p>
+
+                  <div className="space-y-2">
+                    <label className="flex items-center">
+                      <input
+                        type="radio"
+                        name="idCollectionAgreed"
+                        checked={formData.idCollectionAgreed === true}
+                        onChange={() =>
+                          setFormData((prev) => ({
+                            ...prev,
+                            idCollectionAgreed: true,
+                          }))
+                        }
+                        className="mr-2 text-[#6C4BF4] focus:ring-[#6C4BF4]"
+                      />
+                      <span className="text-sm text-gray-700">Yes</span>
+                    </label>
+                    <label className="flex items-center">
+                      <input
+                        type="radio"
+                        name="idCollectionAgreed"
+                        checked={formData.idCollectionAgreed === false}
+                        onChange={() =>
+                          setFormData((prev) => ({
+                            ...prev,
+                            idCollectionAgreed: false,
+                          }))
+                        }
+                        className="mr-2 text-[#6C4BF4] focus:ring-[#6C4BF4]"
+                      />
+                      <span className="text-sm text-gray-700">No</span>
+                    </label>
+                  </div>
+
+                  {errors.idCollectionAgreed && (
+                    <p className="text-red-500 text-sm mt-2">
+                      {errors.idCollectionAgreed}
+                    </p>
+                  )}
+
+                  <p className="text-xs text-gray-500 mt-3">
+                    For security purposes, we collect 1 valid ID and hold onto
+                    it until the end of the rental period. Rest assured that we
+                    keep information secure and all information are kept
+                    private.
+                  </p>
+                </div>
+
+                {/* File Uploads */}
+                <div className="space-y-6">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Upload 1 Valid ID *
+                    </label>
+                    <input
+                      type="file"
+                      name="validId"
+                      onChange={handleInputChange}
+                      accept="image/*,.pdf"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#6C4BF4]"
+                    />
+                    {errors.validId && (
+                      <p className="text-red-500 text-sm mt-1">
+                        {errors.validId}
+                      </p>
+                    )}
+                    <p className="text-xs text-gray-500 mt-1">
+                      Please upload 1 valid government-issued ID. This can be:
+                      Passport, Driver's License, PRC, UMID, Senior Citizen ID,
+                      Integrated Bar ID, ARC card for foreigners.
+                    </p>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Upload a selfie with your Valid ID *
+                    </label>
+                    <input
+                      type="file"
+                      name="selfieWithId"
+                      onChange={handleInputChange}
+                      accept="image/*"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#6C4BF4]"
+                    />
+                    {errors.selfieWithId && (
+                      <p className="text-red-500 text-sm mt-1">
+                        {errors.selfieWithId}
+                      </p>
+                    )}
+                    <p className="text-xs text-gray-500 mt-1">
+                      Please take a selfie with your submitted valid ID.
+                    </p>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Upload 1 Proof of Billing *
+                    </label>
+                    <input
+                      type="file"
+                      name="proofOfBilling"
+                      onChange={handleInputChange}
+                      accept="image/*,.pdf"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#6C4BF4]"
+                    />
+                    {errors.proofOfBilling && (
+                      <p className="text-red-500 text-sm mt-1">
+                        {errors.proofOfBilling}
+                      </p>
+                    )}
+                    <p className="text-xs text-gray-500 mt-1">
+                      Please upload a picture of at least 1 proof of billing.
+                      This can be a billing for: Meralco, MWSS/Maynilad, Credit
+                      Card, Cable TV, PLDT, Mobile Postpaid Plan, Internet
+                      Service Provider.
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Submit Button */}
+              <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+                {errors.submit && (
+                  <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-md">
+                    <p className="text-red-600 text-sm">{errors.submit}</p>
+                  </div>
+                )}
+
+                <button
+                  type="submit"
+                  disabled={!formData.idCollectionAgreed || isSubmitting}
+                  className={`w-full py-3 px-6 rounded-md font-medium transition-colors ${
+                    !formData.idCollectionAgreed || isSubmitting
+                      ? "bg-gray-300 text-gray-500 cursor-not-allowed"
+                      : "bg-[#6C4BF4] text-white hover:bg-[#7857FD]"
+                  }`}
+                >
+                  {isSubmitting ? (
+                    <div className="flex items-center justify-center">
+                      <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin mr-2"></div>
+                      Submitting Request...
+                    </div>
+                  ) : (
+                    "Submit Rental Request"
+                  )}
+                </button>
+
+                {!formData.idCollectionAgreed && (
+                  <p className="text-sm text-gray-500 text-center mt-2">
+                    Please agree to ID collection to submit your rental request.
+                  </p>
+                )}
+              </div>
+            </form>
+          </div>
+        </div>
       </div>
     </div>
   );

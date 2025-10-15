@@ -27,7 +27,8 @@ const ItemDetailView = ({ item, onBack, onRentClick, onGoToProfile }) => {
   const { user } = useContext(AuthContext);
 
   // Check if current user owns this item
-  const isOwnItem = user && item.ownerId === user._id;
+  const isOwnItem =
+    user && (item.owner === user._id || item.owner?._id === user._id);
 
   // Form states
   const [rentalDetails, setRentalDetails] = useState({
@@ -60,13 +61,10 @@ const ItemDetailView = ({ item, onBack, onRentClick, onGoToProfile }) => {
       return; // Do nothing if user owns the item
     }
 
-    // Check if user is verified
-    if (!user?.isVerified) {
-      if (onRentClick) onRentClick(); // This will show verification modal
-    } else {
-      // Navigate to rental flow page
-      navigate(`/rental-flow/${item._id}`);
-    }
+    // Navigate directly to rental flow page with item data
+    navigate(`/rental-flow/${item._id}`, {
+      state: { item: item },
+    });
   };
 
   // Handle go to profile for verification - delegate to parent

@@ -6,14 +6,12 @@ import ItemList from "../components/ItemList";
 import ItemDetailView from "../components/ItemDetailView";
 import { useWishlist } from "../context/wishlistContext";
 import { AuthContext } from "../context/authContext";
-import { useModal } from "../context/modalContext";
 
 const MyWishlist = () => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [selectedItem, setSelectedItem] = useState(null);
   const { wishlistItems, loading } = useWishlist();
   const { user } = useContext(AuthContext);
-  const { openVerificationRequiredModal } = useModal();
   const navigate = useNavigate();
 
   const toggleSidebar = () => setSidebarOpen(!sidebarOpen);
@@ -25,17 +23,10 @@ const MyWishlist = () => {
   const handleBack = () => setSelectedItem(null);
 
   const handleRentClick = () => {
-    // Check if user is verified
-    if (!user?.isVerified) {
-      openVerificationRequiredModal(handleGoToProfile);
-    } else {
-      // Navigate to rental flow page
-      navigate(`/rental-flow/${selectedItem._id}`);
-    }
-  };
-
-  const handleGoToProfile = () => {
-    navigate("/profile?section=verification");
+    // Navigate directly to rental flow page with item data
+    navigate(`/rental-flow/${selectedItem._id}`, {
+      state: { item: selectedItem },
+    });
   };
 
   return (
@@ -56,7 +47,6 @@ const MyWishlist = () => {
               item={selectedItem}
               onBack={handleBack}
               onRentClick={handleRentClick}
-              onGoToProfile={handleGoToProfile}
             />
           ) : wishlistItems.length === 0 ? (
             <div className="flex flex-col justify-center items-center py-12">

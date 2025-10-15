@@ -29,9 +29,9 @@ export const getSizePlaceholder = (category) => {
 
 /*Default rental terms and conditions */
 export const DEFAULT_TERMS = [
-  { label: "Minimum rental period", value: "3 days" },
+  { label: "Minimum rental period", value: "1 day" },
   { label: "Late fee", value: "₱300/day" },
   { label: "No international travel with the item" },
   { label: "Handle with care; any damages will be deducted from deposit" },
-  { label: "Renter must present a valid government ID upon pickup" },
+  { label: "Renter must present a valid government ID upon renting" },
 ];

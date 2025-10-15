@@ -86,6 +86,7 @@ const ItemList = ({
       location: dbItem.location,
       title: dbItem.name,
       price: `₱ ${parseFloat(dbItem.price).toFixed(0)}`,
+      originalPrice: dbItem.price, // Keep original numeric price for filtering
       period: "day",
       rating: 5, // Default rating, you can add rating field to your schema
       image: getImageUrl(dbItem.images[0]),
@@ -108,7 +109,9 @@ const ItemList = ({
   // Apply filters and sorting
   processedItems = filterAndSortItems(processedItems, filters);
 
-  const displayItems = processedItems.slice(0, maxItems);
+  const displayItems = maxItems
+    ? processedItems.slice(0, maxItems)
+    : processedItems;
 
   const renderStars = (rating) => {
     return Array.from({ length: 5 }, (_, index) => (
