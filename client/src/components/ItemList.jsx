@@ -1,9 +1,12 @@
 import { useState, useEffect, useContext } from "react";
 import { useNavigate } from "react-router-dom";
-import { IoStarSharp } from "react-icons/io5";
+import { IoStarSharp, IoHeart, IoHeartOutline } from "react-icons/io5";
 import { UserContext } from "../context/userContext";
+import { AuthContext } from "../context/authContext";
+import { useWishlist } from "../context/wishlistContext";
 import { filterAndSortItems, searchItems } from "../utils/itemUtils";
 import { getImageUrl } from "../utils/imageUtils";
+import Toast from "./Toast";
 
 const ItemList = ({
   items,
@@ -13,6 +16,8 @@ const ItemList = ({
   showActions = false,
   onView,
   onRent,
+  onRentClick,
+  onGoToProfile,
   compact = false,
   onCardClick,
   filters = {},
@@ -20,10 +25,17 @@ const ItemList = ({
 }) => {
   const navigate = useNavigate();
   const { getAllItems } = useContext(UserContext);
+  const { user } = useContext(AuthContext);
+  const { isInWishlist, toggleWishlist } = useWishlist();
 
   const [allItems, setAllItems] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [toast, setToast] = useState({
+    show: false,
+    message: "",
+    type: "success",
+  });
 
   // Fetch all items from database
   useEffect(() => {
@@ -49,7 +61,6 @@ const ItemList = ({
 
   // Transform database items to display format
   const transformItem = (dbItem) => {
-
     // Handle owner display logic
     let ownerDisplay = "Available";
 
@@ -78,8 +89,9 @@ const ItemList = ({
       period: "day",
       rating: 5, // Default rating, you can add rating field to your schema
       image: getImageUrl(dbItem.images[0]),
-      timeAgo: "Available now",
       category: dbItem.category,
+      // Add payment methods - use existing or add sample ones
+      paymentMethod: dbItem.paymentMethod || "GCash, PayMaya",
       ...dbItem, // Include all original properties
     };
   }; // Use provided items or fetched items
@@ -114,12 +126,12 @@ const ItemList = ({
     : "grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-4 lg:gap-6";
 
   const cardClasses = compact
-    ? "bg-white border border-gray-200 rounded-lg overflow-hidden hover:shadow-md transition-shadow duration-300 cursor-pointer h-[360px] flex flex-col min-w-[160px] w-full"
-    : "bg-white border border-gray-200 rounded-lg overflow-hidden hover:shadow-lg transition-shadow duration-300 cursor-pointer h-[400px] flex flex-col min-w-[200px] w-full";
+    ? "bg-white border border-gray-200 rounded-lg overflow-hidden hover:shadow-md transition-shadow duration-300 cursor-pointer h-[320px] flex flex-col min-w-[160px] w-full"
+    : "bg-white border border-gray-200 rounded-lg overflow-hidden hover:shadow-lg transition-shadow duration-300 cursor-pointer h-[360px] flex flex-col min-w-[200px] w-full";
 
   const imageWrapper = compact
-    ? "flex-shrink-0 h-32 p-2"
-    : "flex-shrink-0 h-40 p-2 sm:p-3";
+    ? "flex-shrink-0 h-40 p-2"
+    : "flex-shrink-0 h-48 p-2 sm:p-3";
   const titleClasses = compact
     ? "text-xs font-semibold"
     : "text-sm sm:text-base font-semibold";
@@ -129,6 +141,52 @@ const ItemList = ({
   const actionPadding = compact
     ? "px-2 py-1 text-xs"
     : "px-3 py-2 text-xs sm:text-sm";
+
+  // Handle rent action
+  const handleRentItem = (item) => {
+    if (onRent) {
+      onRent(item);
+    } else if (onRentClick) {
+      // Delegate to parent modal handler
+      onRentClick();
+    } else {
+      // Fallback: navigate to item detail view
+      onCardClick && onCardClick(item);
+    }
+  };
+
+  // Handle go to profile for verification - delegate to parent
+  const handleGoToProfile = () => {
+    if (onGoToProfile) {
+      onGoToProfile();
+    }
+  };
+
+  // Handle wishlist toggle
+  const handleWishlistToggle = async (e, item) => {
+    e.stopPropagation();
+
+    if (!user) {
+      setToast({
+        show: true,
+        message: "Please log in to add items to wishlist",
+        type: "error",
+      });
+      return;
+    }
+
+    const result = await toggleWishlist(item);
+    setToast({
+      show: true,
+      message: result.message,
+      type: result.success ? "wishlist" : "error",
+    });
+  };
+
+  // Close toast
+  const closeToast = () => {
+    setToast({ show: false, message: "", type: "success" });
+  };
 
   // Loading state
   if (loading && !items) {
@@ -250,28 +308,26 @@ const ItemList = ({
                       </div>
                     </div>
 
-                    {/* Bottom section with time and heart */}
-                    <div className="flex items-center justify-between mb-2">
-                      <span className="text-[10px] sm:text-xs text-gray-500 font-poppins truncate">
-                        {item.timeAgo}
-                      </span>
+                    {/* Bottom section with heart only */}
+                    <div className="flex items-center justify-end mb-2">
                       <button
-                        className="text-gray-400 hover:text-red-500 transition-colors flex-shrink-0"
-                        onClick={(e) => e.stopPropagation()}
+                        className={`transition-colors flex-shrink-0 ${
+                          isInWishlist(item.id)
+                            ? "text-red-500 hover:text-red-600"
+                            : "text-gray-400 hover:text-red-500"
+                        }`}
+                        onClick={(e) => handleWishlistToggle(e, item)}
+                        title={
+                          isInWishlist(item.id)
+                            ? "Remove from wishlist"
+                            : "Add to wishlist"
+                        }
                       >
-                        <svg
-                          className="w-3.5 h-3.5 sm:w-4 sm:h-4"
-                          fill="none"
-                          stroke="currentColor"
-                          viewBox="0 0 24 24"
-                        >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth={2}
-                            d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"
-                          />
-                        </svg>
+                        {isInWishlist(item.id) ? (
+                          <IoHeart className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+                        ) : (
+                          <IoHeartOutline className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+                        )}
                       </button>
                     </div>
                   </div>
@@ -292,7 +348,7 @@ const ItemList = ({
                         <button
                           onClick={(e) => {
                             e.stopPropagation();
-                            onRent ? onRent(item) : null;
+                            handleRentItem(item);
                           }}
                           className={`bg-[#6C4BF4] text-white rounded ${actionPadding} font-medium hover:bg-[#7857FD]`}
                         >
@@ -307,6 +363,14 @@ const ItemList = ({
           </div>
         )}
       </div>
+
+      {/* Toast notification */}
+      <Toast
+        message={toast.message}
+        type={toast.type}
+        isVisible={toast.show}
+        onClose={closeToast}
+      />
     </section>
   );
 };

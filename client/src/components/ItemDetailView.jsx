@@ -14,12 +14,67 @@ import {
 } from "react-icons/io5";
 import { TbTruckDelivery } from "react-icons/tb";
 import { getImageUrl } from "../utils/imageUtils";
-import { useMemo } from "react";
+import { useMemo, useState, useContext } from "react";
+import { useNavigate } from "react-router-dom";
+import { AuthContext } from "../context/authContext";
 
 const REVIEWS_PER_PAGE = 3;
 
-const ItemDetailView = ({ item, onBack }) => {
+const ItemDetailView = ({ item, onBack, onRentClick, onGoToProfile }) => {
   if (!item) return null;
+
+  const navigate = useNavigate();
+  const { user } = useContext(AuthContext);
+
+  // Check if current user owns this item
+  const isOwnItem = user && item.ownerId === user._id;
+
+  // Form states
+  const [rentalDetails, setRentalDetails] = useState({
+    startDate: "",
+    endDate: "",
+    addressId: "",
+    recipientName: "",
+    recipientPhone: "",
+    deliveryType: "pickup",
+    notes: "",
+  });
+
+  const [paymentData, setPaymentData] = useState({
+    method: "",
+    termsAccepted: false,
+    breakdown: {
+      rentalDays: 0,
+      rentalCost: 0,
+      serviceFee: 0,
+      taxes: 0,
+      total: 0,
+    },
+  });
+
+  const [transactionResult, setTransactionResult] = useState(null);
+
+  // Handle rent button click
+  const handleRentClick = () => {
+    if (isOwnItem) {
+      return; // Do nothing if user owns the item
+    }
+
+    // Check if user is verified
+    if (!user?.isVerified) {
+      if (onRentClick) onRentClick(); // This will show verification modal
+    } else {
+      // Navigate to rental flow page
+      navigate(`/rental-flow/${item._id}`);
+    }
+  };
+
+  // Handle go to profile for verification - delegate to parent
+  const handleGoToProfile = () => {
+    if (onGoToProfile) {
+      onGoToProfile();
+    }
+  };
 
   // Process images - handle both new and legacy formats with memoization
   const images = useMemo(() => {
@@ -41,21 +96,21 @@ const ItemDetailView = ({ item, onBack }) => {
   const getDownpaymentDisplay = () => {
     const downpaymentValue = item.downpayment;
     const priceValue = item.price;
-    
+
     // Check if downpayment exists and is greater than 0
     if (!downpaymentValue || parseFloat(downpaymentValue) <= 0) {
       return null;
     }
-    
+
     const amount = parseFloat(downpaymentValue);
     const price = parseFloat(priceValue);
-    
+
     // Calculate percentage if we have both values
     const percentage = price > 0 ? Math.round((amount / price) * 100) : 0;
-    
+
     return {
       amount: `₱${amount.toFixed(2)}`,
-      percentage: percentage > 0 ? `${percentage}%` : null
+      percentage: percentage > 0 ? `${percentage}%` : null,
     };
   };
 
@@ -78,7 +133,6 @@ const ItemDetailView = ({ item, onBack }) => {
     customTerms: item.customTerms,
     postedDate: getPostedDate(item),
     createdAt: item.createdAt,
-    availability: item.availability || "Available",
   };
 
   return (
@@ -98,9 +152,7 @@ const ItemDetailView = ({ item, onBack }) => {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mt-2">
           {/* Image Gallery Panel */}
           <div className="bg-white border border-gray-200 rounded-lg p-4 lg:col-span-2 flex flex-col">
-            <div
-              className="relative h-64 md:h-80 bg-gray-100 rounded flex items-center justify-center overflow-hidden"
-            >
+            <div className="relative h-64 md:h-80 bg-gray-100 rounded flex items-center justify-center overflow-hidden">
               {/* Loading indicator */}
               {(carousel.isTransitioning || !carousel.imageLoaded) && (
                 <div className="absolute inset-0 flex items-center justify-center bg-gray-100 z-10">
@@ -119,7 +171,9 @@ const ItemDetailView = ({ item, onBack }) => {
                 src={images[carousel.currentImage]}
                 alt={itemData.name}
                 className={`w-full h-full object-contain transition-opacity duration-300 ease-in-out ${
-                  carousel.isTransitioning || !carousel.imageLoaded ? 'opacity-0' : 'opacity-100'
+                  carousel.isTransitioning || !carousel.imageLoaded
+                    ? "opacity-0"
+                    : "opacity-100"
                 }`}
                 onLoad={() => {
                   // This ensures the image is visible once it's fully loaded
@@ -128,7 +182,10 @@ const ItemDetailView = ({ item, onBack }) => {
                   }
                 }}
                 onError={() => {
-                  console.error('Failed to load image:', images[carousel.currentImage]);
+                  console.error(
+                    "Failed to load image:",
+                    images[carousel.currentImage]
+                  );
                 }}
               />
 
@@ -137,8 +194,8 @@ const ItemDetailView = ({ item, onBack }) => {
                 <button
                   className={`absolute left-2 top-1/2 -translate-y-1/2 bg-white/90 hover:bg-white text-[#6C4BF4] rounded-full p-2 shadow transition-all duration-200 z-30 ${
                     carousel.isTransitioning || !carousel.imageLoaded
-                      ? 'opacity-50 cursor-not-allowed' 
-                      : 'hover:scale-110 hover:shadow-lg'
+                      ? "opacity-50 cursor-not-allowed"
+                      : "hover:scale-110 hover:shadow-lg"
                   }`}
                   onClick={(e) => {
                     e.preventDefault();
@@ -163,8 +220,8 @@ const ItemDetailView = ({ item, onBack }) => {
                 <button
                   className={`absolute right-2 top-1/2 -translate-y-1/2 bg-white/90 hover:bg-white text-[#6C4BF4] rounded-full p-2 shadow transition-all duration-200 z-30 ${
                     carousel.isTransitioning || !carousel.imageLoaded
-                      ? 'opacity-50 cursor-not-allowed'
-                      : 'hover:scale-110 hover:shadow-lg'
+                      ? "opacity-50 cursor-not-allowed"
+                      : "hover:scale-110 hover:shadow-lg"
                   }`}
                   onClick={(e) => {
                     e.preventDefault();
@@ -194,11 +251,19 @@ const ItemDetailView = ({ item, onBack }) => {
                     onClick={(e) => {
                       e.preventDefault();
                       e.stopPropagation();
-                      if (!carousel.isTransitioning && carousel.imageLoaded && idx !== carousel.currentImage) {
+                      if (
+                        !carousel.isTransitioning &&
+                        carousel.imageLoaded &&
+                        idx !== carousel.currentImage
+                      ) {
                         carousel.goToImage(idx);
                       }
                     }}
-                    disabled={carousel.isTransitioning || !carousel.imageLoaded || carousel.currentImage === idx}
+                    disabled={
+                      carousel.isTransitioning ||
+                      !carousel.imageLoaded ||
+                      carousel.currentImage === idx
+                    }
                     className={`h-2.5 w-2.5 rounded-full transition-all duration-300 ${
                       carousel.currentImage === idx
                         ? "bg-[#6C4BF4] scale-110"
@@ -280,26 +345,24 @@ const ItemDetailView = ({ item, onBack }) => {
               )}
             </div>
 
-            <div className="text-sm text-gray-700">
-              <span className="font-medium">Availability:</span>
-              <span
-                className={`ml-2 px-2 py-1 rounded-full text-xs ${
-                  itemData.availability === "Available"
-                    ? "bg-green-100 text-green-700"
-                    : "bg-yellow-100 text-yellow-700"
-                }`}
-              >
-                {itemData.availability}
-              </span>
-            </div>
-
             <div className="mt-4 flex gap-2">
-              <button className="flex-1 bg-[#6C4BF4] hover:bg-[#7857FD] text-white font-semibold rounded py-2 transition-colors">
-                RENT NOW
-              </button>
-              <button className="bg-[#6C4BF4] hover:bg-[#7857FD] text-white rounded py-2 px-3 transition-colors">
-                <IoChatbubbleOutline className="w-5 h-5" />
-              </button>
+              {!isOwnItem ? (
+                <>
+                  <button
+                    onClick={handleRentClick}
+                    className="flex-1 bg-[#6C4BF4] hover:bg-[#7857FD] text-white font-semibold rounded py-2 transition-colors"
+                  >
+                    RENT NOW
+                  </button>
+                  <button className="bg-[#6C4BF4] hover:bg-[#7857FD] text-white rounded py-2 px-3 transition-colors">
+                    <IoChatbubbleOutline className="w-5 h-5" />
+                  </button>
+                </>
+              ) : (
+                <div className="flex-1 bg-gray-100 text-gray-500 font-semibold rounded py-2 text-center">
+                  This is your item
+                </div>
+              )}
             </div>
           </div>
         </div>
@@ -385,7 +448,7 @@ const ItemDetailView = ({ item, onBack }) => {
                       month: "long",
                       day: "numeric",
                       hour: "2-digit",
-                      minute: "2-digit"
+                      minute: "2-digit",
                     })}
                   </span>
                 </div>

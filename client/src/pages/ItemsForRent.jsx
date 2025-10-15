@@ -1,6 +1,9 @@
 import { useState, useContext, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { IoSearch } from "react-icons/io5";
 //import { UserContext } from "../context/userContext";
+import { AuthContext } from "../context/authContext";
+import { useModal } from "../context/modalContext";
 import Sidebar from "../components/Sidebar";
 import SearchFilterSection from "../components/SearchFilterSection";
 import ItemList from "../components/ItemList";
@@ -9,6 +12,9 @@ import ItemDetailView from "../components/ItemDetailView";
 
 const ItemsForRent = () => {
   //const { getAllItems } = useContext(UserContext);
+  const { user } = useContext(AuthContext);
+  const { openVerificationRequiredModal } = useModal();
+  const navigate = useNavigate();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [filters, setFilters] = useState({});
   const [selectedItem, setSelectedItem] = useState(null);
@@ -16,12 +22,23 @@ const ItemsForRent = () => {
 
   const toggleSidebar = () => setSidebarOpen(!sidebarOpen);
 
-  // Placeholder handlers for actions
+  // Simplified handlers
+  const handleRentClick = () => {
+    // Check if user is verified
+    if (!user?.isVerified) {
+      openVerificationRequiredModal(handleGoToProfile);
+    } else {
+      // Navigate to rental flow page
+      navigate(`/rental-flow/${selectedItem._id}`);
+    }
+  };
+
+  const handleGoToProfile = () => {
+    navigate("/profile?section=verification");
+  };
+
   const handleView = (item) => {
     setSelectedItem(item);
-  };
-  const handleRent = (item) => {
-    console.log("Rent item", item);
   };
 
   const handleBack = () => setSelectedItem(null);
@@ -62,14 +79,17 @@ const ItemsForRent = () => {
           {/* Main body: list or detail */}
           <div className="py-2">
             {selectedItem ? (
-              <ItemDetailView item={selectedItem} onBack={handleBack} />
+              <ItemDetailView
+                item={selectedItem}
+                onBack={handleBack}
+                onRentClick={handleRentClick}
+                onGoToProfile={handleGoToProfile}
+              />
             ) : (
               <ItemList
                 title=""
                 showSeeMore={false}
-                showActions
-                onView={handleView}
-                onRent={handleRent}
+                showActions={false}
                 onCardClick={handleView}
                 compact
                 filters={filters}
