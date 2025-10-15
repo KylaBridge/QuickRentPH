@@ -10,6 +10,7 @@ import {
   IoCheckmarkCircle,
 } from "react-icons/io5";
 import { AuthContext } from "../context/authContext";
+import { useRental } from "../context/rentalContext";
 import { getImageUrl } from "../utils/imageUtils";
 
 const RentalFlow = () => {
@@ -17,6 +18,7 @@ const RentalFlow = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { user } = useContext(AuthContext);
+  const { createRental } = useRental();
 
   // Get item from navigation state or set to null if not provided
   const [item, setItem] = useState(location.state?.item || null);
@@ -170,20 +172,35 @@ const RentalFlow = () => {
     setIsSubmitting(true);
 
     try {
-      // TODO: Submit rental request to backend
-      console.log("Submitting rental request:", {
-        item: item,
-        formData: formData,
-        costBreakdown: costBreakdown,
-      });
+      // Build multipart form data
+      const fd = new FormData();
+      fd.append("item", item._id || itemId);
+      fd.append("contactName", formData.name);
+      fd.append("phone", formData.phone);
+      fd.append("email", formData.email);
+      fd.append("completeAddress", formData.completeAddress);
+      fd.append("addressLine1", formData.addressLine1 || "");
+      fd.append("city", formData.city || "");
+      fd.append("stateProvince", formData.stateProvince || "");
+      fd.append("preferredStartDate", formData.preferredStartDate);
+      fd.append("durationOfRent", formData.durationOfRent);
+      fd.append("reasonForRenting", formData.reasonForRenting);
+      fd.append(
+        "idCollectionAgreed",
+        formData.idCollectionAgreed ? "true" : "false"
+      );
+      if (formData.validId) fd.append("validId", formData.validId);
+      if (formData.selfieWithId)
+        fd.append("selfieWithId", formData.selfieWithId);
+      if (formData.proofOfBilling)
+        fd.append("proofOfBilling", formData.proofOfBilling);
 
-      // Simulate API call
-      await new Promise((resolve) => setTimeout(resolve, 2000));
+      const result = await createRental(fd);
 
-      // Navigate to confirmation or my-requests page
       navigate("/my-requests", {
         state: {
           message:
+            result?.message ||
             "Rental request submitted successfully! Wait for the owner's approval.",
         },
       });

@@ -1,8 +1,91 @@
-import React from "react";
-import { IoClose } from "react-icons/io5";
+import React, { useMemo } from "react";
+import { IoClose, IoChevronBack, IoChevronForward } from "react-icons/io5";
+import { getImageUrl } from "../../utils/imageUtils";
+import { useImageCarousel } from "../../hooks/useImageCarousel";
 
 const RequestDetailsModal = ({ isOpen, onClose, request, getActionButton }) => {
   if (!isOpen || !request) return null;
+
+  const ownerDisplay =
+    request.owner && typeof request.owner === "object"
+      ? request.owner.firstName
+        ? `${request.owner.firstName} ${request.owner.lastName}`
+        : request.owner.username || request.owner._id || "Owner"
+      : request.owner || "Owner";
+
+  // Build images array (support populated item.images, request.images, single image fields)
+  const rawImages = useMemo(() => {
+    if (
+      request.item &&
+      Array.isArray(request.item.images) &&
+      request.item.images.length
+    )
+      return request.item.images;
+    if (Array.isArray(request.images) && request.images.length)
+      return request.images;
+    if (request.image) return [request.image];
+    if (request.itemImage) return [request.itemImage];
+    return [];
+  }, [request]);
+
+  const images = useMemo(
+    () =>
+      rawImages.map((img) => (img ? getImageUrl(img) : null)).filter(Boolean),
+    [rawImages]
+  );
+
+  const {
+    currentImage,
+    imageLoaded,
+    goToPrev,
+    goToNext,
+    hasMultipleImages,
+    totalImages,
+  } = useImageCarousel(images);
+
+  const imageSrc = images.length > 0 ? images[currentImage] : null;
+
+  const itemName = request.item?.name || request.itemName || "Requested Item";
+  const description = request.item?.description || request.description || "";
+
+  // Duration and dates
+  const duration = request.durationOfRent || request.duration || 1;
+  let startDate = null;
+  let endDate = null;
+  let dateRange = "";
+  if (request.preferredStartDate) {
+    startDate = new Date(request.preferredStartDate);
+    endDate = new Date(startDate);
+    endDate.setDate(startDate.getDate() + Math.max(0, Number(duration) - 1));
+    const fmt = (d) => d.toLocaleDateString();
+    dateRange = `${fmt(startDate)} - ${fmt(endDate)}`;
+  } else if (request.dateRange) {
+    dateRange = request.dateRange;
+  }
+
+  // Fees
+  const rentalFeeValue =
+    (request.cost && request.cost.subtotal) ||
+    (request.item && request.item.price && duration
+      ? Number(request.item.price) * Number(duration)
+      : null) ||
+    request.rentalFee ||
+    0;
+
+  const totalValue =
+    (request.cost && request.cost.total) || request.totalAmount || 0;
+
+  const formatCurrency = (v) => {
+    if (v == null) return "-";
+    try {
+      return new Intl.NumberFormat("en-PH", {
+        style: "currency",
+        currency: "PHP",
+      }).format(Number(v));
+    } catch (e) {
+      return `₱${Number(v).toFixed(2)}`;
+    }
+  };
 
   return (
     <div
@@ -28,45 +111,82 @@ const RequestDetailsModal = ({ isOpen, onClose, request, getActionButton }) => {
 
         <div className="p-6 space-y-6">
           {/* Item Image */}
-          <div className="h-64 bg-gray-200 rounded-lg overflow-hidden">
-            <img
-              src={request.image}
-              alt={request.itemName}
-              className="w-full h-full object-cover"
-              onError={(e) => {
-                e.target.src =
-                  "data:image/svg+xml,%3Csvg width='300' height='200' xmlns='http://www.w3.org/2000/svg'%3E%3Crect width='100%25' height='100%25' fill='%23f3f4f6'/%3E%3Ctext x='50%25' y='50%25' dominant-baseline='middle' text-anchor='middle' fill='%236b7280'%3ENo Image%3C/text%3E%3C/svg%3E";
-              }}
-            />
+          <div className="relative h-64 bg-gray-200 rounded-lg overflow-hidden">
+            {imageSrc ? (
+              <img
+                src={imageSrc}
+                alt={itemName}
+                className={`w-full h-full object-cover transition-opacity duration-200 ${
+                  imageLoaded ? "opacity-100" : "opacity-0"
+                }`}
+                onError={(e) => {
+                  e.target.src =
+                    "data:image/svg+xml,%3Csvg width='300' height='200' xmlns='http://www.w3.org/2000/svg'%3E%3Crect width='100%25' height='100%25' fill='%23f3f4f6'/%3E%3Ctext x='50%25' y='50%25' dominant-baseline='middle' text-anchor='middle' fill='%236b7280'%3ENo Image%3C/text%3E%3C/svg%3E";
+                }}
+              />
+            ) : (
+              <div className="w-full h-full flex items-center justify-center text-gray-500">
+                No Image
+              </div>
+            )}
+
+            {hasMultipleImages && (
+              <>
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    goToPrev();
+                  }}
+                  className="absolute left-2 top-1/2 -translate-y-1/2 bg-white/80 text-gray-800 rounded-full p-2 shadow"
+                >
+                  <IoChevronBack className="w-5 h-5" />
+                </button>
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    goToNext();
+                  }}
+                  className="absolute right-2 top-1/2 -translate-y-1/2 bg-white/80 text-gray-800 rounded-full p-2 shadow"
+                >
+                  <IoChevronForward className="w-5 h-5" />
+                </button>
+
+                <div className="absolute bottom-2 left-1/2 -translate-x-1/2 bg-white/80 text-xs text-gray-800 px-2 py-1 rounded">
+                  {currentImage + 1} / {totalImages}
+                </div>
+              </>
+            )}
           </div>
 
           {/* Item Details */}
           <div className="space-y-4">
             <div>
               <h4 className="text-lg font-semibold text-gray-900">
-                [{request.owner}] {request.itemName}
+                [{ownerDisplay}] {itemName}
               </h4>
-              <p className="text-gray-600">{request.description}</p>
+              <p className="text-gray-600">{description}</p>
             </div>
 
             <div className="grid grid-cols-2 gap-4 text-sm">
               <div>
                 <span className="font-medium text-gray-700">Duration:</span>
-                <p className="text-gray-600">{request.duration}</p>
+                <p className="text-gray-600">{duration} day(s)</p>
               </div>
               <div>
                 <span className="font-medium text-gray-700">
                   Rental Period:
                 </span>
-                <p className="text-gray-600">{request.dateRange}</p>
+                <p className="text-gray-600">{dateRange || "TBD"}</p>
               </div>
               <div>
                 <span className="font-medium text-gray-700">Rental Fee:</span>
-                <p className="text-gray-600">{request.rentalFee}</p>
+                <p className="text-gray-600">
+                  {formatCurrency(rentalFeeValue)}
+                </p>
               </div>
               <div>
                 <span className="font-medium text-gray-700">Total Amount:</span>
-                <p className="text-gray-600">{request.totalAmount}</p>
+                <p className="text-gray-600">{formatCurrency(totalValue)}</p>
               </div>
             </div>
 
@@ -76,10 +196,22 @@ const RequestDetailsModal = ({ isOpen, onClose, request, getActionButton }) => {
                 Status Timeline
               </h5>
               <div className="space-y-2 text-sm">
-                <div className="flex items-center gap-2">
-                  <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-                  <span>Request Submitted</span>
-                </div>
+                {request.status === "cancelled" ? (
+                  <div className="flex items-center gap-2">
+                    <div className="w-2 h-2 bg-red-500 rounded-full"></div>
+                    <span>
+                      Request Cancelled
+                      {request.cancelledDate
+                        ? ` • ${request.cancelledDate}`
+                        : ""}
+                    </span>
+                  </div>
+                ) : (
+                  <div className="flex items-center gap-2">
+                    <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                    <span>Request Submitted</span>
+                  </div>
+                )}
                 {request.approvedDate && (
                   <div className="flex items-center gap-2">
                     <div className="w-2 h-2 bg-green-500 rounded-full"></div>
@@ -108,7 +240,7 @@ const RequestDetailsModal = ({ isOpen, onClose, request, getActionButton }) => {
             </div>
           </div>
 
-          {/* Action Button in Modal */}
+          {/* Action Button in Modal - keep modal-level actions local to avoid cross-component render helpers */}
           <div className="flex justify-end space-x-3">
             <button
               onClick={onClose}
@@ -116,7 +248,6 @@ const RequestDetailsModal = ({ isOpen, onClose, request, getActionButton }) => {
             >
               Close
             </button>
-            {getActionButton && getActionButton(request)}
           </div>
         </div>
       </div>

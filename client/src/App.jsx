@@ -21,6 +21,7 @@ import ProductManagement from "./pages/admin/ProductManagement.jsx";
 import { UserProvider } from "./context/userContext.jsx";
 import { ModalProvider, useModal } from "./context/modalContext.jsx";
 import { WishlistProvider } from "./context/wishlistContext.jsx";
+import { RentalProvider } from "./context/rentalContext.jsx";
 import VerificationRequiredModal from "./components/modals/VerificationRequiredModal.jsx";
 import AccountVerificationModal from "./components/modals/AccountVerificationModal.jsx";
 import AddressEditorModal from "./components/modals/AddressEditorModal.jsx";
@@ -64,137 +65,139 @@ function App() {
   return (
     <ModalProvider>
       <WishlistProvider>
-        <Routes>
-          <Route path="/" element={<Navigate to="/landing" replace />} />
+        <RentalProvider>
+          <Routes>
+            <Route path="/" element={<Navigate to="/landing" replace />} />
 
-          <Route path="/landing" element={<LandingPage />} />
-          <Route path="/login" element={<LoginPage />} />
-          <Route path="/signup" element={<SignUpPage />} />
-          <Route path="/reset-password" element={<ResetPassword />} />
-          <Route
-            path="/dashboard"
-            element={
-              <ProtectedRoute>
-                <Dashboard />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/items-for-rent"
-            element={
-              <ProtectedRoute>
-                <ItemsForRent />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/rental-flow/:itemId"
-            element={
-              <ProtectedRoute>
-                <UserProvider>
-                  <RentalFlow />
-                </UserProvider>
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/my-requests"
-            element={
-              <ProtectedRoute>
-                <MyRequests />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/my-wishlist"
-            element={
-              <ProtectedRoute>
-                <MyWishlist />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/my-rentals"
-            element={
-              <ProtectedRoute>
-                <UserProvider>
-                  <MyRentals />
-                </UserProvider>
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/notifications"
-            element={
-              <ProtectedRoute>
-                <Notifications />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/messages"
-            element={
-              <ProtectedRoute>
-                <Messages />
-              </ProtectedRoute>
-            }
-          />
+            <Route path="/landing" element={<LandingPage />} />
+            <Route path="/login" element={<LoginPage />} />
+            <Route path="/signup" element={<SignUpPage />} />
+            <Route path="/reset-password" element={<ResetPassword />} />
+            <Route
+              path="/dashboard"
+              element={
+                <ProtectedRoute>
+                  <Dashboard />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/items-for-rent"
+              element={
+                <ProtectedRoute>
+                  <ItemsForRent />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/rental-flow/:itemId"
+              element={
+                <ProtectedRoute>
+                  <UserProvider>
+                    <RentalFlow />
+                  </UserProvider>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/my-requests"
+              element={
+                <ProtectedRoute>
+                  <MyRequests />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/my-wishlist"
+              element={
+                <ProtectedRoute>
+                  <MyWishlist />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/my-rentals"
+              element={
+                <ProtectedRoute>
+                  <UserProvider>
+                    <MyRentals />
+                  </UserProvider>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/notifications"
+              element={
+                <ProtectedRoute>
+                  <Notifications />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/messages"
+              element={
+                <ProtectedRoute>
+                  <Messages />
+                </ProtectedRoute>
+              }
+            />
 
-          <Route
-            path="/help"
-            element={
-              <ProtectedRoute>
-                <Help />
-              </ProtectedRoute>
-            }
-          />
+            <Route
+              path="/help"
+              element={
+                <ProtectedRoute>
+                  <Help />
+                </ProtectedRoute>
+              }
+            />
 
-          <Route
-            path="/profile"
-            element={
-              <ProtectedRoute>
-                <UserProvider>
-                  <Profile />
-                </UserProvider>
-              </ProtectedRoute>
-            }
-          />
+            <Route
+              path="/profile"
+              element={
+                <ProtectedRoute>
+                  <UserProvider>
+                    <Profile />
+                  </UserProvider>
+                </ProtectedRoute>
+              }
+            />
 
-          <Route
-            path="/additem"
-            element={
-              <ProtectedRoute>
-                <AddItem />
-              </ProtectedRoute>
-            }
-          />
+            <Route
+              path="/additem"
+              element={
+                <ProtectedRoute>
+                  <AddItem />
+                </ProtectedRoute>
+              }
+            />
 
-          {/* Admin Routes */}
-          <Route
-            path="/admin/dashboard"
-            element={
-              <AdminProtectedRoute>
-                <AdminDashboard />
-              </AdminProtectedRoute>
-            }
-          />
+            {/* Admin Routes */}
+            <Route
+              path="/admin/dashboard"
+              element={
+                <AdminProtectedRoute>
+                  <AdminDashboard />
+                </AdminProtectedRoute>
+              }
+            />
 
-          <Route
-            path="/admin/items"
-            element={
-              <AdminProtectedRoute>
-                <UserProvider>
-                  <ProductManagement />
-                </UserProvider>
-              </AdminProtectedRoute>
-            }
-          />
+            <Route
+              path="/admin/items"
+              element={
+                <AdminProtectedRoute>
+                  <UserProvider>
+                    <ProductManagement />
+                  </UserProvider>
+                </AdminProtectedRoute>
+              }
+            />
 
-          {/* Catch-all redirect for unknown routes */}
-          <Route path="*" element={<Navigate to="/" replace />} />
-        </Routes>
-        
-        <GlobalModals />
+            {/* Catch-all redirect for unknown routes */}
+            <Route path="*" element={<Navigate to="/" replace />} />
+          </Routes>
+
+          <GlobalModals />
+        </RentalProvider>
       </WishlistProvider>
     </ModalProvider>
   );

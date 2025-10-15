@@ -11,6 +11,7 @@ const authRoutes = require("./routes/authRoutes");
 const userRoutes = require("./routes/userRoutes");
 const itemRoutes = require("./routes/itemRoutes");
 const wishlistRoutes = require("./routes/wishlistRoutes");
+const rentalRoutes = require("./routes/rentalRoutes");
 
 // Middleware packages
 app.use("/user_items", express.static("user_items"));
@@ -30,6 +31,7 @@ app.use("/api/auth", authRoutes);
 app.use("/api/user", userRoutes);
 app.use("/api/items", itemRoutes);
 app.use("/api/wishlist", wishlistRoutes);
+app.use("/api/rentals", rentalRoutes);
 
 // The main shit
 mongoose

@@ -1,24 +1,20 @@
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import Sidebar from "../components/Sidebar";
 import PageHeader from "../components/PageHeader";
 import StatusTab from "../components/myRequests/StatusTab";
 import PaymentsTab from "../components/myRequests/PaymentsTab";
 import ReturnedTab from "../components/myRequests/ReturnedTab";
 import { usePagination } from "../hooks/usePagination";
+import { useRental } from "../context/rentalContext";
 
 const MyRequests = () => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [activeTab, setActiveTab] = useState("status");
 
-  // Mock data for pagination testing - replace with real API data
-  const mockStatusRequests = Array(25)
-    .fill(0)
-    .map((_, i) => ({
-      id: i + 1,
-      itemName: `Item ${i + 1}`,
-      owner: `user${i + 1}`,
-      status: ["pending", "approved", "shipped", "pending_return"][i % 4],
-    }));
+  const { getUserRentals } = useRental();
+  const [statusRequests, setStatusRequests] = useState([]);
+  const [loadingRequests, setLoadingRequests] = useState(false);
+  const [requestsError, setRequestsError] = useState(null);
 
   const mockPayments = Array(20)
     .fill(0)
@@ -38,18 +34,59 @@ const MyRequests = () => {
     }));
 
   // Pagination setup - reduced items per page for better UX
-  const statusPagination = usePagination(mockStatusRequests, 4);
+  const statusPagination = usePagination(statusRequests, 4);
   const paymentsPagination = usePagination(mockPayments, 10);
   const returnsPagination = usePagination(mockReturns, 4);
 
   const toggleSidebar = () => setSidebarOpen(!sidebarOpen);
 
+  const isMounted = useRef(true);
+
+  const loadRequests = async () => {
+    setLoadingRequests(true);
+    setRequestsError(null);
+    try {
+      const resp = await getUserRentals();
+      if (!isMounted.current) return;
+      setStatusRequests(resp.rentals || []);
+    } catch (err) {
+      if (!isMounted.current) return;
+      setRequestsError(
+        err?.response?.data?.error || err.message || "Failed to load requests"
+      );
+    } finally {
+      if (isMounted.current) setLoadingRequests(false);
+    }
+  };
+
+  useEffect(() => {
+    isMounted.current = true;
+    loadRequests();
+    return () => {
+      isMounted.current = false;
+    };
+  }, [getUserRentals]);
+
+  const handleUpdateRequest = async (requestId, action) => {
+    // simple approach: re-fetch the list after an update
+    await loadRequests();
+  };
+
   const tabContent = {
-    status: (
+    status: loadingRequests ? (
+      <div className="flex-1 flex items-center justify-center">
+        Loading requests...
+      </div>
+    ) : requestsError ? (
+      <div className="flex-1 flex items-center justify-center text-red-500">
+        {requestsError}
+      </div>
+    ) : (
       <StatusTab
         userRequests={statusPagination.currentItems}
         pagination={statusPagination}
         itemsPerPage={4}
+        onUpdateRequest={handleUpdateRequest}
       />
     ),
     payments: (
