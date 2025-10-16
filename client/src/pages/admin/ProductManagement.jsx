@@ -15,6 +15,10 @@ import AdminSidebar from "../../components/admin/AdminSidebar";
 import AdminHeader from "../../components/admin/AdminHeader";
 import { UserContext } from "../../context/userContext";
 import { getImageUrl } from "../../utils/imageUtils";
+import {
+  quickRateCalculation,
+  formatCurrency,
+} from "../../utils/rentalCalculations";
 
 const ProductManagement = () => {
   const { getAllItems } = useContext(UserContext);
@@ -387,7 +391,21 @@ const ProductManagement = () => {
                           {item.location || "Not specified"}
                         </td>
                         <td className="px-6 py-4 text-sm text-gray-900">
-                          ₱{item.price}/day
+                          <div className="flex flex-col">
+                            <span className="text-gray-600 text-xs">
+                              Base: ₱{item.price}/day
+                            </span>
+                            <span className="font-medium">
+                              Final:{" "}
+                              {(() => {
+                                const finalPrice = quickRateCalculation(
+                                  item.price
+                                ).finalRate;
+                                return formatCurrency(finalPrice, true);
+                              })()}{" "}
+                              /day
+                            </span>
+                          </div>
                         </td>
                         <td className="px-6 py-4">
                           <div className="flex items-center space-x-2">

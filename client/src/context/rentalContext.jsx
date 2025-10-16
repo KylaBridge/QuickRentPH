@@ -17,6 +17,11 @@ export const RentalProvider = ({ children }) => {
     return resp.data;
   };
 
+  const getOwnerRentals = async () => {
+    const resp = await api.get("/api/rentals/owner");
+    return resp.data;
+  };
+
   const getRental = async (id) => {
     const resp = await api.get(`/api/rentals/${id}`);
     return resp.data;
@@ -32,14 +37,24 @@ export const RentalProvider = ({ children }) => {
     return resp.data;
   };
 
+  const updateRentalStatus = async (id, status, reason = null) => {
+    const resp = await api.patch(`/api/rentals/${id}/status`, {
+      status,
+      reason,
+    });
+    return resp.data;
+  };
+
   return (
     <RentalContext.Provider
       value={{
         createRental,
         getUserRentals,
+        getOwnerRentals,
         getRental,
         cancelRental,
         deleteRental,
+        updateRentalStatus,
       }}
     >
       {children}

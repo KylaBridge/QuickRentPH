@@ -5,8 +5,10 @@ const {
   createRental,
   getRentalById,
   getUserRentals,
+  getOwnerRentals,
   cancelRental,
   deleteRental,
+  updateRentalStatus,
 } = require("../controllers/rentalController");
 const { idUpload } = require("../helpers/multer");
 
@@ -19,7 +21,9 @@ const uploadFields = idUpload.fields([
 
 router.post("/", requireAuth, uploadFields, createRental);
 router.get("/", requireAuth, getUserRentals);
+router.get("/owner", requireAuth, getOwnerRentals);
 router.get("/:id", requireAuth, getRentalById);
+router.patch("/:id/status", requireAuth, updateRentalStatus);
 router.patch("/:id/cancel", requireAuth, cancelRental);
 router.delete("/:id", requireAuth, deleteRental);
 

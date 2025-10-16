@@ -1,4 +1,8 @@
 import Pagination from "../Pagination";
+import {
+  quickRateCalculation,
+  formatCurrency,
+} from "../../utils/rentalCalculations";
 
 const RemovedTab = ({
   removedItems,
@@ -46,9 +50,13 @@ const RemovedTab = ({
                 {item.category}
               </div>
               <div className="col-span-1.5 text-sm text-center text-black">
-                {`₱${parseFloat(item.price.replace(/[^0-9.]/g, "")).toFixed(
-                  2
-                )}`}
+                {(() => {
+                  const priceStr = item.price.toString();
+                  const basePrice =
+                    parseFloat(priceStr.replace(/[^0-9.]/g, "")) || 0;
+                  const finalPrice = quickRateCalculation(basePrice).finalRate;
+                  return formatCurrency(finalPrice, true);
+                })()}
               </div>
               <div className="col-span-1.5 text-center flex justify-center space-x-4">
                 <button

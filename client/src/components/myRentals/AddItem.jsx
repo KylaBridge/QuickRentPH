@@ -1,4 +1,4 @@
-import React, { useRef, useState, useContext } from "react";
+import React, { useRef, useState, useContext, useMemo } from "react";
 import { UserContext } from "../../context/userContext";
 import { CATEGORIES, DEAL_OPTIONS } from "../../constants/categories";
 import { useFormData } from "../../hooks/useFormData";
@@ -14,6 +14,10 @@ import {
   getSizePlaceholder,
   DEFAULT_TERMS,
 } from "../../utils/placeholderUtils";
+import {
+  quickRateCalculation,
+  formatCurrency,
+} from "../../utils/rentalCalculations";
 import gcashLogo from "../../assets/GCash-Logo.png";
 import paymayaLogo from "../../assets/paymaya-logo.png";
 
@@ -87,6 +91,11 @@ const AddItem = ({ onClose, onSuccess, editingItem = null }) => {
     formData.price
   );
   const sizePlaceholder = getSizePlaceholder(formData.category);
+
+  // Calculate rate with tax for display (using centralized calculations)
+  const rateCalculation = useMemo(() => {
+    return quickRateCalculation(formData.price);
+  }, [formData.price]);
 
   // Form submission handler
   const handleCreate = async (e) => {
@@ -320,7 +329,9 @@ const AddItem = ({ onClose, onSuccess, editingItem = null }) => {
                         <button
                           type="button"
                           className="bg-white text-gray-800 px-3 py-1 rounded font-semibold mb-1 text-xs shadow"
-                          onClick={() => replaceInputRefs.current[startIdx + idx]?.click()}
+                          onClick={() =>
+                            replaceInputRefs.current[startIdx + idx]?.click()
+                          }
                         >
                           Replace
                         </button>
@@ -335,7 +346,9 @@ const AddItem = ({ onClose, onSuccess, editingItem = null }) => {
                           type="file"
                           accept="image/*"
                           className="hidden"
-                          ref={(el) => (replaceInputRefs.current[startIdx + idx] = el)}
+                          ref={(el) =>
+                            (replaceInputRefs.current[startIdx + idx] = el)
+                          }
                           onChange={(e) => {
                             const file = e.target.files?.[0];
                             if (file) handleReplace(startIdx + idx, file);
@@ -449,8 +462,7 @@ const AddItem = ({ onClose, onSuccess, editingItem = null }) => {
             <div className="flex gap-2 mb-2">
               <div className="flex-1">
                 <label className="block text-xs font-medium mb-1">
-                  Downpayment required (%){" "}
-                  <span className="text-red-600">*</span>
+                  Deposit required (%) <span className="text-red-600">*</span>
                 </label>
                 <div className="relative">
                   <input
@@ -592,7 +604,7 @@ const AddItem = ({ onClose, onSuccess, editingItem = null }) => {
             <div className="flex gap-4 mb-2">
               <div className="flex-1">
                 <label className="block text-xs font-medium mb-1">
-                  Item Price <span className="text-red-600">*</span>
+                  Base Price (per day) <span className="text-red-600">*</span>
                 </label>
                 <div className="flex items-center rounded-md border border-gray-300 px-2">
                   <span className="text-gray-500">₱</span>
@@ -607,6 +619,34 @@ const AddItem = ({ onClose, onSuccess, editingItem = null }) => {
                     onBlur={validatePriceInput}
                   />
                 </div>
+
+                {/* Tax Calculation Display */}
+                {formData.price && parseFloat(formData.price) > 0 && (
+                  <div className="mt-1 p-2 bg-blue-50 rounded-md border border-blue-200">
+                    <div className="text-xs space-y-1">
+                      <div className="flex justify-between">
+                        <span className="text-gray-600">Base Rate:</span>
+                        <span className="font-medium">
+                          {rateCalculation.formattedBase}
+                        </span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-gray-600">Tax (12%):</span>
+                        <span className="font-medium text-orange-600">
+                          +{rateCalculation.formattedTax}
+                        </span>
+                      </div>
+                      <div className="flex justify-between border-t border-blue-300 pt-1">
+                        <span className="font-semibold text-gray-800">
+                          Final Price (shown to renters):
+                        </span>
+                        <span className="font-bold text-blue-600">
+                          {rateCalculation.formattedFinal}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                )}
               </div>
 
               <div className="flex-1">

@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { IoClose } from "react-icons/io5";
+import { formatCurrency } from "../../utils/rentalCalculations";
 
 const PaymentModal = ({ isOpen, onClose, request, onPaymentConfirm }) => {
   const [paymentMethod, setPaymentMethod] = useState("gcash");
@@ -54,11 +55,37 @@ const PaymentModal = ({ isOpen, onClose, request, onPaymentConfirm }) => {
               </div>
               <div className="flex justify-between">
                 <span className="text-gray-600">Rental Fee:</span>
-                <span>{request.rentalFee}</span>
+                <span>
+                  {(() => {
+                    const fee = request.rentalFee;
+                    if (typeof fee === "string" && fee.includes("₱")) {
+                      const numericValue = parseFloat(
+                        fee.replace(/[^0-9.]/g, "")
+                      );
+                      return formatCurrency(numericValue);
+                    } else if (typeof fee === "number") {
+                      return formatCurrency(fee);
+                    }
+                    return fee;
+                  })()}
+                </span>
               </div>
               <div className="border-t pt-1 mt-2 flex justify-between font-medium">
                 <span>Total Amount:</span>
-                <span className="text-green-600">{request.totalAmount}</span>
+                <span className="text-green-600">
+                  {(() => {
+                    const total = request.totalAmount;
+                    if (typeof total === "string" && total.includes("₱")) {
+                      const numericValue = parseFloat(
+                        total.replace(/[^0-9.]/g, "")
+                      );
+                      return formatCurrency(numericValue);
+                    } else if (typeof total === "number") {
+                      return formatCurrency(total);
+                    }
+                    return total;
+                  })()}
+                </span>
               </div>
             </div>
           </div>

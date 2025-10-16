@@ -118,6 +118,19 @@ const getUserRentals = async (req, res) => {
   }
 };
 
+// Get rental requests for items owned by the current user (for Reserved tab)
+const getOwnerRentals = async (req, res) => {
+  try {
+    const userId = req.userId;
+    const rentals = await Rental.find({ owner: userId })
+      .populate("item")
+      .populate("renter", "firstName lastName email phone createdAt");
+    res.status(200).json({ rentals });
+  } catch (error) {
+    res.status(400).json({ error: error.message });
+  }
+};
+
 // Mark a rental as cancelled. Allowed by the renter or the owner.
 const cancelRental = async (req, res) => {
   try {
@@ -230,10 +243,58 @@ const deleteRental = async (req, res) => {
   }
 };
 
+const updateRentalStatus = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { status, reason } = req.body;
+    const userId = req.userId;
+
+    if (!id) return res.status(400).json({ error: "Rental id is required" });
+    if (!mongoose.Types.ObjectId.isValid(id))
+      return res.status(400).json({ error: "Invalid rental id" });
+
+    const rental = await Rental.findById(id).populate("item");
+    if (!rental) return res.status(404).json({ error: "Rental not found" });
+
+    // Only the item owner can update rental status
+    if (rental.item.owner.toString() !== userId.toString()) {
+      return res
+        .status(403)
+        .json({ error: "Not authorized to update this rental" });
+    }
+
+    // Valid status transitions
+    const validStatuses = [
+      "pending_review",
+      "approved",
+      "rejected",
+      "in_progress",
+      "completed",
+      "cancelled",
+    ];
+    if (!validStatuses.includes(status)) {
+      return res.status(400).json({ error: "Invalid status" });
+    }
+
+    rental.status = status;
+    if (reason) {
+      rental.rejectionReason = reason;
+    }
+
+    await rental.save();
+
+    res.status(200).json({ message: "Rental status updated", rental });
+  } catch (error) {
+    res.status(400).json({ error: error.message });
+  }
+};
+
 module.exports = {
   createRental,
   getRentalById,
   getUserRentals,
+  getOwnerRentals,
   cancelRental,
   deleteRental,
+  updateRentalStatus,
 };

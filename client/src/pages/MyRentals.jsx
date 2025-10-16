@@ -1,10 +1,12 @@
 import { useState, useContext, useEffect } from "react";
 import { UserContext } from "../context/userContext";
+import { useRental } from "../context/rentalContext";
 import { usePagination } from "../hooks/usePagination";
 import Sidebar from "../components/Sidebar";
 import PageHeader from "../components/PageHeader";
 import ItemsTab from "../components/myRentals/ItemsTab";
 import EarningsTab from "../components/myRentals/EarningsTab";
+import ReservedTab from "../components/myRentals/ReservedTab";
 import AddItem from "../components/myRentals/AddItem";
 
 // Custom Dropdown Component
@@ -61,6 +63,7 @@ const CustomDropdown = ({ label, options, onSelect, isOpen, onToggle }) => {
 
 const MyRentals = () => {
   const { getUserItems, deleteItem } = useContext(UserContext);
+  const { getOwnerRentals, updateRentalStatus } = useRental();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [activeTab, setActiveTab] = useState("items");
   const [showAddItem, setShowAddItem] = useState(false);
@@ -74,6 +77,11 @@ const MyRentals = () => {
     categories: "",
     availability: "",
   });
+
+  // State for reservations data
+  const [reservationsData, setReservationsData] = useState([]);
+  const [reservationsLoading, setReservationsLoading] = useState(true);
+  const [reservationsError, setReservationsError] = useState(null);
 
   // Fetch user items on component mount
   useEffect(() => {
@@ -93,6 +101,25 @@ const MyRentals = () => {
 
     fetchItems();
   }, [getUserItems]);
+
+  // Fetch owner rentals (reservations) on component mount
+  useEffect(() => {
+    const fetchReservations = async () => {
+      try {
+        setReservationsLoading(true);
+        const result = await getOwnerRentals();
+        setReservationsData(result.rentals || []);
+        setReservationsError(null);
+      } catch (error) {
+        setReservationsError(error);
+        setReservationsData([]);
+      } finally {
+        setReservationsLoading(false);
+      }
+    };
+
+    fetchReservations();
+  }, [getOwnerRentals]);
 
   // State for earnings data
   const [earningsData] = useState([
@@ -315,6 +342,7 @@ const MyRentals = () => {
   // Use pagination hooks - reduced items per page for better UX
   const itemsPagination = usePagination(filteredItems, 4);
   const earningsPagination = usePagination(earningsData, 5);
+  const reservationsPagination = usePagination(reservationsData, 4);
 
   // State for earnings status filter
   const [earningsStatusFilter, setEarningsStatusFilter] = useState("Status");
@@ -351,6 +379,45 @@ const MyRentals = () => {
     setShowAddItem(true);
   };
 
+  const handleUpdateReservation = async (
+    reservationId,
+    action,
+    reason = ""
+  ) => {
+    try {
+      setReservationsLoading(true);
+
+      let status;
+      switch (action) {
+        case "approve":
+          status = "approved";
+          break;
+        case "reject":
+          status = "rejected";
+          break;
+        default:
+          status = action; // For other direct status updates
+      }
+
+      await updateRentalStatus(reservationId, status, reason);
+
+      // Refresh the reservations data
+      const result = await getOwnerRentals();
+      setReservationsData(result.rentals || []);
+      setReservationsError(null);
+
+      console.log(`Reservation ${reservationId} updated to ${status}`);
+      if (reason) {
+        console.log(`Reason: ${reason}`);
+      }
+    } catch (error) {
+      console.error("Error updating reservation:", error);
+      setReservationsError(error);
+    } finally {
+      setReservationsLoading(false);
+    }
+  };
+
   const tabComponents = {
     items: (
       <ItemsTab
@@ -371,6 +438,22 @@ const MyRentals = () => {
         loading={itemsLoading}
         error={itemsError}
         onFilterChange={setItemsFilters}
+      />
+    ),
+    requests: (
+      <ReservedTab
+        userReservations={reservationsPagination.currentItems}
+        pagination={{
+          currentPage: reservationsPagination.currentPage,
+          totalPages: reservationsPagination.totalPages,
+          totalItems: reservationsPagination.totalItems,
+          startIndex: reservationsPagination.startIndex,
+          endIndex: reservationsPagination.endIndex,
+          goToPage: reservationsPagination.goToPage,
+        }}
+        onUpdateReservation={handleUpdateReservation}
+        loading={reservationsLoading}
+        itemsPerPage={4}
       />
     ),
     earnings: (
@@ -435,7 +518,7 @@ const MyRentals = () => {
                   )}
                 </button>
 
-                {/* Requests Tab */}
+                {/* Reserved Tab */}
                 <button
                   onClick={() => setActiveTab("requests")}
                   className={`relative ${

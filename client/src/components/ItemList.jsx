@@ -6,6 +6,10 @@ import { AuthContext } from "../context/authContext";
 import { useWishlist } from "../context/wishlistContext";
 import { filterAndSortItems, searchItems } from "../utils/itemUtils";
 import { getImageUrl } from "../utils/imageUtils";
+import {
+  quickRateCalculation,
+  formatCurrency,
+} from "../utils/rentalCalculations";
 import Toast from "./Toast";
 
 const ItemList = ({
@@ -88,10 +92,8 @@ const ItemList = ({
       renter: ownerDisplay,
       location: dbItem.location,
       title: dbItem.title || dbItem.name,
-      price: dbItem.price
-        ? `₱ ${parseFloat(dbItem.price).toFixed(0)}`
-        : dbItem.price,
-      originalPrice: dbItem.originalPrice || dbItem.price, // Keep original numeric price for filtering
+      price: dbItem.price, // Keep original price for fallback
+      basePrice: parseFloat(dbItem.price) || 0, // Store numeric base price for calculations
       period: dbItem.period || "day",
       rating: dbItem.rating || 5,
       image:
@@ -308,7 +310,14 @@ const ItemList = ({
                       <span
                         className={`${priceClasses} text-[#6C4BF4] font-poppins`}
                       >
-                        {item.price} / {item.period}
+                        {(() => {
+                          const basePrice =
+                            parseFloat(item.basePrice || item.price) || 0;
+                          const finalPrice =
+                            quickRateCalculation(basePrice).finalRate;
+                          return formatCurrency(finalPrice, true);
+                        })()}{" "}
+                        / {item.period}
                       </span>
                     </div>
 

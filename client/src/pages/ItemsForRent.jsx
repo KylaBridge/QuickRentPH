@@ -1,5 +1,5 @@
 import { useState, useContext, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { IoSearch } from "react-icons/io5";
 //import { UserContext } from "../context/userContext";
 import { AuthContext } from "../context/authContext";
@@ -13,12 +13,22 @@ const ItemsForRent = () => {
   //const { getAllItems } = useContext(UserContext);
   const { user } = useContext(AuthContext);
   const navigate = useNavigate();
+  const location = useLocation();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [filters, setFilters] = useState({});
   const [selectedItem, setSelectedItem] = useState(null);
   const [searchTerm, setSearchTerm] = useState("");
 
   const toggleSidebar = () => setSidebarOpen(!sidebarOpen);
+
+  // Check if we need to show a specific item from navigation state
+  useEffect(() => {
+    if (location.state?.viewItemId && location.state?.item) {
+      setSelectedItem(location.state.item);
+      // Clear the state so refreshing doesn't show the item again
+      navigate(location.pathname, { replace: true });
+    }
+  }, [location.state, location.pathname, navigate]);
 
   // Simplified handlers
   const handleRentClick = () => {

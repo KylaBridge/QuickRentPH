@@ -1,20 +1,25 @@
 import React, { useMemo } from "react";
-import { IoClose, IoChevronBack, IoChevronForward } from "react-icons/io5";
+import { useNavigate } from "react-router-dom";
+import {
+  IoClose,
+  IoChevronBack,
+  IoChevronForward,
+  IoEye,
+} from "react-icons/io5";
 import { getImageUrl } from "../../utils/imageUtils";
 import { useImageCarousel } from "../../hooks/useImageCarousel";
+import {
+  calculateRentalBreakdown,
+  formatCurrency as formatCurrencyUtil,
+  quickRateCalculation,
+} from "../../utils/rentalCalculations";
 
 const RequestDetailsModal = ({ isOpen, onClose, request, getActionButton }) => {
-  if (!isOpen || !request) return null;
-
-  const ownerDisplay =
-    request.owner && typeof request.owner === "object"
-      ? request.owner.firstName
-        ? `${request.owner.firstName} ${request.owner.lastName}`
-        : request.owner.username || request.owner._id || "Owner"
-      : request.owner || "Owner";
+  const navigate = useNavigate();
 
   // Build images array (support populated item.images, request.images, single image fields)
   const rawImages = useMemo(() => {
+    if (!request) return [];
     if (
       request.item &&
       Array.isArray(request.item.images) &&
@@ -43,13 +48,58 @@ const RequestDetailsModal = ({ isOpen, onClose, request, getActionButton }) => {
     totalImages,
   } = useImageCarousel(images);
 
+  // Duration and dates - calculate this before other useMemo hooks
+  const duration = request?.durationOfRent || request?.duration || 1;
+
+  // Calculate rental costs using centralized calculations
+  const rentalCalculation = useMemo(() => {
+    if (!request) return { subtotal: 0, total: 0 };
+
+    if (request.cost) {
+      // Use existing cost structure if available
+      return {
+        subtotal: request.cost.subtotal || 0,
+        total: request.cost.total || 0,
+      };
+    }
+
+    // Calculate using centralized logic
+    if (request.item?.price && duration) {
+      const basePrice = Number(request.item.price);
+      const days = Number(duration);
+      if (basePrice > 0 && days > 0) {
+        const finalPrice = quickRateCalculation(basePrice).finalRate;
+        const breakdown = calculateRentalBreakdown(finalPrice, days);
+        return {
+          subtotal: breakdown.totalRentalCost,
+          total: breakdown.totalAmountDue,
+        };
+      }
+    }
+
+    // Fallback values
+    return {
+      subtotal: request.rentalFee || 0,
+      total: request.totalAmount || 0,
+    };
+  }, [request, duration]);
+
+  // Early return AFTER all hooks are called
+  if (!isOpen || !request) return null;
+
+  const ownerDisplay =
+    request.owner && typeof request.owner === "object"
+      ? request.owner.firstName
+        ? `${request.owner.firstName} ${request.owner.lastName}`
+        : request.owner.username || request.owner._id || "Owner"
+      : request.owner || "Owner";
+
   const imageSrc = images.length > 0 ? images[currentImage] : null;
 
   const itemName = request.item?.name || request.itemName || "Requested Item";
   const description = request.item?.description || request.description || "";
 
   // Duration and dates
-  const duration = request.durationOfRent || request.duration || 1;
   let startDate = null;
   let endDate = null;
   let dateRange = "";
@@ -64,26 +114,26 @@ const RequestDetailsModal = ({ isOpen, onClose, request, getActionButton }) => {
   }
 
   // Fees
-  const rentalFeeValue =
-    (request.cost && request.cost.subtotal) ||
-    (request.item && request.item.price && duration
-      ? Number(request.item.price) * Number(duration)
-      : null) ||
-    request.rentalFee ||
-    0;
-
-  const totalValue =
-    (request.cost && request.cost.total) || request.totalAmount || 0;
+  const rentalFeeValue = rentalCalculation.subtotal;
+  const totalValue = rentalCalculation.total;
 
   const formatCurrency = (v) => {
     if (v == null) return "-";
-    try {
-      return new Intl.NumberFormat("en-PH", {
-        style: "currency",
-        currency: "PHP",
-      }).format(Number(v));
-    } catch (e) {
-      return `₱${Number(v).toFixed(2)}`;
+    return formatCurrencyUtil(v);
+  };
+
+  const handleViewItem = () => {
+    // Get the item ID from the request
+    const itemId = request.item?._id || request.item?.id || request.itemId;
+    if (itemId) {
+      onClose(); // Close the modal first
+      // Navigate to items-for-rent page and pass the item ID as state
+      navigate("/items-for-rent", {
+        state: {
+          viewItemId: itemId,
+          item: request.item,
+        },
+      });
     }
   };
 
@@ -242,6 +292,16 @@ const RequestDetailsModal = ({ isOpen, onClose, request, getActionButton }) => {
 
           {/* Action Button in Modal - keep modal-level actions local to avoid cross-component render helpers */}
           <div className="flex justify-end space-x-3">
+            {/* Show "View Item" button if the request is cancelled */}
+            {request.status === "cancelled" && (
+              <button
+                onClick={handleViewItem}
+                className="flex items-center gap-2 px-4 py-2 text-white bg-[#6C4BF4] rounded-lg hover:bg-[#5B3FD8] transition-colors duration-200 font-medium"
+              >
+                <IoEye className="w-4 h-4" />
+                View Item
+              </button>
+            )}
             <button
               onClick={onClose}
               className="px-4 py-2 text-gray-700 bg-gray-200 rounded-lg hover:bg-gray-300 transition-colors duration-200 font-medium"

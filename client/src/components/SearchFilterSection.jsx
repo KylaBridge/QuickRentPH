@@ -40,17 +40,17 @@ const SearchFilterSection = ({
 
   // --- Dynamic price ranges based on search and category ---
   const getDynamicPriceRanges = (searchTerm, category) => {
-    // Default price ranges
+    // Default price ranges (adjusted for final prices that include 12% tax)
     const defaultRanges = [
-      { label: "₱1 - ₱149", value: "1-149" },
-      { label: "₱149 - ₱300", value: "149-300" },
-      { label: "₱300 - ₱6,000", value: "300-6000" },
+      { label: "₱1 - ₱167", value: "1-167" }, // ~149 base + 12%
+      { label: "₱167 - ₱336", value: "167-336" }, // ~300 base + 12%
+      { label: "₱336 - ₱6,720", value: "336-6720" }, // ~6000 base + 12%
     ];
 
     // Combine search term and category for analysis
     const combinedText = `${searchTerm} ${category}`.toLowerCase();
 
-    // Electronics/Tech categories - higher price ranges
+    // Electronics/Tech categories - higher price ranges (adjusted for final prices)
     if (
       combinedText.includes("camera") ||
       combinedText.includes("laptop") ||
@@ -63,14 +63,14 @@ const SearchFilterSection = ({
       combinedText.includes("monitor")
     ) {
       return [
-        { label: "₱500 - ₱1,000", value: "500-1000" },
-        { label: "₱1,000 - ₱3,000", value: "1000-3000" },
-        { label: "₱3,000 - ₱10,000", value: "3000-10000" },
-        { label: "₱10,000+", value: "10000-999999" },
+        { label: "₱560 - ₱1,120", value: "560-1120" }, // ~500-1000 base + 12%
+        { label: "₱1,120 - ₱3,360", value: "1120-3360" }, // ~1000-3000 base + 12%
+        { label: "₱3,360 - ₱11,200", value: "3360-11200" }, // ~3000-10000 base + 12%
+        { label: "₱11,200+", value: "11200-999999" }, // ~10000+ base + 12%
       ];
     }
 
-    // Vehicles - very high price ranges
+    // Vehicles - very high price ranges (adjusted for final prices)
     if (
       combinedText.includes("car") ||
       combinedText.includes("motorcycle") ||
@@ -79,14 +79,14 @@ const SearchFilterSection = ({
       combinedText.includes("transportation")
     ) {
       return [
-        { label: "₱1,000 - ₱5,000", value: "1000-5000" },
-        { label: "₱5,000 - ₱15,000", value: "5000-15000" },
-        { label: "₱15,000 - ₱50,000", value: "15000-50000" },
-        { label: "₱50,000+", value: "50000-999999" },
+        { label: "₱1,120 - ₱5,600", value: "1120-5600" }, // ~1000-5000 base + 12%
+        { label: "₱5,600 - ₱16,800", value: "5600-16800" }, // ~5000-15000 base + 12%
+        { label: "₱16,800 - ₱56,000", value: "16800-56000" }, // ~15000-50000 base + 12%
+        { label: "₱56,000+", value: "56000-999999" }, // ~50000+ base + 12%
       ];
     }
 
-    // Formal wear/suits - medium-high price ranges
+    // Formal wear/suits - medium-high price ranges (adjusted for final prices)
     if (
       combinedText.includes("suit") ||
       combinedText.includes("formal") ||
@@ -96,14 +96,14 @@ const SearchFilterSection = ({
       combinedText.includes("wedding")
     ) {
       return [
-        { label: "₱200 - ₱500", value: "200-500" },
-        { label: "₱500 - ₱1,500", value: "500-1500" },
-        { label: "₱1,500 - ₱5,000", value: "1500-5000" },
-        { label: "₱5,000+", value: "5000-999999" },
+        { label: "₱224 - ₱560", value: "224-560" }, // ~200-500 base + 12%
+        { label: "₱560 - ₱1,680", value: "560-1680" }, // ~500-1500 base + 12%
+        { label: "₱1,680 - ₱5,600", value: "1680-5600" }, // ~1500-5000 base + 12%
+        { label: "₱5,600+", value: "5600-999999" }, // ~5000+ base + 12%
       ];
     }
 
-    // Sports equipment - medium price ranges
+    // Sports equipment - medium price ranges (adjusted for final prices)
     if (
       combinedText.includes("sports") ||
       combinedText.includes("equipment") ||
@@ -113,14 +113,14 @@ const SearchFilterSection = ({
       combinedText.includes("fitness")
     ) {
       return [
-        { label: "₱100 - ₱300", value: "100-300" },
-        { label: "₱300 - ₱800", value: "300-800" },
-        { label: "₱800 - ₱2,000", value: "800-2000" },
-        { label: "₱2,000+", value: "2000-999999" },
+        { label: "₱112 - ₱336", value: "112-336" }, // ~100-300 base + 12%
+        { label: "₱336 - ₱896", value: "336-896" }, // ~300-800 base + 12%
+        { label: "₱896 - ₱2,240", value: "896-2240" }, // ~800-2000 base + 12%
+        { label: "₱2,240+", value: "2240-999999" }, // ~2000+ base + 12%
       ];
     }
 
-    // Books/Educational - low price ranges
+    // Books/Educational - low price ranges (adjusted for final prices)
     if (
       combinedText.includes("book") ||
       combinedText.includes("educational") ||
@@ -129,14 +129,14 @@ const SearchFilterSection = ({
       combinedText.includes("learning")
     ) {
       return [
-        { label: "₱20 - ₱100", value: "20-100" },
-        { label: "₱100 - ₱300", value: "100-300" },
-        { label: "₱300 - ₱800", value: "300-800" },
-        { label: "₱800+", value: "800-999999" },
+        { label: "₱22 - ₱112", value: "22-112" }, // ~20-100 base + 12%
+        { label: "₱112 - ₱336", value: "112-336" }, // ~100-300 base + 12%
+        { label: "₱336 - ₱896", value: "336-896" }, // ~300-800 base + 12%
+        { label: "₱896+", value: "896-999999" }, // ~800+ base + 12%
       ];
     }
 
-    // Accessories/Small items - low price ranges
+    // Accessories/Small items - low price ranges (adjusted for final prices)
     if (
       combinedText.includes("umbrella") ||
       combinedText.includes("accessories") ||
@@ -146,14 +146,14 @@ const SearchFilterSection = ({
       combinedText.includes("wallet")
     ) {
       return [
-        { label: "₱10 - ₱50", value: "10-50" },
-        { label: "₱50 - ₱150", value: "50-150" },
-        { label: "₱150 - ₱500", value: "150-500" },
-        { label: "₱500+", value: "500-999999" },
+        { label: "₱11 - ₱56", value: "11-56" }, // ~10-50 base + 12%
+        { label: "₱56 - ₱168", value: "56-168" }, // ~50-150 base + 12%
+        { label: "₱168 - ₱560", value: "168-560" }, // ~150-500 base + 12%
+        { label: "₱560+", value: "560-999999" }, // ~500+ base + 12%
       ];
     }
 
-    // Tools/Equipment - medium-high price ranges
+    // Tools/Equipment - medium-high price ranges (adjusted for final prices)
     if (
       combinedText.includes("tools") ||
       combinedText.includes("equipment") ||
@@ -161,14 +161,14 @@ const SearchFilterSection = ({
       combinedText.includes("machinery")
     ) {
       return [
-        { label: "₱300 - ₱1,000", value: "300-1000" },
-        { label: "₱1,000 - ₱3,000", value: "1000-3000" },
-        { label: "₱3,000 - ₱8,000", value: "3000-8000" },
-        { label: "₱8,000+", value: "8000-999999" },
+        { label: "₱336 - ₱1,120", value: "336-1120" }, // ~300-1000 base + 12%
+        { label: "₱1,120 - ₱3,360", value: "1120-3360" }, // ~1000-3000 base + 12%
+        { label: "₱3,360 - ₱8,960", value: "3360-8960" }, // ~3000-8000 base + 12%
+        { label: "₱8,960+", value: "8960-999999" }, // ~8000+ base + 12%
       ];
     }
 
-    // Home & Garden - varied price ranges
+    // Home & Garden - varied price ranges (adjusted for final prices)
     if (
       combinedText.includes("home") ||
       combinedText.includes("garden") ||
@@ -176,10 +176,10 @@ const SearchFilterSection = ({
       combinedText.includes("appliances")
     ) {
       return [
-        { label: "₱200 - ₱800", value: "200-800" },
-        { label: "₱800 - ₱2,500", value: "800-2500" },
-        { label: "₱2,500 - ₱8,000", value: "2500-8000" },
-        { label: "₱8,000+", value: "8000-999999" },
+        { label: "₱224 - ₱896", value: "224-896" }, // ~200-800 base + 12%
+        { label: "₱896 - ₱2,800", value: "896-2800" }, // ~800-2500 base + 12%
+        { label: "₱2,800 - ₱8,960", value: "2800-8960" }, // ~2500-8000 base + 12%
+        { label: "₱8,960+", value: "8960-999999" }, // ~8000+ base + 12%
       ];
     }
 

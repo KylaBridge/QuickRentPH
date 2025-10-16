@@ -1,5 +1,6 @@
 import React from "react";
 import { IoClose } from "react-icons/io5";
+import { formatCurrency } from "../../utils/rentalCalculations";
 
 const PaymentDetailsModal = ({
   isOpen,
@@ -105,15 +106,55 @@ const PaymentDetailsModal = ({
             <div className="space-y-2 text-sm">
               <div className="flex justify-between">
                 <span className="text-gray-700">Rental Fee:</span>
-                <span className="text-gray-900">{payment.amount}</span>
+                <span className="text-gray-900">
+                  {(() => {
+                    const amount = payment.amount;
+                    if (typeof amount === "string" && amount.includes("₱")) {
+                      // If already formatted, extract number and reformat consistently
+                      const numericValue = parseFloat(
+                        amount.replace(/[^0-9.]/g, "")
+                      );
+                      return formatCurrency(numericValue);
+                    } else if (typeof amount === "number") {
+                      return formatCurrency(amount);
+                    }
+                    return amount;
+                  })()}
+                </span>
               </div>
               <div className="flex justify-between">
                 <span className="text-gray-700">Processing Fee:</span>
-                <span className="text-gray-900">{payment.processingFee}</span>
+                <span className="text-gray-900">
+                  {(() => {
+                    const fee = payment.processingFee;
+                    if (typeof fee === "string" && fee.includes("₱")) {
+                      const numericValue = parseFloat(
+                        fee.replace(/[^0-9.]/g, "")
+                      );
+                      return formatCurrency(numericValue);
+                    } else if (typeof fee === "number") {
+                      return formatCurrency(fee);
+                    }
+                    return fee;
+                  })()}
+                </span>
               </div>
               <div className="border-t pt-2 flex justify-between font-medium">
                 <span className="text-gray-900">Total Paid:</span>
-                <span className="text-gray-900">{payment.totalPaid}</span>
+                <span className="text-gray-900">
+                  {(() => {
+                    const total = payment.totalPaid;
+                    if (typeof total === "string" && total.includes("₱")) {
+                      const numericValue = parseFloat(
+                        total.replace(/[^0-9.]/g, "")
+                      );
+                      return formatCurrency(numericValue);
+                    } else if (typeof total === "number") {
+                      return formatCurrency(total);
+                    }
+                    return total;
+                  })()}
+                </span>
               </div>
             </div>
           </div>
@@ -162,7 +203,20 @@ const PaymentDetailsModal = ({
                   <span className="font-medium text-gray-700">
                     Refund Amount:
                   </span>
-                  <p className="text-gray-900">{payment.refundAmount}</p>
+                  <p className="text-gray-900">
+                    {(() => {
+                      const refund = payment.refundAmount;
+                      if (typeof refund === "string" && refund.includes("₱")) {
+                        const numericValue = parseFloat(
+                          refund.replace(/[^0-9.]/g, "")
+                        );
+                        return formatCurrency(numericValue);
+                      } else if (typeof refund === "number") {
+                        return formatCurrency(refund);
+                      }
+                      return refund;
+                    })()}
+                  </p>
                 </div>
               </div>
             </div>

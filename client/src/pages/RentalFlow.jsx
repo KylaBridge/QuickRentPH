@@ -12,6 +12,12 @@ import {
 import { AuthContext } from "../context/authContext";
 import { useRental } from "../context/rentalContext";
 import { getImageUrl } from "../utils/imageUtils";
+import {
+  calculateRentalBreakdown,
+  formatCurrency,
+  quickRateCalculation,
+  BUSINESS_RATES,
+} from "../utils/rentalCalculations";
 
 const RentalFlow = () => {
   const { itemId } = useParams();
@@ -70,17 +76,38 @@ const RentalFlow = () => {
     if (formData.preferredStartDate && formData.durationOfRent && item?.price) {
       const days = parseInt(formData.durationOfRent);
       if (days > 0) {
-        const rentalCost = days * parseFloat(item.price);
-        const serviceFee = rentalCost * 0.1; // 10% service fee
-        const taxes = rentalCost * 0.12; // 12% tax
-        const total = rentalCost + serviceFee + taxes;
+        // Use final price if already calculated in ItemDetailView, otherwise calculate it
+        const finalPrice =
+          item.finalPrice ||
+          quickRateCalculation(parseFloat(item.price)).finalRate;
+
+        // Calculate rental cost (final price × days)
+        const rentalCost = finalPrice * days;
+
+        // Calculate service fee (5% of rental cost)
+        const serviceFee = rentalCost * BUSINESS_RATES.SERVICE_FEE_RATE;
+
+        // Use pre-calculated deposit amount if available, otherwise calculate it
+        let depositAmount;
+        if (item.depositAmount && item.depositPercent) {
+          // Use pre-calculated deposit from ItemDetailView
+          depositAmount = item.depositAmount;
+        } else {
+          // Fallback: calculate deposit based on percentage
+          const depositPercent = item.depositPercent || item.downpayment || 50;
+          depositAmount = (rentalCost * depositPercent) / 100;
+        }
+
+        // Calculate total amount due
+        const total = rentalCost + serviceFee + depositAmount;
 
         return {
           days,
-          rentalCost,
-          serviceFee,
-          taxes,
-          total,
+          rentalCost: Math.round(rentalCost * 100) / 100,
+          serviceFee: Math.round(serviceFee * 100) / 100,
+          depositAmount: Math.round(depositAmount * 100) / 100,
+          depositPercent: item.depositPercent || item.downpayment || 50,
+          total: Math.round(total * 100) / 100,
         };
       }
     }
@@ -301,7 +328,13 @@ const RentalFlow = () => {
                 </div>
 
                 <div className="text-lg font-bold text-[#6C4BF4]">
-                  ₱{parseFloat(item.price).toFixed(2)} / day
+                  {(() => {
+                    const basePrice = parseFloat(item.price) || 0;
+                    const finalPrice =
+                      quickRateCalculation(basePrice).finalRate;
+                    return formatCurrency(finalPrice);
+                  })()}{" "}
+                  / day
                 </div>
 
                 {item.dealOption && (
@@ -332,19 +365,19 @@ const RentalFlow = () => {
                   <div className="space-y-2 text-sm">
                     <div className="flex justify-between">
                       <span>Rental ({costBreakdown.days} days)</span>
-                      <span>₱{costBreakdown.rentalCost.toFixed(2)}</span>
+                      <span>{formatCurrency(costBreakdown.rentalCost)}</span>
                     </div>
                     <div className="flex justify-between">
-                      <span>Service Fee (10%)</span>
-                      <span>₱{costBreakdown.serviceFee.toFixed(2)}</span>
+                      <span>Service Fee (5%)</span>
+                      <span>{formatCurrency(costBreakdown.serviceFee)}</span>
                     </div>
                     <div className="flex justify-between">
-                      <span>Taxes (12%)</span>
-                      <span>₱{costBreakdown.taxes.toFixed(2)}</span>
+                      <span>Deposit ({costBreakdown.depositPercent}%)</span>
+                      <span>{formatCurrency(costBreakdown.depositAmount)}</span>
                     </div>
                     <div className="flex justify-between font-semibold text-[#6C4BF4] pt-2 border-t">
                       <span>Total</span>
-                      <span>₱{costBreakdown.total.toFixed(2)}</span>
+                      <span>{formatCurrency(costBreakdown.total)}</span>
                     </div>
                   </div>
                 </div>

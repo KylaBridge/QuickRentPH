@@ -3,6 +3,10 @@ import { usePagination } from "../hooks/usePagination";
 import { getPostedDate } from "../utils/dateUtils";
 import { DEFAULT_TERMS } from "../utils/placeholderUtils";
 import {
+  quickRateCalculation,
+  formatCurrency,
+} from "../utils/rentalCalculations";
+import {
   IoChevronBack,
   IoLocationOutline,
   IoCalendarOutline,
@@ -61,9 +65,20 @@ const ItemDetailView = ({ item, onBack, onRentClick, onGoToProfile }) => {
       return; // Do nothing if user owns the item
     }
 
-    // Navigate directly to rental flow page with item data
+    // Prepare item data with pre-calculated deposit info
+    const itemWithDepositInfo = {
+      ...item,
+      depositPercent: downpaymentInfo?.depositPercent || 50,
+      depositAmount: downpaymentInfo?.depositAmount || 0,
+      finalPrice: (() => {
+        const basePrice = parseFloat(item.price) || 0;
+        return quickRateCalculation(basePrice).finalRate;
+      })(),
+    };
+
+    // Navigate directly to rental flow page with enhanced item data
     navigate(`/rental-flow/${item._id}`, {
-      state: { item: item },
+      state: { item: itemWithDepositInfo },
     });
   };
 
@@ -92,23 +107,24 @@ const ItemDetailView = ({ item, onBack, onRentClick, onGoToProfile }) => {
 
   // Helper function to get downpayment display
   const getDownpaymentDisplay = () => {
-    const downpaymentValue = item.downpayment;
-    const priceValue = item.price;
+    const depositPercent = item.downpayment || item.depositPercent || 50; // Default to 50%
+    const basePrice = parseFloat(item.price) || 0;
 
-    // Check if downpayment exists and is greater than 0
-    if (!downpaymentValue || parseFloat(downpaymentValue) <= 0) {
+    if (basePrice <= 0) {
       return null;
     }
 
-    const amount = parseFloat(downpaymentValue);
-    const price = parseFloat(priceValue);
+    // Calculate final price with tax (same as displayed price)
+    const finalPrice = quickRateCalculation(basePrice).finalRate;
 
-    // Calculate percentage if we have both values
-    const percentage = price > 0 ? Math.round((amount / price) * 100) : 0;
+    // Calculate deposit amount based on percentage of final price
+    const depositAmount = (finalPrice * depositPercent) / 100;
 
     return {
-      amount: `₱${amount.toFixed(2)}`,
-      percentage: percentage > 0 ? `${percentage}%` : null,
+      amount: formatCurrency(depositAmount),
+      percentage: `${depositPercent}%`,
+      depositPercent: depositPercent, // Store for passing to RentalFlow
+      depositAmount: depositAmount, // Store actual amount for passing to RentalFlow
     };
   };
 
@@ -118,7 +134,11 @@ const ItemDetailView = ({ item, onBack, onRentClick, onGoToProfile }) => {
   const itemData = {
     name: item.name || item.title,
     category: item.category,
-    price: item.price ? `₱${parseFloat(item.price).toFixed(2)}` : "",
+    price: (() => {
+      const basePrice = parseFloat(item.price) || 0;
+      const finalPrice = quickRateCalculation(basePrice).finalRate;
+      return formatCurrency(finalPrice);
+    })(),
     dealOption: item.dealOption,
     location: item.location,
     size: item.size,
@@ -404,7 +424,7 @@ const ItemDetailView = ({ item, onBack, onRentClick, onGoToProfile }) => {
             <div className="text-sm text-gray-700 space-y-2">
               {downpaymentInfo && (
                 <div>
-                  <span className="font-medium">Downpayment Required:</span>{" "}
+                  <span className="font-medium">Deposit Required:</span>{" "}
                   <span className="text-[#6C4BF4] font-semibold">
                     {downpaymentInfo.amount}
                     {downpaymentInfo.percentage && (

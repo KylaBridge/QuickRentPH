@@ -6,6 +6,10 @@ import { getImageUrl } from "../../utils/imageUtils";
 import { AuthContext } from "../../context/authContext";
 import { useNavigate } from "react-router-dom";
 import Pagination from "../Pagination";
+import {
+  quickRateCalculation,
+  formatCurrency,
+} from "../../utils/rentalCalculations";
 
 const ItemsTab = ({
   currentItems,
@@ -252,7 +256,12 @@ const ItemsTab = ({
                   {item.category}
                 </div>
                 <div className="text-sm text-center text-black">
-                  ₱{parseFloat(item.price).toFixed(2)}
+                  {(() => {
+                    const basePrice = parseFloat(item.price) || 0;
+                    const finalPrice =
+                      quickRateCalculation(basePrice).finalRate;
+                    return formatCurrency(finalPrice, true);
+                  })()}
                 </div>
                 <div className="text-sm text-center">
                   <span

@@ -90,43 +90,7 @@ const StatusTab = ({
           </button>
         );
       case "cancelled":
-        return (
-          <button
-            onClick={(e) => {
-              e.stopPropagation();
-              handleDelete(request.id);
-            }}
-            className="flex items-center gap-1 px-2 py-1 bg-red-600 text-white rounded hover:bg-red-700 transition-colors text-xs font-medium"
-            disabled={deletingIds.has(request.id)}
-          >
-            {deletingIds.has(request.id) ? (
-              <svg
-                className="animate-spin h-3 w-3 text-white"
-                xmlns="http://www.w3.org/2000/svg"
-                fill="none"
-                viewBox="0 0 24 24"
-              >
-                <circle
-                  className="opacity-25"
-                  cx="12"
-                  cy="12"
-                  r="10"
-                  stroke="currentColor"
-                  strokeWidth="4"
-                ></circle>
-                <path
-                  className="opacity-75"
-                  fill="currentColor"
-                  d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"
-                ></path>
-              </svg>
-            ) : (
-              <>
-                <IoClose className="w-3 h-3" /> Delete
-              </>
-            )}
-          </button>
-        );
+        return null;
       case "approved":
         return (
           <button
@@ -188,8 +152,6 @@ const StatusTab = ({
 
   const { cancelRental } = useRental();
   const [cancellingIds, setCancellingIds] = useState(new Set());
-  const { deleteRental } = useRental();
-  const [deletingIds, setDeletingIds] = useState(new Set());
 
   const handleCancel = async (requestId) => {
     try {
@@ -202,23 +164,6 @@ const StatusTab = ({
       // optionally show UI feedback here
     } finally {
       setCancellingIds((s) => {
-        const next = new Set(s);
-        next.delete(requestId);
-        return next;
-      });
-    }
-  };
-
-  const handleDelete = async (requestId) => {
-    try {
-      setDeletingIds((s) => new Set(s).add(requestId));
-      await deleteRental(requestId);
-      // inform parent so it can refresh the list or update state
-      if (onUpdateRequest) onUpdateRequest(requestId, "delete");
-    } catch (err) {
-      console.error("Failed to delete rental", err);
-    } finally {
-      setDeletingIds((s) => {
         const next = new Set(s);
         next.delete(requestId);
         return next;
