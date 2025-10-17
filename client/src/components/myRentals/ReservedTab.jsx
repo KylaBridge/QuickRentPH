@@ -54,8 +54,7 @@ const ReservedTab = ({
       <button
         onClick={(e) => {
           e.stopPropagation();
-          setSelectedReservation(reservation);
-          setShowReviewModal(true);
+          openReviewModal(reservation);
         }}
         className="flex items-center gap-1 px-2 py-1 bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors text-xs font-medium"
       >
@@ -66,7 +65,29 @@ const ReservedTab = ({
   };
 
   const openReviewModal = (reservation) => {
-    setSelectedReservation(reservation);
+    const rawImage =
+      reservation.image ||
+      (reservation.item &&
+        reservation.item.images &&
+        reservation.item.images[0]) ||
+      "";
+
+    const enhancedReservation = {
+      ...reservation,
+      // Make sure the image data is available in the modal
+      image: rawImage,
+      // Ensure item object has images array if it exists
+      item: reservation.item
+        ? {
+            ...reservation.item,
+            images: reservation.item.images || (rawImage ? [rawImage] : []),
+          }
+        : {
+            images: rawImage ? [rawImage] : [],
+          },
+    };
+
+    setSelectedReservation(enhancedReservation);
     setShowReviewModal(true);
   };
 
@@ -232,8 +253,13 @@ const ReservedTab = ({
         isOpen={showReviewModal}
         onClose={closeReviewModal}
         reservation={selectedReservation}
-        onApprove={(reservationId) => onUpdateReservation && onUpdateReservation(reservationId, "approve")}
-        onReject={(reservationId, reason) => onUpdateReservation && onUpdateReservation(reservationId, "reject", reason)}
+        onApprove={(reservationId) =>
+          onUpdateReservation && onUpdateReservation(reservationId, "approve")
+        }
+        onReject={(reservationId, reason) =>
+          onUpdateReservation &&
+          onUpdateReservation(reservationId, "reject", reason)
+        }
       />
     </div>
   );

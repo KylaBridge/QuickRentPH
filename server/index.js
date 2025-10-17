@@ -14,7 +14,28 @@ const wishlistRoutes = require("./routes/wishlistRoutes");
 const rentalRoutes = require("./routes/rentalRoutes");
 
 // Middleware packages
-app.use("/user_items", express.static("user_items"));
+app.use(
+  "/user_items",
+  (req, res, next) => {
+    res.header("Access-Control-Allow-Origin", process.env.FRONTEND_URL);
+    res.header("Access-Control-Allow-Methods", "GET");
+    res.header("Access-Control-Allow-Headers", "Content-Type");
+    next();
+  },
+  express.static("user_items")
+);
+
+app.use(
+  "/user_ids",
+  (req, res, next) => {
+    res.header("Access-Control-Allow-Origin", process.env.FRONTEND_URL);
+    res.header("Access-Control-Allow-Methods", "GET");
+    res.header("Access-Control-Allow-Headers", "Content-Type");
+    next();
+  },
+  express.static("user_ids")
+);
+
 app.use(express.json());
 app.use(cookieParser());
 app.use(passport.initialize());

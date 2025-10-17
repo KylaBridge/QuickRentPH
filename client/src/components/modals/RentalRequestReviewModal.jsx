@@ -17,9 +17,37 @@ const RentalRequestReviewModal = ({
   const [rejectionReason, setRejectionReason] = useState("");
   const [showRejectionForm, setShowRejectionForm] = useState(false);
   const [showValidId, setShowValidId] = useState(false);
+  const [showSelfieWithId, setShowSelfieWithId] = useState(false);
   const [showProofOfBilling, setShowProofOfBilling] = useState(false);
 
   if (!isOpen || !reservation) return null;
+
+  // Helper function to convert local file paths to proper URLs
+  const getImageUrlFromPath = (imagePath, imageType = "item") => {
+    if (!imagePath) return "";
+
+    // If it's already a URL, return as is
+    if (imagePath.startsWith("http")) {
+      return imagePath;
+    }
+
+    // If it's a local Windows path, extract the filename and construct server URL
+    if (imagePath.includes("\\")) {
+      const filename = imagePath.split("\\").pop();
+
+      // Use different folder paths based on image type
+      if (imageType === "verification") {
+        // For ID, selfie, and proof of billing images
+        return `http://localhost:3000/user_ids/${filename}`;
+      } else {
+        // For item images
+        return `http://localhost:3000/user_items/${filename}`;
+      }
+    }
+
+    // Otherwise, use the getImageUrl function
+    return getImageUrl(imagePath);
+  };
 
   // Extract reservation details
   const renterInfo = reservation.renter || {};
@@ -32,7 +60,19 @@ const RentalRequestReviewModal = ({
 
   // Item details
   const itemName = itemInfo.name || reservation.itemName || "Rental Item";
-  const itemImages = itemInfo.images || [reservation.image] || [];
+
+  // Try multiple possible image sources
+  const possibleImages = [
+    reservation.image,
+    reservation.itemImage,
+    reservation.productImage,
+    itemInfo.image,
+    itemInfo.images && itemInfo.images[0],
+    reservation.item && reservation.item.image,
+    reservation.item && reservation.item.images && reservation.item.images[0],
+  ].filter(Boolean);
+
+  const itemImages = possibleImages.length > 0 ? possibleImages : [];
   const itemDescription = itemInfo.description || "";
   const itemCategory = itemInfo.category || "";
 
@@ -86,11 +126,11 @@ const RentalRequestReviewModal = ({
     }
   };
 
-  const downloadFile = async (fileUrl, fileName) => {
+  const downloadFile = async (fileUrl, fileName, imageType = "item") => {
     if (!fileUrl) return;
 
     try {
-      const imageUrl = getImageUrl(fileUrl);
+      const imageUrl = getImageUrlFromPath(fileUrl, imageType);
       const response = await fetch(imageUrl);
       const blob = await response.blob();
       const url = window.URL.createObjectURL(blob);
@@ -143,15 +183,32 @@ const RentalRequestReviewModal = ({
             <div className="bg-gray-50 rounded-lg p-3">
               <h3 className="font-semibold text-gray-900 mb-2">Item Details</h3>
               <div className="space-y-2">
-                <img
-                  src={getImageUrl(itemImages[0])}
-                  alt={itemName}
-                  className="w-full h-32 object-cover rounded-lg"
-                  onError={(e) => {
-                    e.target.src =
-                      "data:image/svg+xml,%3Csvg width='200' height='120' xmlns='http://www.w3.org/2000/svg'%3E%3Crect width='100%25' height='100%25' fill='%23f3f4f6'/%3E%3Ctext x='50%25' y='50%25' dominant-baseline='middle' text-anchor='middle' fill='%236b7280'%3ENo Image%3C/text%3E%3C/svg%3E";
-                  }}
-                />
+                <div className="relative">
+                  <img
+                    src={getImageUrlFromPath(itemImages[0])}
+                    alt={itemName}
+                    className="w-full h-32 object-cover rounded-lg"
+                    onError={(e) => {
+                      e.target.src =
+                        "data:image/svg+xml,%3Csvg width='200' height='120' xmlns='http://www.w3.org/2000/svg'%3E%3Crect width='100%25' height='100%25' fill='%23f3f4f6'/%3E%3Ctext x='50%25' y='50%25' dominant-baseline='middle' text-anchor='middle' fill='%236b7280'%3ENo Image%3C/text%3E%3C/svg%3E";
+                    }}
+                  />
+                  {/* Download button for item image */}
+                  {itemImages[0] && (
+                    <button
+                      onClick={() =>
+                        downloadFile(
+                          itemImages[0],
+                          `${itemName.replace(/\s+/g, "_")}_ItemImage.jpg`
+                        )
+                      }
+                      className="absolute top-2 right-2 bg-white bg-opacity-90 hover:bg-opacity-100 text-gray-700 rounded-full p-1.5 shadow-sm transition-all hover:shadow-md"
+                      title="Download item image"
+                    >
+                      <IoDownload className="w-3 h-3" />
+                    </button>
+                  )}
+                </div>
                 <div className="text-sm">
                   <p>
                     <span className="font-medium">Name:</span> {itemName}
@@ -292,7 +349,8 @@ const RentalRequestReviewModal = ({
                         onClick={() =>
                           downloadFile(
                             reservation.validId,
-                            `${renterName.replace(/\s+/g, "_")}_ValidID.jpg`
+                            `${renterName.replace(/\s+/g, "_")}_ValidID.jpg`,
+                            "verification"
                           )
                         }
                         className="px-2 py-1 bg-green-600 text-white rounded text-xs hover:bg-green-700 flex items-center space-x-1"
@@ -311,13 +369,20 @@ const RentalRequestReviewModal = ({
                     <p className="font-medium mb-1">Selfie with ID:</p>
                     <div className="flex space-x-2">
                       <button
+                        onClick={() => setShowSelfieWithId(true)}
+                        className="px-2 py-1 bg-blue-600 text-white rounded text-xs hover:bg-blue-700"
+                      >
+                        View
+                      </button>
+                      <button
                         onClick={() =>
                           downloadFile(
                             reservation.selfieWithId,
                             `${renterName.replace(
                               /\s+/g,
                               "_"
-                            )}_SelfieWithID.jpg`
+                            )}_SelfieWithID.jpg`,
+                            "verification"
                           )
                         }
                         className="px-2 py-1 bg-green-600 text-white rounded text-xs hover:bg-green-700 flex items-center space-x-1"
@@ -346,7 +411,8 @@ const RentalRequestReviewModal = ({
                             `${renterName.replace(
                               /\s+/g,
                               "_"
-                            )}_ProofOfBilling.jpg`
+                            )}_ProofOfBilling.jpg`,
+                            "verification"
                           )
                         }
                         className="px-2 py-1 bg-green-600 text-white rounded text-xs hover:bg-green-700 flex items-center space-x-1"
@@ -498,12 +564,48 @@ const RentalRequestReviewModal = ({
               </button>
             </div>
             <img
-              src={getImageUrl(reservation.validId)}
+              src={getImageUrlFromPath(reservation.validId, "verification")}
               alt="Valid ID"
               className="w-full h-auto rounded-lg"
               onError={(e) => {
                 e.target.src =
                   "data:image/svg+xml,%3Csvg width='400' height='300' xmlns='http://www.w3.org/2000/svg'%3E%3Crect width='100%25' height='100%25' fill='%23f3f4f6'/%3E%3Ctext x='50%25' y='50%25' dominant-baseline='middle' text-anchor='middle' fill='%236b7280'%3EID Image Not Available%3C/text%3E%3C/svg%3E";
+              }}
+            />
+          </div>
+        </div>
+      )}
+
+      {/* Selfie with ID Modal */}
+      {showSelfieWithId && (
+        <div
+          className="fixed inset-0 z-[10000] flex items-center justify-center"
+          style={{ backgroundColor: "rgba(0, 0, 0, 0.75)" }}
+          onClick={() => setShowSelfieWithId(false)}
+        >
+          <div
+            className="bg-white rounded-lg p-4 max-w-2xl max-h-[80vh] overflow-auto"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex justify-between items-center mb-4">
+              <h3 className="text-lg font-semibold">Selfie with ID</h3>
+              <button
+                onClick={() => setShowSelfieWithId(false)}
+                className="text-gray-400 hover:text-gray-600"
+              >
+                <IoClose className="w-6 h-6" />
+              </button>
+            </div>
+            <img
+              src={getImageUrlFromPath(
+                reservation.selfieWithId,
+                "verification"
+              )}
+              alt="Selfie with ID"
+              className="w-full h-auto rounded-lg"
+              onError={(e) => {
+                e.target.src =
+                  "data:image/svg+xml,%3Csvg width='400' height='300' xmlns='http://www.w3.org/2000/svg'%3E%3Crect width='100%25' height='100%25' fill='%23f3f4f6'/%3E%3Ctext x='50%25' y='50%25' dominant-baseline='middle' text-anchor='middle' fill='%236b7280'%3ESelfie Image Not Available%3C/text%3E%3C/svg%3E";
               }}
             />
           </div>
@@ -531,7 +633,10 @@ const RentalRequestReviewModal = ({
               </button>
             </div>
             <img
-              src={getImageUrl(reservation.proofOfBilling)}
+              src={getImageUrlFromPath(
+                reservation.proofOfBilling,
+                "verification"
+              )}
               alt="Proof of Billing"
               className="w-full h-auto rounded-lg"
               onError={(e) => {

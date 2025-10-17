@@ -17,11 +17,6 @@ const ItemList = ({
   title = "Featured Items",
   showSeeMore = true,
   maxItems = 6,
-  showActions = false,
-  onView,
-  onRent,
-  onRentClick,
-  onGoToProfile,
   compact = false,
   onCardClick,
   filters = {},
@@ -95,7 +90,7 @@ const ItemList = ({
       price: dbItem.price, // Keep original price for fallback
       basePrice: parseFloat(dbItem.price) || 0, // Store numeric base price for calculations
       period: dbItem.period || "day",
-      rating: dbItem.rating || 5,
+      rating: dbItem.rating || 0, // Default to 0 until we have actual ratings
       image:
         dbItem.image || getImageUrl((dbItem.images && dbItem.images[0]) || ""),
       category: dbItem.category,
@@ -124,14 +119,14 @@ const ItemList = ({
     : processedItems;
 
   const renderStars = (rating) => {
-    return Array.from({ length: 5 }, (_, index) => (
-      <IoStarSharp
-        key={index}
-        className={`w-3 h-3 sm:w-4 sm:h-4 ${
-          index < rating ? "text-yellow-400" : "text-gray-300"
-        }`}
-      />
-    ));
+    return (
+      <div className="flex items-center space-x-1 px-2 py-1 rounded-full">
+        <IoStarSharp className="w-3 h-3 text-yellow-400" />
+        <span className="text-xs font-medium text-gray-700">
+          {rating.toFixed(1)}
+        </span>
+      </div>
+    );
   };
 
   const gridClasses = compact
@@ -139,8 +134,8 @@ const ItemList = ({
     : "grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-4 lg:gap-6";
 
   const cardClasses = compact
-    ? "bg-white border border-gray-200 rounded-lg overflow-hidden hover:shadow-md transition-shadow duration-300 cursor-pointer h-[320px] flex flex-col min-w-[160px] w-full"
-    : "bg-white border border-gray-200 rounded-lg overflow-hidden hover:shadow-lg transition-shadow duration-300 cursor-pointer h-[360px] flex flex-col min-w-[200px] w-full";
+    ? "bg-white border border-gray-200 rounded-lg overflow-hidden hover:shadow-md transition-shadow duration-300 cursor-pointer h-[280px] flex flex-col min-w-[160px] w-full"
+    : "bg-white border border-gray-200 rounded-lg overflow-hidden hover:shadow-lg transition-shadow duration-300 cursor-pointer h-[320px] flex flex-col min-w-[200px] w-full";
 
   const imageWrapper = compact
     ? "flex-shrink-0 h-40 p-2"
@@ -151,29 +146,6 @@ const ItemList = ({
   const priceClasses = compact
     ? "text-sm font-bold"
     : "text-sm sm:text-base font-bold";
-  const actionPadding = compact
-    ? "px-2 py-1 text-xs"
-    : "px-3 py-2 text-xs sm:text-sm";
-
-  // Handle rent action
-  const handleRentItem = (item) => {
-    if (onRent) {
-      onRent(item);
-    } else if (onRentClick) {
-      // Delegate to parent modal handler
-      onRentClick();
-    } else {
-      // Fallback: navigate to item detail view
-      onCardClick && onCardClick(item);
-    }
-  };
-
-  // Handle go to profile for verification - delegate to parent
-  const handleGoToProfile = () => {
-    if (onGoToProfile) {
-      onGoToProfile();
-    }
-  };
 
   // Handle wishlist toggle
   const handleWishlistToggle = async (e, item) => {
@@ -321,62 +293,37 @@ const ItemList = ({
                       </span>
                     </div>
 
-                    {/* Rating */}
-                    <div className="flex items-center mb-2">
-                      <div className="flex items-center space-x-0.5 sm:space-x-1">
-                        {renderStars(item.rating)}
-                      </div>
-                    </div>
+                    {/* Bottom section with rating and wishlist */}
+                    <div className="flex items-center justify-between">
+                      {/* Rating */}
+                      {renderStars(item.rating)}
 
-                    {/* Bottom section with heart only */}
-                    <div className="flex items-center justify-end mb-2">
-                      <button
-                        className={`transition-colors flex-shrink-0 ${
-                          isInWishlist(item.id || item._id)
-                            ? "text-red-500 hover:text-red-600"
-                            : "text-gray-400 hover:text-red-500"
-                        }`}
-                        onClick={(e) => handleWishlistToggle(e, item)}
-                        title={
-                          isInWishlist(item.id || item._id)
+                      {/* Wishlist button with tooltip */}
+                      <div className="relative group">
+                        <button
+                          className={`transition-colors flex-shrink-0 ${
+                            isInWishlist(item.id || item._id)
+                              ? "text-red-500 hover:text-red-600"
+                              : "text-gray-400 hover:text-red-500"
+                          }`}
+                          onClick={(e) => handleWishlistToggle(e, item)}
+                        >
+                          {isInWishlist(item.id || item._id) ? (
+                            <IoHeart className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+                          ) : (
+                            <IoHeartOutline className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+                          )}
+                        </button>
+
+                        {/* Tooltip */}
+                        <div className="absolute bottom-full right-0 mb-2 px-2 py-1 bg-gray-800 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none whitespace-nowrap z-10">
+                          {isInWishlist(item.id || item._id)
                             ? "Remove from wishlist"
-                            : "Add to wishlist"
-                        }
-                      >
-                        {isInWishlist(item.id || item._id) ? (
-                          <IoHeart className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
-                        ) : (
-                          <IoHeartOutline className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
-                        )}
-                      </button>
+                            : "Add to wishlist"}
+                        </div>
+                      </div>
                     </div>
                   </div>
-
-                  {/* Action buttons - Fixed at the bottom */}
-                  {showActions && (
-                    <div className="mt-auto pt-2 flex-shrink-0">
-                      <div className="grid grid-cols-2 gap-2">
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            onView ? onView(item) : null;
-                          }}
-                          className={`bg-white border border-gray-300 rounded ${actionPadding} font-medium hover:bg-gray-50`}
-                        >
-                          VIEW
-                        </button>
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleRentItem(item);
-                          }}
-                          className={`bg-[#6C4BF4] text-white rounded ${actionPadding} font-medium hover:bg-[#7857FD]`}
-                        >
-                          RENT
-                        </button>
-                      </div>
-                    </div>
-                  )}
                 </div>
               </div>
             ))}
