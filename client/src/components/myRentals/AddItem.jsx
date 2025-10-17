@@ -466,9 +466,10 @@ const AddItem = ({ onClose, onSuccess, editingItem = null }) => {
                 </label>
                 <div className="relative">
                   <input
-                    type="text"
-                    inputMode="decimal"
-                    pattern="[0-9]*[.]?[0-9]*"
+                    type="number"
+                    min="0"
+                    max="100"
+                    step="0.01"
                     className="w-full border border-gray-200 rounded pl-3 pr-7 py-1 text-xs placeholder-gray-400"
                     placeholder="e.g. 50"
                     value={formData.downpaymentPercentage}

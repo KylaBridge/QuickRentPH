@@ -16,15 +16,18 @@ export const validateForm = (formData, paymentMethods, images) => {
   if (!formData.size.trim()) errors.push("Size/Dimensions is required");
   if (!formData.color.trim()) errors.push("Color is required");
   if (!formData.description.trim()) errors.push("Description is required");
-  
+
   // Check downpayment - validate percentage input but also check if amount exists
-  const hasDownpaymentPercentage = formData.downpaymentPercentage && parseFloat(formData.downpaymentPercentage) > 0;
-  const hasDownpaymentAmount = formData.downpayment && parseFloat(formData.downpayment) > 0;
-  
+  const hasDownpaymentPercentage =
+    formData.downpaymentPercentage &&
+    parseFloat(formData.downpaymentPercentage) > 0;
+  const hasDownpaymentAmount =
+    formData.downpayment && parseFloat(formData.downpayment) > 0;
+
   if (!hasDownpaymentPercentage && !hasDownpaymentAmount) {
     errors.push("Downpayment required (%) is required");
   }
-  
+
   if (!formData.pickupLocation.trim())
     errors.push("Pickup Location is required");
   if (!formData.deliveryOption) errors.push("Delivery Option is required");
@@ -40,7 +43,13 @@ export const validateForm = (formData, paymentMethods, images) => {
   return errors;
 };
 
-export const buildItemData = (formData, paymentMethods, images, isEditMode, hasImageChanges = false) => {
+export const buildItemData = (
+  formData,
+  paymentMethods,
+  images,
+  isEditMode,
+  hasImageChanges = false
+) => {
   const selectedPayments = Object.entries(paymentMethods)
     .filter(([, v]) => v)
     .map(([k]) => k)
@@ -58,7 +67,7 @@ export const buildItemData = (formData, paymentMethods, images, isEditMode, hasI
     ...(formData.includedAccessories.trim() && {
       includedAccessories: formData.includedAccessories.trim(),
     }),
-    downpayment: parseFloat(formData.downpayment),
+    downpayment: parseFloat(formData.downpaymentPercentage) || 50, // Store percentage, not amount
     pickupLocation: formData.pickupLocation.trim(),
     paymentMethod: selectedPayments,
     deliveryOption: formData.deliveryOption,
@@ -120,16 +129,16 @@ export const handleDownpaymentChange = (e, price, setFormData) => {
 
   // Cap percentage at 100%
   const cappedPercentage = Math.min(percentageValue, 100);
-  
+
   // Convert percentage to actual amount
   const downpaymentAmount = (cappedPercentage / 100) * priceValue;
 
-  // Update the form with the calculated amount and the input percentage
-  setFormData((prev) => ({ 
-    ...prev, 
+  // Update the form with the calculated amount and the capped percentage
+  setFormData((prev) => ({
+    ...prev,
     downpayment: downpaymentAmount.toFixed(2),
-    // Store the actual typed percentage (not the capped one) for display
-    downpaymentPercentage: value
+    // Store the capped percentage for display (auto-corrects values > 100)
+    downpaymentPercentage: cappedPercentage.toString(),
   }));
 };
 
