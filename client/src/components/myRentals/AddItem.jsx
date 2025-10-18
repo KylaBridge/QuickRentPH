@@ -3,7 +3,6 @@ import { UserContext } from "../../context/userContext";
 import { CATEGORIES, DEAL_OPTIONS } from "../../constants/categories";
 import { useFormData } from "../../hooks/useFormData";
 import { useImageManagement } from "../../hooks/useImageManagement";
-import { usePaymentMethods } from "../../hooks/usePaymentMethods";
 import {
   validateForm,
   buildItemData,
@@ -65,12 +64,7 @@ const AddItem = ({ onClose, onSuccess, editingItem = null }) => {
     replaceInputRefs,
   } = imageManagement;
 
-  const {
-    paymentMethods,
-    hasPaymentChanges,
-    togglePaymentMethod,
-    getSelectedPaymentMethods,
-  } = usePaymentMethods(editingItem);
+  // Payment methods are now default - no selection logic needed
 
   // Local state for UI
   const [errors, setErrors] = useState([]);
@@ -78,7 +72,7 @@ const AddItem = ({ onClose, onSuccess, editingItem = null }) => {
   const [successMsg, setSuccessMsg] = useState("");
 
   // Calculate total changes
-  const hasChanges = hasFormChanges || hasImageChanges || hasPaymentChanges;
+  const hasChanges = hasFormChanges || hasImageChanges;
 
   // Helper function for downpayment input using utility
   const handleDownpaymentInputChange = (e) => {
@@ -103,7 +97,7 @@ const AddItem = ({ onClose, onSuccess, editingItem = null }) => {
     setErrors([]);
     setSuccessMsg("");
 
-    const validationErrors = validateForm(formData, paymentMethods, images);
+    const validationErrors = validateForm(formData, null, images);
     if (validationErrors.length) {
       setErrors(validationErrors);
       return;
@@ -113,7 +107,7 @@ const AddItem = ({ onClose, onSuccess, editingItem = null }) => {
     try {
       const itemData = buildItemData(
         formData,
-        paymentMethods,
+        null,
         images,
         isEditMode,
         hasImageChanges
@@ -498,45 +492,28 @@ const AddItem = ({ onClose, onSuccess, editingItem = null }) => {
             <div className="flex gap-2">
               <div className="flex-1">
                 <label className="block text-xs font-medium mb-1">
-                  Payment Methods <span className="text-red-600">*</span>
+                  Payment Methods
                 </label>
                 <div className="flex items-center gap-3 flex-wrap">
-                  {/* GCash */}
-                  <label className="inline-flex items-center gap-2 px-2 py-1 bg-white rounded-md border border-gray-300 shadow-sm cursor-pointer">
-                    <input
-                      type="checkbox"
-                      className="sr-only"
-                      checked={paymentMethods.gcash}
-                      onChange={() => togglePaymentMethod("gcash")}
-                    />
-                    <span
-                      className={`w-3 h-3 rounded-sm border ${
-                        paymentMethods.gcash
-                          ? "bg-[#6C4BF4] border-[#6C4BF4]"
-                          : "bg-white border-gray-300"
-                      }`}
-                    />
+                  {/* GCash - Always displayed */}
+                  <div className="inline-flex items-center gap-2 px-3 py-2 bg-gray-50 rounded-md border border-gray-200">
                     <img src={gcashLogo} alt="GCash" className="h-5" />
-                  </label>
+                    <span className="text-xs font-small text-gray-700">
+                      GCash
+                    </span>
+                  </div>
 
-                  {/* PayMaya */}
-                  <label className="inline-flex items-center gap-2 px-2 py-1 bg-white rounded-md border border-gray-300 shadow-sm cursor-pointer">
-                    <input
-                      type="checkbox"
-                      className="sr-only"
-                      checked={paymentMethods.paymaya}
-                      onChange={() => togglePaymentMethod("paymaya")}
-                    />
-                    <span
-                      className={`w-3 h-3 rounded-sm border ${
-                        paymentMethods.paymaya
-                          ? "bg-[#6C4BF4] border-[#6C4BF4]"
-                          : "bg-white border-gray-300"
-                      }`}
-                    />
+                  {/* PayMaya - Always displayed */}
+                  <div className="inline-flex items-center gap-2 px-3 py-2 bg-gray-50 rounded-md border border-gray-200">
                     <img src={paymayaLogo} alt="PayMaya" className="h-5" />
-                  </label>
+                    <span className="text-xs font-small text-gray-700">
+                      PayMaya
+                    </span>
+                  </div>
                 </div>
+                <p className="text-xs text-gray-500 mt-1">
+                  Default payment methods for all items
+                </p>
               </div>
               <div className="flex-1">
                 <label className="block text-xs font-medium mb-1">

@@ -1,10 +1,11 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRental } from "../../context/rentalContext";
 import { IoEye, IoCash, IoCheckmarkCircle, IoClose } from "react-icons/io5";
 import { getImageUrl } from "../../utils/imageUtils";
 import Pagination from "../Pagination";
 import RequestDetailsModal from "../modals/RequestDetailsModal";
 import PaymentModal from "../modals/PaymentModal";
+import ReceiptModal from "../modals/ReceiptModal";
 
 const StatusTab = ({
   userRequests = [],
@@ -16,6 +17,8 @@ const StatusTab = ({
   const [selectedRequest, setSelectedRequest] = useState(null);
   const [showModal, setShowModal] = useState(false);
   const [showPaymentModal, setShowPaymentModal] = useState(false);
+  const [showReceiptModal, setShowReceiptModal] = useState(false);
+  const [paymentData, setPaymentData] = useState(null);
 
   // Use the requests data passed from parent (already paginated)
   const requests = userRequests;
@@ -23,6 +26,34 @@ const StatusTab = ({
   // Use the pagination data from parent
   const displayedRequests = requests;
   const paginationProps = pagination;
+
+  // Listen for payment completion messages from gateway windows
+  useEffect(() => {
+    const handlePaymentMessage = (event) => {
+      // Only accept messages from the same origin for security
+      if (event.origin !== window.location.origin) {
+        return;
+      }
+
+      if (event.data.type === "PAYMENT_COMPLETED") {
+        const { data } = event.data;
+        console.log("Payment completed:", data);
+
+        // Update the request status to paid
+        if (onUpdateRequest) {
+          onUpdateRequest(data.requestId, "pay");
+        }
+
+        // Show receipt modal
+        setPaymentData(data);
+        setSelectedRequest(requests.find((req) => req.id === data.requestId));
+        setShowReceiptModal(true);
+      }
+    };
+
+    window.addEventListener("message", handlePaymentMessage);
+    return () => window.removeEventListener("message", handlePaymentMessage);
+  }, [requests, onUpdateRequest]);
 
   const getStatusDisplay = (status) => {
     const statusMap = {
@@ -196,6 +227,20 @@ const StatusTab = ({
     }
   };
 
+  const closeReceiptModal = () => {
+    setShowReceiptModal(false);
+    setSelectedRequest(null);
+    setPaymentData(null);
+  };
+
+  const handleReturnItem = (requestId) => {
+    console.log(`Marking item as received for request ${requestId}`);
+    // Update request status to received
+    if (onUpdateRequest) {
+      onUpdateRequest(requestId, "receive");
+    }
+  };
+
   if (loading) {
     return (
       <div className="flex items-center justify-center py-12">
@@ -290,14 +335,20 @@ const StatusTab = ({
                         <h4 className="text-sm font-semibold text-gray-900 truncate">
                           [{ownerDisplay}] {itemName}
                         </h4>
-                        <div className="mt-1">
+                        <div className="mt-1 flex items-center gap-2">
+                          <span className="text-xs text-gray-500 font-medium">
+                            Status:
+                          </span>
                           <span
                             className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${statusInfo.color}`}
                           >
                             {statusInfo.text}
-                            {request.approvedDate &&
-                              ` • ${request.approvedDate}`}
                           </span>
+                          {request.approvedDate && (
+                            <span className="text-xs text-gray-400">
+                              • {request.approvedDate}
+                            </span>
+                          )}
                         </div>
                       </div>
                     </div>
@@ -352,6 +403,15 @@ const StatusTab = ({
         onClose={closePaymentModal}
         request={selectedRequest}
         onPaymentConfirm={handlePaymentConfirm}
+      />
+
+      {/* Receipt Modal */}
+      <ReceiptModal
+        isOpen={showReceiptModal}
+        onClose={closeReceiptModal}
+        request={selectedRequest}
+        paymentData={paymentData}
+        onReturnItem={handleReturnItem}
       />
     </div>
   );

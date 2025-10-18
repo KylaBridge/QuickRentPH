@@ -146,7 +146,6 @@ const ItemDetailView = ({ item, onBack, onRentClick, onGoToProfile }) => {
     description: item.description,
     includedAccessories: item.includedAccessories,
     pickupLocation: item.pickupLocation,
-    paymentMethod: item.paymentMethod,
     deliveryOption: item.deliveryOption,
     customTerms: item.customTerms,
     postedDate: getPostedDate(item),
@@ -450,12 +449,14 @@ const ItemDetailView = ({ item, onBack, onRentClick, onGoToProfile }) => {
                 </div>
               )}
 
-              {itemData.paymentMethod && (
-                <div>
-                  <span className="font-medium">Payment Methods:</span>{" "}
-                  {itemData.paymentMethod}
-                </div>
-              )}
+              <div>
+                <span className="font-medium">Payment Methods:</span>{" "}
+                <span className="inline-flex items-center gap-2">
+                  <span className="text-blue-600">GCash</span>
+                  <span className="text-gray-400">•</span>
+                  <span className="text-green-600">PayMaya</span>
+                </span>
+              </div>
 
               {itemData.createdAt && (
                 <div>

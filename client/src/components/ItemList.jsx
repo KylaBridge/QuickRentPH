@@ -94,8 +94,7 @@ const ItemList = ({
       image:
         dbItem.image || getImageUrl((dbItem.images && dbItem.images[0]) || ""),
       category: dbItem.category,
-      // Add payment methods - use existing or add sample ones
-      paymentMethod: dbItem.paymentMethod || "GCash, PayMaya",
+      // Payment methods are always default (GCash, PayMaya)
       ...dbItem, // Include all original properties
     };
   };

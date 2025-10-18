@@ -32,12 +32,6 @@ export const validateForm = (formData, paymentMethods, images) => {
     errors.push("Pickup Location is required");
   if (!formData.deliveryOption) errors.push("Delivery Option is required");
 
-  const selectedPayments = Object.entries(paymentMethods)
-    .filter(([, v]) => v)
-    .map(([k]) => k);
-  if (selectedPayments.length === 0)
-    errors.push("At least one payment method is required");
-
   if (images.length === 0) errors.push("At least one image is required");
 
   return errors;
@@ -50,10 +44,8 @@ export const buildItemData = (
   isEditMode,
   hasImageChanges = false
 ) => {
-  const selectedPayments = Object.entries(paymentMethods)
-    .filter(([, v]) => v)
-    .map(([k]) => k)
-    .join(",");
+  // default payment methods (GCash and PayMaya)
+  const selectedPayments = "gcash,paymaya";
 
   const itemData = {
     name: formData.name.trim(),

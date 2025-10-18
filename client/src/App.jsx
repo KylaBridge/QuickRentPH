@@ -14,6 +14,8 @@ import Messages from "./pages/Messages.jsx";
 import Profile from "./pages/Profile.jsx";
 import Help from "./pages/Help.jsx";
 import AddItem from "./components/myRentals/AddItem.jsx";
+import GCashGateway from "./pages/GCashGateway.jsx";
+import PayMayaGateway from "./pages/PayMayaGateway.jsx";
 import ProtectedRoute from "./components/ProtectedRoute.jsx";
 import AdminProtectedRoute from "./components/AdminProtectedRoute.jsx";
 import AdminDashboard from "./pages/admin/AdminDashboard.jsx";
@@ -73,6 +75,10 @@ function App() {
             <Route path="/login" element={<LoginPage />} />
             <Route path="/signup" element={<SignUpPage />} />
             <Route path="/reset-password" element={<ResetPassword />} />
+
+            {/* Payment Gateway Routes */}
+            <Route path="/gcash-gateway" element={<GCashGateway />} />
+            <Route path="/paymaya-gateway" element={<PayMayaGateway />} />
             <Route
               path="/dashboard"
               element={

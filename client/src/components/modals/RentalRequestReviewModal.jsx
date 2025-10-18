@@ -97,16 +97,51 @@ const RentalRequestReviewModal = ({
   const rentalReason =
     reservation.rentalReason || reservation.reasonForRenting || "";
 
-  // Get deposit percentage (default to 50% if not specified)
+  // Get deposit percentage from the item's actual setting (where lender defined it)
   const depositPercent =
-    reservation.depositPercent || itemInfo.depositPercent || 50;
+    itemInfo.depositPercent ||
+    itemInfo.downpaymentPercentage ||
+    itemInfo.downpayment ||
+    reservation.depositPercent ||
+    50; // Only fallback to 50% if truly not specified
 
-  // Use centralized calculation system with final rate (no double taxation)
+  console.log("Deposit percentage sources:", {
+    itemInfoDepositPercent: itemInfo.depositPercent,
+    itemInfoDownpaymentPercentage: itemInfo.downpaymentPercentage,
+    itemInfoDownpayment: itemInfo.downpayment,
+    reservationDepositPercent: reservation.depositPercent,
+    finalUsed: depositPercent,
+  });
+
+  // Use centralized calculation system with final rate
   const rentalBreakdown = calculateRentalBreakdown(
     finalRate,
     duration,
     depositPercent
   );
+
+  // Override owner receivable to exclude tax (owner gets base amount only)
+  const taxAmount = finalRate - baseRate;
+  const baseTotalRentalCost = baseRate * duration;
+  const ownerReceivableExcludingTax = baseTotalRentalCost; // Owner gets base amount without tax
+
+  // Create corrected breakdown
+  const correctedBreakdown = {
+    ...rentalBreakdown,
+    ownerReceivable: ownerReceivableExcludingTax,
+    platformEarnings: rentalBreakdown.serviceFee, // Platform gets service fee + tax
+  };
+
+  console.log("Breakdown calculation:", {
+    baseRate,
+    finalRate,
+    taxAmount,
+    duration,
+    baseTotalRentalCost,
+    ownerReceivableExcludingTax,
+    platformEarnings: correctedBreakdown.platformEarnings,
+    depositPercent,
+  });
 
   const handleApprove = () => {
     if (onApprove) {
@@ -441,7 +476,7 @@ const RentalRequestReviewModal = ({
                 <span>{formatCurrency(rentalBreakdown.totalRentalCost)}</span>
               </div>
               <div className="flex justify-between">
-                <span>Security Deposit ({depositPercent}%)</span>
+                <span>Deposit ({depositPercent}%)</span>
                 <span>{formatCurrency(rentalBreakdown.depositAmount)}</span>
               </div>
               <div className="flex justify-between">
@@ -459,19 +494,25 @@ const RentalRequestReviewModal = ({
                   <div className="flex justify-between">
                     <span>Platform Earnings:</span>
                     <span>
-                      {formatCurrency(rentalBreakdown.platformEarnings)}
+                      {formatCurrency(correctedBreakdown.platformEarnings)}
                     </span>
                   </div>
                   <div className="flex justify-between">
                     <span>Owner Receivable:</span>
                     <span>
-                      {formatCurrency(rentalBreakdown.ownerReceivable)}
+                      {formatCurrency(correctedBreakdown.ownerReceivable)}
                     </span>
                   </div>
                   <div className="flex justify-between">
                     <span>Deposit (Refundable):</span>
                     <span>
                       {formatCurrency(rentalBreakdown.refundableDeposit)}
+                    </span>
+                  </div>
+                  <div className="flex justify-between text-xs">
+                    <span>Tax (System Held):</span>
+                    <span>
+                      {formatCurrency((finalRate - baseRate) * duration)}
                     </span>
                   </div>
                 </div>

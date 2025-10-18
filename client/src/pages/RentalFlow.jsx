@@ -349,11 +349,14 @@ const RentalFlow = () => {
                   </div>
                 )}
 
-                {item.paymentMethod && (
-                  <div className="text-sm text-gray-600">
-                    <strong>Payment Methods:</strong> {item.paymentMethod}
-                  </div>
-                )}
+                <div className="text-sm text-gray-600">
+                  <strong>Payment Methods:</strong>{" "}
+                  <span className="inline-flex items-center gap-2">
+                    <span className="text-blue-600">GCash</span>
+                    <span className="text-gray-400">•</span>
+                    <span className="text-green-600">PayMaya</span>
+                  </span>
+                </div>
               </div>
 
               {/* Cost Breakdown */}

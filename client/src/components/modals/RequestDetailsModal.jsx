@@ -51,36 +51,78 @@ const RequestDetailsModal = ({ isOpen, onClose, request, getActionButton }) => {
   // Duration and dates - calculate this before other useMemo hooks
   const duration = request?.durationOfRent || request?.duration || 1;
 
-  // Calculate rental costs using centralized calculations
+  // Calculate rental costs - completely refactored to use current pricing system
   const rentalCalculation = useMemo(() => {
-    if (!request) return { subtotal: 0, total: 0 };
-
-    if (request.cost) {
-      // Use existing cost structure if available
+    if (!request || !request.item) {
       return {
-        subtotal: request.cost.subtotal || 0,
-        total: request.cost.total || 0,
+        subtotal: 0,
+        total: 0,
+        breakdown: null,
       };
     }
 
-    // Calculate using centralized logic
-    if (request.item?.price && duration) {
-      const basePrice = Number(request.item.price);
-      const days = Number(duration);
-      if (basePrice > 0 && days > 0) {
-        const finalPrice = quickRateCalculation(basePrice).finalRate;
-        const breakdown = calculateRentalBreakdown(finalPrice, days);
-        return {
-          subtotal: breakdown.totalRentalCost,
-          total: breakdown.totalAmountDue,
-        };
-      }
+    // Debug log to see what request data we have
+    console.log("Request data:", {
+      item: request.item,
+      duration: duration,
+      depositPercent: request.item?.depositPercent,
+      downpayment: request.item?.downpayment,
+    });
+
+    // Use the current pricing system exactly like the frontend does
+    const basePrice = parseFloat(request.item.price) || 0;
+    const days = parseInt(duration) || 1;
+
+    if (basePrice <= 0 || days <= 0) {
+      return {
+        subtotal: 0,
+        total: 0,
+        breakdown: null,
+      };
     }
 
-    // Fallback values
+    // Calculate final price with tax (same as displayed throughout the app)
+    const finalPrice = quickRateCalculation(basePrice).finalRate;
+
+    // Calculate rental cost (final price × days)
+    const rentalCost = finalPrice * days;
+
+    // Calculate service fee (5% of rental cost)
+    const serviceFee = rentalCost * 0.05; // BUSINESS_RATES.SERVICE_FEE_RATE
+
+    // Get deposit percentage from item (where it's actually stored)
+    const depositPercent =
+      request.item?.depositPercent || request.item?.downpayment || 50;
+
+    // Calculate deposit amount
+    const depositAmount = (rentalCost * depositPercent) / 100;
+
+    // Calculate total amount due
+    const totalAmountDue = rentalCost + serviceFee + depositAmount;
+
+    // Create proper breakdown structure
+    const breakdown = {
+      totalRentalCost: Math.round(rentalCost * 100) / 100,
+      serviceFee: Math.round(serviceFee * 100) / 100,
+      depositAmount: Math.round(depositAmount * 100) / 100,
+      depositPercent: depositPercent,
+      totalAmountDue: Math.round(totalAmountDue * 100) / 100,
+      platformEarnings: Math.round(serviceFee * 100) / 100, // Platform gets the service fee
+      ownerReceivable: Math.round(rentalCost * 100) / 100,
+      refundableDeposit: Math.round(depositAmount * 100) / 100,
+      duration: days,
+      dailyRate: {
+        base: basePrice,
+        final: finalPrice,
+      },
+    };
+
+    console.log("Calculated breakdown:", breakdown);
+
     return {
-      subtotal: request.rentalFee || 0,
-      total: request.totalAmount || 0,
+      subtotal: breakdown.totalRentalCost,
+      total: breakdown.totalAmountDue,
+      breakdown: breakdown,
     };
   }, [request, duration]);
 
@@ -112,10 +154,6 @@ const RequestDetailsModal = ({ isOpen, onClose, request, getActionButton }) => {
   } else if (request.dateRange) {
     dateRange = request.dateRange;
   }
-
-  // Fees
-  const rentalFeeValue = rentalCalculation.subtotal;
-  const totalValue = rentalCalculation.total;
 
   const formatCurrency = (v) => {
     if (v == null) return "-";
@@ -228,62 +266,299 @@ const RequestDetailsModal = ({ isOpen, onClose, request, getActionButton }) => {
                 </span>
                 <p className="text-gray-600">{dateRange || "TBD"}</p>
               </div>
-              <div>
-                <span className="font-medium text-gray-700">Rental Fee:</span>
-                <p className="text-gray-600">
-                  {formatCurrency(rentalFeeValue)}
-                </p>
-              </div>
-              <div>
-                <span className="font-medium text-gray-700">Total Amount:</span>
-                <p className="text-gray-600">{formatCurrency(totalValue)}</p>
-              </div>
             </div>
+
+            {/* Detailed Cost Breakdown */}
+            {rentalCalculation.breakdown && (
+              <div className="bg-gray-50 rounded-lg p-4">
+                <h5 className="font-semibold text-gray-900 mb-3">
+                  Cost Breakdown
+                </h5>
+                <div className="space-y-2 text-sm">
+                  <div className="flex justify-between">
+                    <span className="text-gray-700">
+                      Rental ({duration} day{duration > 1 ? "s" : ""})
+                    </span>
+                    <span className="font-medium">
+                      {formatCurrency(
+                        rentalCalculation.breakdown.totalRentalCost
+                      )}
+                    </span>
+                  </div>
+
+                  {/* Show service fee if available and non-zero */}
+                  {rentalCalculation.breakdown.serviceFee > 0 && (
+                    <div className="flex justify-between">
+                      <span className="text-gray-700">Service Fee (5%)</span>
+                      <span className="font-medium">
+                        {formatCurrency(rentalCalculation.breakdown.serviceFee)}
+                      </span>
+                    </div>
+                  )}
+
+                  {/* Show deposit if available and non-zero */}
+                  {rentalCalculation.breakdown.depositAmount > 0 && (
+                    <>
+                      <div className="flex justify-between">
+                        <span className="text-gray-700">
+                          Deposit ({rentalCalculation.breakdown.depositPercent}
+                          %)
+                        </span>
+                        <span className="font-medium">
+                          {formatCurrency(
+                            rentalCalculation.breakdown.depositAmount
+                          )}
+                        </span>
+                      </div>
+                      <div className="text-xs text-gray-500 italic mt-1">
+                        Note: The deposit is refundable and will be returned
+                        once the item is confirmed returned in good condition.
+                      </div>
+                    </>
+                  )}
+
+                  <hr className="border-gray-300 my-2" />
+                  <div className="flex justify-between font-semibold text-base">
+                    <span className="text-[#6C4BF4]">Total</span>
+                    <span className="text-[#6C4BF4]">
+                      {formatCurrency(
+                        rentalCalculation.breakdown.totalAmountDue
+                      )}
+                    </span>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Fallback for when detailed breakdown is not available */}
+            {!rentalCalculation.breakdown && (
+              <div className="bg-gray-50 rounded-lg p-4">
+                <h5 className="font-semibold text-gray-900 mb-3">
+                  Payment Summary
+                </h5>
+                <div className="space-y-2 text-sm">
+                  <div className="flex justify-between">
+                    <span className="text-gray-700">Rental Fee:</span>
+                    <span className="font-medium">
+                      {formatCurrency(rentalCalculation.subtotal)}
+                    </span>
+                  </div>
+                  <hr className="border-gray-300 my-2" />
+                  <div className="flex justify-between font-semibold text-base">
+                    <span className="text-[#6C4BF4]">Total Amount:</span>
+                    <span className="text-[#6C4BF4]">
+                      {formatCurrency(rentalCalculation.total)}
+                    </span>
+                  </div>
+                </div>
+              </div>
+            )}
 
             {/* Status Timeline */}
             <div>
-              <h5 className="font-medium text-gray-700 mb-2">
-                Status Timeline
+              <h5 className="font-medium text-gray-700 mb-3">
+                Status:{" "}
+                <span className="text-[#6C4BF4] capitalize">
+                  {request.status?.replace("_", " ") || "Unknown"}
+                </span>
               </h5>
-              <div className="space-y-2 text-sm">
-                {request.status === "cancelled" ? (
-                  <div className="flex items-center gap-2">
-                    <div className="w-2 h-2 bg-red-500 rounded-full"></div>
-                    <span>
-                      Request Cancelled
-                      {request.cancelledDate
-                        ? ` • ${request.cancelledDate}`
-                        : ""}
-                    </span>
+              <h6 className="font-medium text-gray-700 mb-2 text-sm">
+                Status Timeline
+              </h6>
+              <div className="space-y-3 text-sm">
+                {/* Request Submitted */}
+                <div className="flex items-start gap-3">
+                  <div className="w-2 h-2 bg-green-500 rounded-full mt-1.5 flex-shrink-0"></div>
+                  <div className="flex-1">
+                    <div className="font-medium text-gray-900">
+                      Request Submitted
+                    </div>
+                    <div className="text-xs text-gray-500 mt-0.5">
+                      {request.createdAt
+                        ? new Date(request.createdAt).toLocaleString()
+                        : "Date not available"}
+                    </div>
                   </div>
-                ) : (
-                  <div className="flex items-center gap-2">
-                    <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-                    <span>Request Submitted</span>
+                </div>
+
+                {/* Approved */}
+                {(request.status === "approved" ||
+                  request.status === "paid" ||
+                  request.status === "shipped" ||
+                  request.status === "received" ||
+                  request.status === "returned") && (
+                  <div className="flex items-start gap-3">
+                    <div className="w-2 h-2 bg-green-500 rounded-full mt-1.5 flex-shrink-0"></div>
+                    <div className="flex-1">
+                      <div className="font-medium text-gray-900">
+                        Request Approved
+                      </div>
+                      <div className="text-xs text-gray-500 mt-0.5">
+                        {request.approvedDate
+                          ? request.approvedDate.includes("T") ||
+                            request.approvedDate.includes(" ")
+                            ? new Date(request.approvedDate).toLocaleString()
+                            : request.approvedDate
+                          : "Approval date not available"}
+                      </div>
+                      <div className="text-xs text-gray-600 mt-1">
+                        Owner has approved your rental request. You can now
+                        proceed with payment.
+                      </div>
+                    </div>
                   </div>
                 )}
-                {request.approvedDate && (
-                  <div className="flex items-center gap-2">
-                    <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-                    <span>Approved {request.approvedDate}</span>
+
+                {/* Payment Made */}
+                {(request.status === "paid" ||
+                  request.status === "shipped" ||
+                  request.status === "received" ||
+                  request.status === "returned") && (
+                  <div className="flex items-start gap-3">
+                    <div className="w-2 h-2 bg-blue-500 rounded-full mt-1.5 flex-shrink-0"></div>
+                    <div className="flex-1">
+                      <div className="font-medium text-gray-900">
+                        Payment Submitted
+                      </div>
+                      <div className="text-xs text-gray-500 mt-0.5">
+                        {request.paymentSubmittedDate
+                          ? new Date(
+                              request.paymentSubmittedDate
+                            ).toLocaleString()
+                          : "Payment date not available"}
+                      </div>
+                      <div className="text-xs text-gray-600 mt-1">
+                        You have submitted payment. Waiting for owner
+                        confirmation.
+                      </div>
+                    </div>
                   </div>
                 )}
-                {request.paymentDate && (
-                  <div className="flex items-center gap-2">
-                    <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-                    <span>Payment Confirmed {request.paymentDate}</span>
+
+                {/* Payment Confirmed */}
+                {(request.status === "paid" ||
+                  request.status === "shipped" ||
+                  request.status === "received" ||
+                  request.status === "returned") && (
+                  <div className="flex items-start gap-3">
+                    <div className="w-2 h-2 bg-green-500 rounded-full mt-1.5 flex-shrink-0"></div>
+                    <div className="flex-1">
+                      <div className="font-medium text-gray-900">
+                        Payment Confirmed
+                      </div>
+                      <div className="text-xs text-gray-500 mt-0.5">
+                        {request.paymentConfirmedDate || request.paymentDate
+                          ? new Date(
+                              request.paymentConfirmedDate ||
+                                request.paymentDate
+                            ).toLocaleString()
+                          : "Payment confirmation date not available"}
+                      </div>
+                      <div className="text-xs text-gray-600 mt-1">
+                        Owner has confirmed receipt of your payment.
+                      </div>
+                    </div>
                   </div>
                 )}
-                {request.shippedDate && (
-                  <div className="flex items-center gap-2">
-                    <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-                    <span>Item Shipped {request.shippedDate}</span>
+
+                {/* Item Shipped */}
+                {(request.status === "shipped" ||
+                  request.status === "received" ||
+                  request.status === "returned") &&
+                  request.shippedDate && (
+                    <div className="flex items-start gap-3">
+                      <div className="w-2 h-2 bg-purple-500 rounded-full mt-1.5 flex-shrink-0"></div>
+                      <div className="flex-1">
+                        <div className="font-medium text-gray-900">
+                          Item Shipped
+                        </div>
+                        <div className="text-xs text-gray-500 mt-0.5">
+                          {new Date(request.shippedDate).toLocaleString()}
+                        </div>
+                        <div className="text-xs text-gray-600 mt-1">
+                          Item is on its way to you.
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                {/* Item Received */}
+                {(request.status === "received" ||
+                  request.status === "returned") &&
+                  request.receivedDate && (
+                    <div className="flex items-start gap-3">
+                      <div className="w-2 h-2 bg-indigo-500 rounded-full mt-1.5 flex-shrink-0"></div>
+                      <div className="flex-1">
+                        <div className="font-medium text-gray-900">
+                          Item Received
+                        </div>
+                        <div className="text-xs text-gray-500 mt-0.5">
+                          {new Date(request.receivedDate).toLocaleString()}
+                        </div>
+                        <div className="text-xs text-gray-600 mt-1">
+                          You have confirmed receipt of the item.
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                {/* Item Returned */}
+                {request.status === "returned" && request.returnedDate && (
+                  <div className="flex items-start gap-3">
+                    <div className="w-2 h-2 bg-gray-500 rounded-full mt-1.5 flex-shrink-0"></div>
+                    <div className="flex-1">
+                      <div className="font-medium text-gray-900">
+                        Item Returned
+                      </div>
+                      <div className="text-xs text-gray-500 mt-0.5">
+                        {new Date(request.returnedDate).toLocaleString()}
+                      </div>
+                      <div className="text-xs text-gray-600 mt-1">
+                        Item has been returned and rental is complete.
+                      </div>
+                    </div>
                   </div>
                 )}
-                {request.receivedDate && (
-                  <div className="flex items-center gap-2">
-                    <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-                    <span>Item Received {request.receivedDate}</span>
+
+                {/* Cancelled */}
+                {request.status === "cancelled" && (
+                  <div className="flex items-start gap-3">
+                    <div className="w-2 h-2 bg-red-500 rounded-full mt-1.5 flex-shrink-0"></div>
+                    <div className="flex-1">
+                      <div className="font-medium text-gray-900">
+                        Request Cancelled
+                      </div>
+                      <div className="text-xs text-gray-500 mt-0.5">
+                        {request.cancelledDate
+                          ? new Date(request.cancelledDate).toLocaleString()
+                          : "Cancellation date not available"}
+                      </div>
+                      <div className="text-xs text-gray-600 mt-1">
+                        {request.cancellationReason ||
+                          "Request has been cancelled."}
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* Rejected */}
+                {request.status === "rejected" && (
+                  <div className="flex items-start gap-3">
+                    <div className="w-2 h-2 bg-red-500 rounded-full mt-1.5 flex-shrink-0"></div>
+                    <div className="flex-1">
+                      <div className="font-medium text-gray-900">
+                        Request Rejected
+                      </div>
+                      <div className="text-xs text-gray-500 mt-0.5">
+                        {request.rejectedDate
+                          ? new Date(request.rejectedDate).toLocaleString()
+                          : "Rejection date not available"}
+                      </div>
+                      <div className="text-xs text-gray-600 mt-1">
+                        {request.rejectionReason ||
+                          "Owner has rejected your request."}
+                      </div>
+                    </div>
                   </div>
                 )}
               </div>
