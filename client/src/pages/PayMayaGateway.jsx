@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useSearchParams } from "react-router-dom";
+import api from "../axios";
 
 const PayMayaGateway = () => {
   const [searchParams] = useSearchParams();
@@ -18,14 +19,30 @@ const PayMayaGateway = () => {
     return () => clearTimeout(loadingTimer);
   }, []);
 
-  const handlePaymentComplete = () => {
+  const handlePaymentComplete = async () => {
     // Send payment completion data back to parent window
     const paymentData = {
       requestId,
       paymentMethod: "paymaya",
       status: "completed",
-      timestamp: new Date().toISOString(),
+      paymentDate: new Date().toISOString(),
+      totalAmount,
     };
+
+    // Record escrow payment on server (subtotal as amount)
+    try {
+      await api.post("/api/payments", {
+        requestId,
+        paymentMethod: "paymaya",
+        totalPaid: totalAmount,
+      });
+      // Update rental status to 'paid'
+      await api.patch(`/api/rentals/${requestId}/status`, {
+        status: "paid"
+      });
+    } catch (e) {
+      console.warn("Failed to record payment or update rental status", e);
+    }
 
     // If opened in a new window, send message to parent
     if (window.opener) {

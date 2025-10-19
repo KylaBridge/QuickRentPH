@@ -39,10 +39,23 @@ const rentalSchema = new Schema({
   },
   status: {
     type: String,
-    enum: ["pending", "approved", "rejected", "cancelled"],
+    enum: [
+      "pending",
+      "approved",
+      "rejected",
+      "cancelled",
+      "paid",
+      "shipped",
+      "received",
+      "shipping_for_return",
+      "returned_to_owner"
+    ],
     default: "pending",
   },
+  approvedAt: { type: Date },
+  paidAt: { type: Date },
   createdAt: { type: Date, default: Date.now },
+  updatedAt: { type: Date, default: Date.now },
 });
 
 module.exports = mongoose.model("Rentals", rentalSchema);

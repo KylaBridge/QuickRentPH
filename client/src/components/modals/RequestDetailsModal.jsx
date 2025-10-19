@@ -370,152 +370,87 @@ const RequestDetailsModal = ({ isOpen, onClose, request, getActionButton }) => {
                 <div className="flex items-start gap-3">
                   <div className="w-2 h-2 bg-green-500 rounded-full mt-1.5 flex-shrink-0"></div>
                   <div className="flex-1">
-                    <div className="font-medium text-gray-900">
-                      Request Submitted
-                    </div>
+                    <div className="font-medium text-gray-900">Request Submitted</div>
                     <div className="text-xs text-gray-500 mt-0.5">
-                      {request.createdAt
-                        ? new Date(request.createdAt).toLocaleString()
-                        : "Date not available"}
+                      {request.createdAt ? new Date(request.createdAt).toLocaleString() : "Date not available"}
                     </div>
                   </div>
                 </div>
 
                 {/* Approved */}
-                {(request.status === "approved" ||
-                  request.status === "paid" ||
-                  request.status === "shipped" ||
-                  request.status === "received" ||
-                  request.status === "returned") && (
+                {request.approvedAt && (
                   <div className="flex items-start gap-3">
                     <div className="w-2 h-2 bg-green-500 rounded-full mt-1.5 flex-shrink-0"></div>
                     <div className="flex-1">
-                      <div className="font-medium text-gray-900">
-                        Request Approved
-                      </div>
+                      <div className="font-medium text-gray-900">Request Approved</div>
                       <div className="text-xs text-gray-500 mt-0.5">
-                        {request.approvedDate
-                          ? request.approvedDate.includes("T") ||
-                            request.approvedDate.includes(" ")
-                            ? new Date(request.approvedDate).toLocaleString()
-                            : request.approvedDate
-                          : "Approval date not available"}
+                        {new Date(request.approvedAt).toLocaleString()}
                       </div>
-                      <div className="text-xs text-gray-600 mt-1">
-                        Owner has approved your rental request. You can now
-                        proceed with payment.
-                      </div>
+                      <div className="text-xs text-gray-600 mt-1">Owner has approved your rental request. You can now proceed with payment.</div>
                     </div>
                   </div>
                 )}
 
                 {/* Payment Made */}
-                {(request.status === "paid" ||
-                  request.status === "shipped" ||
-                  request.status === "received" ||
-                  request.status === "returned") && (
+                {request.paidAt && (
                   <div className="flex items-start gap-3">
                     <div className="w-2 h-2 bg-blue-500 rounded-full mt-1.5 flex-shrink-0"></div>
                     <div className="flex-1">
-                      <div className="font-medium text-gray-900">
-                        Payment Submitted
-                      </div>
+                      <div className="font-medium text-gray-900">Payment Submitted</div>
                       <div className="text-xs text-gray-500 mt-0.5">
-                        {request.paymentSubmittedDate
-                          ? new Date(
-                              request.paymentSubmittedDate
-                            ).toLocaleString()
-                          : "Payment date not available"}
+                        {new Date(request.paidAt).toLocaleString()}
                       </div>
-                      <div className="text-xs text-gray-600 mt-1">
-                        You have submitted payment. Waiting for owner
-                        confirmation.
-                      </div>
-                    </div>
-                  </div>
-                )}
-
-                {/* Payment Confirmed */}
-                {(request.status === "paid" ||
-                  request.status === "shipped" ||
-                  request.status === "received" ||
-                  request.status === "returned") && (
-                  <div className="flex items-start gap-3">
-                    <div className="w-2 h-2 bg-green-500 rounded-full mt-1.5 flex-shrink-0"></div>
-                    <div className="flex-1">
-                      <div className="font-medium text-gray-900">
-                        Payment Confirmed
-                      </div>
-                      <div className="text-xs text-gray-500 mt-0.5">
-                        {request.paymentConfirmedDate || request.paymentDate
-                          ? new Date(
-                              request.paymentConfirmedDate ||
-                                request.paymentDate
-                            ).toLocaleString()
-                          : "Payment confirmation date not available"}
-                      </div>
-                      <div className="text-xs text-gray-600 mt-1">
-                        Owner has confirmed receipt of your payment.
-                      </div>
+                      <div className="text-xs text-gray-600 mt-1">You have submitted payment. Waiting for owner confirmation.</div>
                     </div>
                   </div>
                 )}
 
                 {/* Item Shipped */}
-                {(request.status === "shipped" ||
-                  request.status === "received" ||
-                  request.status === "returned") &&
-                  request.shippedDate && (
-                    <div className="flex items-start gap-3">
-                      <div className="w-2 h-2 bg-purple-500 rounded-full mt-1.5 flex-shrink-0"></div>
-                      <div className="flex-1">
-                        <div className="font-medium text-gray-900">
-                          Item Shipped
-                        </div>
-                        <div className="text-xs text-gray-500 mt-0.5">
-                          {new Date(request.shippedDate).toLocaleString()}
-                        </div>
-                        <div className="text-xs text-gray-600 mt-1">
-                          Item is on its way to you.
-                        </div>
+                {request.shippedDate && (
+                  <div className="flex items-start gap-3">
+                    <div className="w-2 h-2 bg-purple-500 rounded-full mt-1.5 flex-shrink-0"></div>
+                    <div className="flex-1">
+                      <div className="font-medium text-gray-900">Item Shipped</div>
+                      <div className="text-xs text-gray-500 mt-0.5">
+                        {new Date(request.shippedDate).toLocaleString()}
                       </div>
+                      <div className="text-xs text-gray-600 mt-1">Item is on its way to you.</div>
                     </div>
-                  )}
+                  </div>
+                )}
 
                 {/* Item Received */}
-                {(request.status === "received" ||
-                  request.status === "returned") &&
-                  request.receivedDate && (
-                    <div className="flex items-start gap-3">
-                      <div className="w-2 h-2 bg-indigo-500 rounded-full mt-1.5 flex-shrink-0"></div>
-                      <div className="flex-1">
-                        <div className="font-medium text-gray-900">
-                          Item Received
-                        </div>
-                        <div className="text-xs text-gray-500 mt-0.5">
-                          {new Date(request.receivedDate).toLocaleString()}
-                        </div>
-                        <div className="text-xs text-gray-600 mt-1">
-                          You have confirmed receipt of the item.
-                        </div>
-                      </div>
-                    </div>
-                  )}
-
-                {/* Item Returned */}
-                {request.status === "returned" && request.returnedDate && (
+                {request.receivedDate && (
                   <div className="flex items-start gap-3">
-                    <div className="w-2 h-2 bg-gray-500 rounded-full mt-1.5 flex-shrink-0"></div>
+                    <div className="w-2 h-2 bg-indigo-500 rounded-full mt-1.5 flex-shrink-0"></div>
                     <div className="flex-1">
-                      <div className="font-medium text-gray-900">
-                        Item Returned
-                      </div>
+                      <div className="font-medium text-gray-900">Item Received</div>
                       <div className="text-xs text-gray-500 mt-0.5">
-                        {new Date(request.returnedDate).toLocaleString()}
+                        {new Date(request.receivedDate).toLocaleString()}
                       </div>
-                      <div className="text-xs text-gray-600 mt-1">
-                        Item has been returned and rental is complete.
-                      </div>
+                      <div className="text-xs text-gray-600 mt-1">You have confirmed receipt of the item.</div>
+                    </div>
+                  </div>
+                )}
+
+                {/* Shipping for Return */}
+                {(request.status === "shipping_for_return" || request.status === "returned_to_owner") && (
+                  <div className="flex items-start gap-3">
+                    <div className="w-2 h-2 bg-pink-500 rounded-full mt-1.5 flex-shrink-0"></div>
+                    <div className="flex-1">
+                      <div className="font-medium text-gray-900">Shipping for Return</div>
+                      <div className="text-xs text-gray-500 mt-0.5">Item is being shipped back to the owner.</div>
+                    </div>
+                  </div>
+                )}
+
+                {/* Returned to Owner */}
+                {request.status === "returned_to_owner" && (
+                  <div className="flex items-start gap-3">
+                    <div className="w-2 h-2 bg-green-500 rounded-full mt-1.5 flex-shrink-0"></div>
+                    <div className="flex-1">
+                      <div className="font-medium text-gray-900">Returned to Owner</div>
+                      <div className="text-xs text-gray-500 mt-0.5">Item has been returned and rental is complete.</div>
                     </div>
                   </div>
                 )}
@@ -525,18 +460,11 @@ const RequestDetailsModal = ({ isOpen, onClose, request, getActionButton }) => {
                   <div className="flex items-start gap-3">
                     <div className="w-2 h-2 bg-red-500 rounded-full mt-1.5 flex-shrink-0"></div>
                     <div className="flex-1">
-                      <div className="font-medium text-gray-900">
-                        Request Cancelled
-                      </div>
+                      <div className="font-medium text-gray-900">Request Cancelled</div>
                       <div className="text-xs text-gray-500 mt-0.5">
-                        {request.cancelledDate
-                          ? new Date(request.cancelledDate).toLocaleString()
-                          : "Cancellation date not available"}
+                        {request.cancelledDate ? new Date(request.cancelledDate).toLocaleString() : "Cancellation date not available"}
                       </div>
-                      <div className="text-xs text-gray-600 mt-1">
-                        {request.cancellationReason ||
-                          "Request has been cancelled."}
-                      </div>
+                      <div className="text-xs text-gray-600 mt-1">{request.cancellationReason || "Request has been cancelled."}</div>
                     </div>
                   </div>
                 )}
@@ -546,18 +474,11 @@ const RequestDetailsModal = ({ isOpen, onClose, request, getActionButton }) => {
                   <div className="flex items-start gap-3">
                     <div className="w-2 h-2 bg-red-500 rounded-full mt-1.5 flex-shrink-0"></div>
                     <div className="flex-1">
-                      <div className="font-medium text-gray-900">
-                        Request Rejected
-                      </div>
+                      <div className="font-medium text-gray-900">Request Rejected</div>
                       <div className="text-xs text-gray-500 mt-0.5">
-                        {request.rejectedDate
-                          ? new Date(request.rejectedDate).toLocaleString()
-                          : "Rejection date not available"}
+                        {request.rejectedDate ? new Date(request.rejectedDate).toLocaleString() : "Rejection date not available"}
                       </div>
-                      <div className="text-xs text-gray-600 mt-1">
-                        {request.rejectionReason ||
-                          "Owner has rejected your request."}
-                      </div>
+                      <div className="text-xs text-gray-600 mt-1">{request.rejectionReason || "Owner has rejected your request."}</div>
                     </div>
                   </div>
                 )}

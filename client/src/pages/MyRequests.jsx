@@ -24,19 +24,39 @@ const MyRequests = () => {
       amount: `₱${(i + 1) * 100}`,
     }));
 
-  const mockReturns = Array(30)
-    .fill(0)
-    .map((_, i) => ({
-      id: i + 1,
-      itemName: `Returned Item ${i + 1}`,
-      owner: `owner${i + 1}`,
-      returnStatus: ["completed", "pending_confirmation"][i % 2],
+  // Filter real returned rentals for the renter
+  const returnedRentals = statusRequests
+    .filter((r) => r.status === "returned_to_owner")
+    .map((r) => ({
+      id: r._id || r.id,
+      itemName:
+        (r.item && typeof r.item === "object" && r.item.name) ||
+        r.itemName ||
+        r.item ||
+        "Returned Item",
+      owner:
+        r.owner && typeof r.owner === "object"
+          ? r.owner.firstName
+            ? `${r.owner.firstName} ${r.owner.lastName}`
+            : r.owner.username || r.owner._id || "Owner"
+          : r.owner || "Owner",
+      returnStatus: "completed",
+      image:
+        r.image ||
+        (r.item && r.item.images && r.item.images[0]) ||
+        "",
+      duration: r.durationOfRent || r.duration || r.durationDays || 1,
+      returnDate: r.updatedAt || r.returnedAt || r.paidAt || r.createdAt,
+      condition: r.condition || "good",
+      totalPaid: r.cost?.total || r.totalAmount || "",
+      hasReviewed: false,
+      userRating: 0,
     }));
 
   // Pagination setup - reduced items per page for better UX
   const statusPagination = usePagination(statusRequests, 4);
   const paymentsPagination = usePagination(mockPayments, 10);
-  const returnsPagination = usePagination(mockReturns, 4);
+  const returnsPagination = usePagination(returnedRentals, 4);
 
   const toggleSidebar = () => setSidebarOpen(!sidebarOpen);
 

@@ -18,9 +18,11 @@ import {
 } from "react-icons/io5";
 import { TbTruckDelivery } from "react-icons/tb";
 import { getImageUrl } from "../utils/imageUtils";
-import { useMemo, useState, useContext } from "react";
+import { useMemo, useState, useContext, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { AuthContext } from "../context/authContext";
+import ConfirmationModal from "./modals/ConfirmationModal";
+import { useRental } from "../context/rentalContext";
 
 const REVIEWS_PER_PAGE = 3;
 
@@ -30,9 +32,68 @@ const ItemDetailView = ({ item, onBack, onRentClick, onGoToProfile }) => {
   const navigate = useNavigate();
   const { user } = useContext(AuthContext);
 
+
   // Check if current user owns this item
   const isOwnItem =
     user && (item.owner === user._id || item.owner?._id === user._id);
+
+  // Check if user already requested this item for rent
+  // Prefer server-checked flag (in case item.rentals isn't populated client-side)
+  const [hasRequestedServer, setHasRequestedServer] = useState(false);
+  const [checkingRequested, setCheckingRequested] = useState(true);
+
+  // Local fallback if item.rentals is populated
+  const hasRequestedLocal =
+    user && Array.isArray(item.rentals)
+      ? item.rentals.some(
+          (r) => r.renter === user._id || r.renter?._id === user._id
+        )
+      : false;
+
+  // Combined result used by UI
+  const hasRequested = hasRequestedLocal || hasRequestedServer;
+
+  const { getUserRentals } = useRental();
+
+  useEffect(() => {
+    let mounted = true;
+    // If no user or local flag already true, skip server check
+    if (!user || hasRequestedLocal) {
+      setCheckingRequested(false);
+      return () => {
+        mounted = false;
+      };
+    }
+
+    const fetchUserRentals = async () => {
+      try {
+        setCheckingRequested(true);
+        const res = await getUserRentals();
+        const rentals = res?.rentals || [];
+        const found = rentals.some((r) => {
+          const itemId = r.item?._id || r.item;
+          const renterId = r.renter?._id || r.renter;
+          return (
+            itemId &&
+            (itemId === item._id || itemId.toString() === item._id) &&
+            renterId &&
+            (renterId === user._id || renterId.toString() === user._id)
+          );
+        });
+        if (mounted) setHasRequestedServer(found);
+      } catch (e) {
+        // ignore errors, default to false
+      } finally {
+        if (mounted) setCheckingRequested(false);
+      }
+    };
+
+    fetchUserRentals();
+
+    return () => {
+      mounted = false;
+    };
+  }, [user, item._id, hasRequestedLocal]);
 
   // Form states
   const [rentalDetails, setRentalDetails] = useState({
@@ -59,12 +120,36 @@ const ItemDetailView = ({ item, onBack, onRentClick, onGoToProfile }) => {
 
   const [transactionResult, setTransactionResult] = useState(null);
 
+
+  // Profile completeness check (copied from ItemsTab.jsx)
+  const isValidMobile = (m) => {
+    if (!m) return false;
+    if (m === "0") return false;
+    // accept Philippine mobile format 09XXXXXXXXX
+    return /^09\d{9}$/.test(m);
+  };
+
+  const isProfileComplete = () => {
+    if (!user) return false;
+    const hasGender = !!user.gender;
+    const hasBirth = !!user.birthDate;
+    const hasUsername = !!user.username;
+    const hasMobile = isValidMobile(user.mobileNumber);
+    return hasGender && hasBirth && hasUsername && hasMobile;
+  };
+
+  // Modal state for prompting profile completion
+  const [promptCompleteProfile, setPromptCompleteProfile] = useState(false);
+
   // Handle rent button click
   const handleRentClick = () => {
     if (isOwnItem) {
       return; // Do nothing if user owns the item
     }
-
+    if (!isProfileComplete()) {
+      setPromptCompleteProfile(true);
+      return;
+    }
     // Prepare item data with pre-calculated deposit info
     const itemWithDepositInfo = {
       ...item,
@@ -75,7 +160,6 @@ const ItemDetailView = ({ item, onBack, onRentClick, onGoToProfile }) => {
         return quickRateCalculation(basePrice).finalRate;
       })(),
     };
-
     // Navigate directly to rental flow page with enhanced item data
     navigate(`/rental-flow/${item._id}`, {
       state: { item: itemWithDepositInfo },
@@ -154,6 +238,20 @@ const ItemDetailView = ({ item, onBack, onRentClick, onGoToProfile }) => {
 
   return (
     <div className="px-4 sm:px-6 lg:px-8 py-4">
+      {/* Prompt modal to complete profile before renting */}
+      <ConfirmationModal
+        isOpen={promptCompleteProfile}
+        onClose={() => setPromptCompleteProfile(false)}
+        onConfirm={() => {
+          setPromptCompleteProfile(false);
+          navigate("/profile");
+        }}
+        title="Complete your profile"
+        message="You need to complete your profile before renting items."
+        confirmText="Go to Profile"
+        cancelText="Cancel"
+        type="info"
+      />
       <div className="max-w-7xl mx-auto">
         {/* Sticky Go Back Button */}
         <div className="sticky top-0 z-20 bg-gray-50 pt-2 pb-2">
@@ -364,17 +462,23 @@ const ItemDetailView = ({ item, onBack, onRentClick, onGoToProfile }) => {
 
             <div className="mt-4 flex gap-2">
               {!isOwnItem ? (
-                <>
-                  <button
-                    onClick={handleRentClick}
-                    className="flex-1 bg-[#6C4BF4] hover:bg-[#7857FD] text-white font-semibold rounded py-2 transition-colors"
-                  >
-                    RENT NOW
-                  </button>
-                  <button className="bg-[#6C4BF4] hover:bg-[#7857FD] text-white rounded py-2 px-3 transition-colors">
-                    <IoChatbubbleOutline className="w-5 h-5" />
-                  </button>
-                </>
+                hasRequested ? (
+                  <div className="flex-1 bg-gray-100 text-gray-500 font-semibold rounded py-2 text-center">
+                    You have already requested to rent this item
+                  </div>
+                ) : (
+                  <>
+                    <button
+                      onClick={handleRentClick}
+                      className="flex-1 bg-[#6C4BF4] hover:bg-[#7857FD] text-white font-semibold rounded py-2 transition-colors"
+                    >
+                      RENT NOW
+                    </button>
+                    <button className="bg-[#6C4BF4] hover:bg-[#7857FD] text-white rounded py-2 px-3 transition-colors">
+                      <IoChatbubbleOutline className="w-5 h-5" />
+                    </button>
+                  </>
+                )
               ) : (
                 <div className="flex-1 bg-gray-100 text-gray-500 font-semibold rounded py-2 text-center">
                   This is your item

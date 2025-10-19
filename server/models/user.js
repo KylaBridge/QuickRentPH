@@ -44,6 +44,10 @@ const userSchema = new Schema({
     match: [/^09\d{9}$/, "Invalid Philippine mobile number"],
     default: null,
   },
+  earnings: {
+    type: Number,
+    default: 0
+  },
   // Wishlist: array of Item ObjectId references
   wishlist: [
     {

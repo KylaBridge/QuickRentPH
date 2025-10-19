@@ -35,17 +35,13 @@ const PaymentDetailsModal = ({
         </div>
 
         <div className="p-6 space-y-6">
-          {/* Transaction Summary */}
+          {/* Transaction Summary - match PaymentsTab */}
           <div className="bg-gray-50 rounded-lg p-4">
-            <h4 className="font-medium text-gray-900 mb-3">
-              Transaction Summary
-            </h4>
+            <h4 className="font-medium text-gray-900 mb-3">Transaction Summary</h4>
             <div className="grid grid-cols-2 gap-4 text-sm">
               <div>
-                <span className="font-medium text-gray-700">
-                  Transaction ID:
-                </span>
-                <p className="text-gray-900">{payment.transactionId}</p>
+                <span className="font-medium text-gray-700">Payment ID:</span>
+                <p className="text-gray-900">{payment._id}</p>
               </div>
               <div>
                 <span className="font-medium text-gray-700">Status:</span>
@@ -56,11 +52,7 @@ const PaymentDetailsModal = ({
                     return (
                       <>
                         <StatusIcon className="w-4 h-4" />
-                        <span
-                          className={`px-2 py-1 rounded-full text-xs font-medium ${statusInfo.color}`}
-                        >
-                          {statusInfo.text}
-                        </span>
+                        <span className={`px-2 py-1 rounded-full text-xs font-medium ${statusInfo.color}`}>{statusInfo.text}</span>
                       </>
                     );
                   })()}
@@ -69,108 +61,87 @@ const PaymentDetailsModal = ({
             </div>
           </div>
 
-          {/* Item Details */}
+          {/* Item Details - match PaymentsTab */}
           <div>
             <h4 className="font-medium text-gray-900 mb-3">Rental Details</h4>
             <div className="grid grid-cols-2 gap-4 text-sm">
               <div>
                 <span className="font-medium text-gray-700">Item:</span>
-                <p className="text-gray-900">
-                  [{payment.owner}] {payment.itemName}
-                </p>
+                <p className="text-gray-900">{payment.rental && payment.rental.item && payment.rental.item.name ? payment.rental.item.name : (typeof payment.rental?.item === 'string' ? payment.rental.item : 'Item')}</p>
               </div>
               <div>
                 <span className="font-medium text-gray-700">Duration:</span>
                 <p className="text-gray-900">{payment.duration}</p>
               </div>
               <div>
-                <span className="font-medium text-gray-700">
-                  Rental Period:
-                </span>
-                <p className="text-gray-900">{payment.rentalPeriod}</p>
+                <span className="font-medium text-gray-700">Rental Period:</span>
+                <p className="text-gray-900">{(() => {
+                  if (!payment.rentalPeriod) return "-";
+                  const d = new Date(payment.rentalPeriod);
+                  return isNaN(d.getTime()) ? payment.rentalPeriod : d.toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric" });
+                })()}</p>
               </div>
               <div>
                 <span className="font-medium text-gray-700">Payment Date:</span>
-                <p className="text-gray-900">
-                  {formatDate(payment.paymentDate)}
-                </p>
+                <p className="text-gray-900">{formatDate(payment.paymentDate)}</p>
               </div>
             </div>
           </div>
 
-          {/* Payment Breakdown */}
+          {/* Payment Breakdown - match PaymentsTab */}
           <div>
-            <h4 className="font-medium text-gray-900 mb-3">
-              Payment Breakdown
-            </h4>
+            <h4 className="font-medium text-gray-900 mb-3">Payment Breakdown</h4>
             <div className="space-y-2 text-sm">
               <div className="flex justify-between">
                 <span className="text-gray-700">Rental Fee:</span>
-                <span className="text-gray-900">
-                  {(() => {
-                    const amount = payment.amount;
-                    if (typeof amount === "string" && amount.includes("₱")) {
-                      // If already formatted, extract number and reformat consistently
-                      const numericValue = parseFloat(
-                        amount.replace(/[^0-9.]/g, "")
-                      );
-                      return formatCurrency(numericValue);
-                    } else if (typeof amount === "number") {
-                      return formatCurrency(amount);
-                    }
-                    return amount;
-                  })()}
-                </span>
+                <span className="text-gray-900">{(() => {
+                  const amount = payment.amount;
+                  if (typeof amount === "string" && amount.includes("₱")) {
+                    const numericValue = parseFloat(amount.replace(/[^0-9.]/g, ""));
+                    return formatCurrency(numericValue);
+                  } else if (typeof amount === "number") {
+                    return formatCurrency(amount);
+                  }
+                  return amount;
+                })()}</span>
               </div>
               <div className="flex justify-between">
                 <span className="text-gray-700">Processing Fee:</span>
-                <span className="text-gray-900">
-                  {(() => {
-                    const fee = payment.processingFee;
-                    if (typeof fee === "string" && fee.includes("₱")) {
-                      const numericValue = parseFloat(
-                        fee.replace(/[^0-9.]/g, "")
-                      );
-                      return formatCurrency(numericValue);
-                    } else if (typeof fee === "number") {
-                      return formatCurrency(fee);
-                    }
-                    return fee;
-                  })()}
-                </span>
+                <span className="text-gray-900">{(() => {
+                  const fee = payment.processingFee;
+                  if (typeof fee === "string" && fee.includes("₱")) {
+                    const numericValue = parseFloat(fee.replace(/[^0-9.]/g, ""));
+                    return formatCurrency(numericValue);
+                  } else if (typeof fee === "number") {
+                    return formatCurrency(fee);
+                  }
+                  return fee;
+                })()}</span>
               </div>
               <div className="border-t pt-2 flex justify-between font-medium">
                 <span className="text-gray-900">Total Paid:</span>
-                <span className="text-gray-900">
-                  {(() => {
-                    const total = payment.totalPaid;
-                    if (typeof total === "string" && total.includes("₱")) {
-                      const numericValue = parseFloat(
-                        total.replace(/[^0-9.]/g, "")
-                      );
-                      return formatCurrency(numericValue);
-                    } else if (typeof total === "number") {
-                      return formatCurrency(total);
-                    }
-                    return total;
-                  })()}
-                </span>
+                <span className="text-gray-900">{(() => {
+                  const total = payment.totalPaid;
+                  if (typeof total === "string" && total.includes("₱")) {
+                    const numericValue = parseFloat(total.replace(/[^0-9.]/g, ""));
+                    return formatCurrency(numericValue);
+                  } else if (typeof total === "number") {
+                    return formatCurrency(total);
+                  }
+                  return total;
+                })()}</span>
               </div>
             </div>
           </div>
 
-          {/* Payment Method */}
+          {/* Payment Method - match PaymentsTab */}
           <div>
             <h4 className="font-medium text-gray-900 mb-3">Payment Method</h4>
             <div className="flex items-center gap-3">
               {(() => {
                 const methodIcon = getPaymentMethodIcon(payment.paymentMethod);
                 return methodIcon ? (
-                  <img
-                    src={methodIcon}
-                    alt={payment.paymentMethod}
-                    className="w-8 h-8 object-contain"
-                  />
+                  <img src={methodIcon} alt={payment.paymentMethod} className="w-8 h-8 object-contain" />
                 ) : null;
               })()}
               <span className="text-gray-900">{payment.paymentMethod}</span>
@@ -187,36 +158,24 @@ const PaymentDetailsModal = ({
 
           {payment.refundDate && (
             <div>
-              <h4 className="font-medium text-gray-900 mb-3">
-                Refund Information
-              </h4>
+              <h4 className="font-medium text-gray-900 mb-3">Refund Information</h4>
               <div className="grid grid-cols-2 gap-4 text-sm">
                 <div>
-                  <span className="font-medium text-gray-700">
-                    Refund Date:
-                  </span>
-                  <p className="text-gray-900">
-                    {formatDate(payment.refundDate)}
-                  </p>
+                  <span className="font-medium text-gray-700">Refund Date:</span>
+                  <p className="text-gray-900">{formatDate(payment.refundDate)}</p>
                 </div>
                 <div>
-                  <span className="font-medium text-gray-700">
-                    Refund Amount:
-                  </span>
-                  <p className="text-gray-900">
-                    {(() => {
-                      const refund = payment.refundAmount;
-                      if (typeof refund === "string" && refund.includes("₱")) {
-                        const numericValue = parseFloat(
-                          refund.replace(/[^0-9.]/g, "")
-                        );
-                        return formatCurrency(numericValue);
-                      } else if (typeof refund === "number") {
-                        return formatCurrency(refund);
-                      }
-                      return refund;
-                    })()}
-                  </p>
+                  <span className="font-medium text-gray-700">Refund Amount:</span>
+                  <p className="text-gray-900">{(() => {
+                    const refund = payment.refundAmount;
+                    if (typeof refund === "string" && refund.includes("₱")) {
+                      const numericValue = parseFloat(refund.replace(/[^0-9.]/g, ""));
+                      return formatCurrency(numericValue);
+                    } else if (typeof refund === "number") {
+                      return formatCurrency(refund);
+                    }
+                    return refund;
+                  })()}</p>
                 </div>
               </div>
             </div>

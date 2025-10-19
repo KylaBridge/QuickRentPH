@@ -1,23 +1,52 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import api from "../../axios";
 import { IoEye, IoCard, IoCheckmarkCircle, IoTime, IoWarning, } from "react-icons/io5";
 import Pagination from "../Pagination";
 import PaymentDetailsModal from "../modals/PaymentDetailsModal";
 
+
 const PaymentsTab = ({
-  userPayments = [],
-  pagination,
-  loading = false,
   itemsPerPage = 10, // Customizable items per page for table view
 }) => {
   const [selectedPayment, setSelectedPayment] = useState(null);
   const [showModal, setShowModal] = useState(false);
+  const [payments, setPayments] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [currentPage, setCurrentPage] = useState(1);
 
-  // Use the payments data passed from parent (already paginated)
-  const payments = userPayments;
+  // Fetch payments on mount
+  useEffect(() => {
+    const fetchPayments = async () => {
+      setLoading(true);
+      setError(null);
+      try {
+        const res = await api.get("/api/payments");
+        // If payments are nested in res.data.payments, use that
+        setPayments(res.data.payments || []);
+      } catch (err) {
+        setError("Failed to load payments");
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchPayments();
+  }, []);
 
-  // Use the pagination data from parent
-  const displayedPayments = payments;
-  const paginationProps = pagination;
+  // Pagination logic
+  const totalItems = payments.length;
+  const totalPages = Math.ceil(totalItems / itemsPerPage);
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const endIndex = Math.min(startIndex + itemsPerPage, totalItems);
+  const displayedPayments = payments.slice(startIndex, endIndex);
+  const paginationProps = {
+    currentPage,
+    totalPages,
+    totalItems,
+    startIndex: startIndex + 1,
+    endIndex,
+    goToPage: setCurrentPage,
+  };
 
   const getStatusDisplay = (status) => {
     const statusMap = {
@@ -81,17 +110,31 @@ const PaymentsTab = ({
   };
 
   const formatDate = (dateString) => {
-    return new Date(dateString).toLocaleDateString("en-US", {
+    if (!dateString) return "-";
+    const date = new Date(dateString);
+    return date.toLocaleString("en-US", {
       year: "numeric",
       month: "short",
       day: "numeric",
+      hour: "numeric",
+      minute: "2-digit",
+      hour12: true,
     });
   };
+
 
   if (loading) {
     return (
       <div className="flex items-center justify-center py-12">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#6C4BF4]"></div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="flex items-center justify-center py-12">
+        <div className="text-red-500">{error}</div>
       </div>
     );
   }
@@ -146,16 +189,15 @@ const PaymentsTab = ({
                   {displayedPayments.map((payment) => {
                     const statusInfo = getStatusDisplay(payment.status);
                     const StatusIcon = statusInfo.icon;
-                    const methodIcon = getPaymentMethodIcon(
-                      payment.paymentMethod
-                    );
+                    const methodIcon = getPaymentMethodIcon(payment.paymentMethod);
 
                     return (
-                      <tr key={payment.id} className="hover:bg-gray-50">
+                      <tr key={payment._id || payment.id} className="hover:bg-gray-50">
                         <td className="px-6 py-4 whitespace-nowrap">
                           <div>
                             <div className="text-sm font-medium text-gray-900">
-                              {payment.transactionId}
+                              {/* Display payment _id instead of transactionId */}
+                              {payment._id}
                             </div>
                             <div className="text-sm text-gray-500">
                               {payment.duration}
@@ -165,10 +207,25 @@ const PaymentsTab = ({
                         <td className="px-6 py-4 whitespace-nowrap">
                           <div>
                             <div className="text-sm font-medium text-gray-900">
-                              [{payment.owner}] {payment.itemName}
+                              {/* Display item name if available, fallback to id */}
+                              {payment.rental && payment.rental.item && payment.rental.item.name
+                                ? payment.rental.item.name
+                                : (typeof payment.rental?.item === 'string' ? payment.rental.item : 'Item')}
                             </div>
                             <div className="text-sm text-gray-500">
-                              {payment.rentalPeriod}
+                              {/* Format rentalPeriod if it's a date string */}
+                              {(() => {
+                                if (!payment.rentalPeriod) return "-";
+                                const d = new Date(payment.rentalPeriod);
+                                // If valid date, format it, else show as is
+                                return isNaN(d.getTime())
+                                  ? payment.rentalPeriod
+                                  : d.toLocaleDateString("en-US", {
+                                      year: "numeric",
+                                      month: "short",
+                                      day: "numeric",
+                                    });
+                              })()}
                             </div>
                           </div>
                         </td>

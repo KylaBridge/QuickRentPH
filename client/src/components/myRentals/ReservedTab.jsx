@@ -42,6 +42,14 @@ const ReservedTab = ({
         color: "bg-indigo-100 text-indigo-800",
       },
       completed: { text: "Completed", color: "bg-gray-100 text-gray-800" },
+      shipping_for_return: {
+        text: "Shipping for Return",
+        color: "bg-pink-100 text-pink-800",
+      },
+      returned_to_owner: {
+        text: "Returned to Owner",
+        color: "bg-gray-200 text-gray-800",
+      },
     };
     return (
       statusMap[status] || { text: status, color: "bg-gray-100 text-gray-800" }
@@ -49,7 +57,39 @@ const ReservedTab = ({
   };
 
   const getActionButton = (reservation) => {
-    // show "View Details" button - approval/rejection handled in modal
+    // If status is 'paid', show Ship button for lender
+    if (reservation.status === 'paid') {
+      return (
+        <button
+          onClick={(e) => {
+            e.stopPropagation();
+            if (onUpdateReservation) {
+              onUpdateReservation(reservation._id || reservation.id, 'shipped');
+            }
+          }}
+          className="flex items-center gap-1 px-2 py-1 bg-green-600 text-white rounded hover:bg-green-700 transition-colors text-xs font-medium"
+        >
+          Ship
+        </button>
+      );
+    }
+    // If status is 'shipping_for_return', show Returned button for lender
+    if (reservation.status === 'shipping_for_return') {
+      return (
+        <button
+          onClick={(e) => {
+            e.stopPropagation();
+            if (onUpdateReservation) {
+              onUpdateReservation(reservation._id || reservation.id, 'returned_to_owner');
+            }
+          }}
+          className="flex items-center gap-1 px-2 py-1 bg-pink-600 text-white rounded hover:bg-pink-700 transition-colors text-xs font-medium"
+        >
+          Returned
+        </button>
+      );
+    }
+    // Default: show View Details button
     return (
       <button
         onClick={(e) => {

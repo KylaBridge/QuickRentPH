@@ -256,21 +256,23 @@ const updateRentalStatus = async (req, res) => {
     const rental = await Rental.findById(id).populate("item");
     if (!rental) return res.status(404).json({ error: "Rental not found" });
 
-    // Only the item owner can update rental status
-    if (rental.item.owner.toString() !== userId.toString()) {
-      return res
-        .status(403)
-        .json({ error: "Not authorized to update this rental" });
+    // Allow both owner and renter to update status as long as they are involved in the rental
+    let isOwner = rental.item.owner.toString() === userId.toString();
+    let isRenter = rental.renter.toString() === userId.toString();
+    if (!isOwner && !isRenter) {
+      return res.status(403).json({ error: "Not authorized to update this rental" });
     }
 
-    // Valid status transitions
     const validStatuses = [
-      "pending_review",
+      "pending",
       "approved",
       "rejected",
-      "in_progress",
-      "completed",
       "cancelled",
+      "paid",
+      "shipped",
+      "received",
+      "shipping_for_return",
+      "returned_to_owner"
     ];
     if (!validStatuses.includes(status)) {
       return res.status(400).json({ error: "Invalid status" });
@@ -280,8 +282,62 @@ const updateRentalStatus = async (req, res) => {
     if (reason) {
       rental.rejectionReason = reason;
     }
+    // Set approval/payment dates
+    if (status === "approved") {
+      rental.approvedAt = new Date();
+    }
+    if (status === "paid") {
+      rental.paidAt = new Date();
+    }
 
     await rental.save();
+
+    // Update item availability based on rental status
+    try {
+      const itemId = rental.item?._id || rental.item;
+      if (status === "approved" && itemId) {
+        // Mark item as rented out
+        await Item.findByIdAndUpdate(itemId, { availability: "Rented Out" });
+      } else if ((status === "cancelled" || status === "rejected") && itemId) {
+        // Only set item back to Available if there are no other approved rentals
+        const otherApproved = await Rental.findOne({
+          item: itemId,
+          status: "approved",
+          _id: { $ne: rental._id },
+        });
+        if (!otherApproved) {
+          await Item.findByIdAndUpdate(itemId, { availability: "Available" });
+        }
+      }
+      // If the rental is marked as received, release escrow: mark payment completed and credit owner
+      if (status === "received") {
+        const Payment = require("../models/payment");
+        const User = require("../models/user");
+        // Find payment(s) associated with this rental that are processing
+        const payments = await Payment.find({ rental: rental._id, status: "processing" });
+        for (const p of payments) {
+          p.status = "completed";
+          await p.save();
+          try {
+            // credit owner's earnings by payment.amount
+            const owner = await User.findById(p.owner);
+            if (owner) {
+              owner.earnings = (owner.earnings || 0) + (p.amount || 0);
+              await owner.save();
+            }
+          } catch (e) {
+            console.error("Failed to credit owner earnings:", e?.message || e);
+          }
+        }
+      }
+      // If the rental is marked as returned_to_owner, set item availability to Available
+      if (status === "returned_to_owner" && itemId) {
+        await Item.findByIdAndUpdate(itemId, { availability: "Available" });
+      }
+    } catch (e) {
+      // Log but don't fail the request
+      console.error("Failed to update item availability:", e?.message || e);
+    }
 
     res.status(200).json({ message: "Rental status updated", rental });
   } catch (error) {

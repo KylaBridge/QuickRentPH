@@ -21,6 +21,8 @@ const ItemList = ({
   onCardClick,
   filters = {},
   searchTerm = "",
+  // if true, hide items that are not available (Rented Out / not 'Available')
+  hideUnavailable = true,
 }) => {
   const navigate = useNavigate();
   const { getAllItems } = useContext(UserContext);
@@ -100,7 +102,12 @@ const ItemList = ({
   };
 
   // Use provided items or fetched items and normalize via transformItem so every item has `id`
-  const sourceItems = (items || allItems).map(transformItem);
+  const sourceRaw = items || allItems;
+  // Optionally hide unavailable items (those that are rented out or approved)
+  const filteredRaw = hideUnavailable
+    ? sourceRaw.filter((it) => (it.availability || "Available") === "Available")
+    : sourceRaw;
+  const sourceItems = filteredRaw.map(transformItem);
 
   // Apply search, filters, and sorting using utility functions
   let processedItems = sourceItems;

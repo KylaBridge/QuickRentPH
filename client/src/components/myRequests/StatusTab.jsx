@@ -27,6 +27,9 @@ const StatusTab = ({
   const displayedRequests = requests;
   const paginationProps = pagination;
 
+  // Get updateRentalStatus from context at top level
+  const { updateRentalStatus, cancelRental } = useRental();
+
   // Listen for payment completion messages from gateway windows
   useEffect(() => {
     const handlePaymentMessage = (event) => {
@@ -67,6 +70,14 @@ const StatusTab = ({
       received: {
         text: "Item Received",
         color: "bg-indigo-100 text-indigo-800",
+      },
+      shipping_for_return: {
+        text: "Shipping for Return",
+        color: "bg-pink-100 text-pink-800",
+      },
+      returned_to_owner: {
+        text: "Returned to Owner",
+        color: "bg-gray-200 text-gray-800",
       },
       pending_return: {
         text: "Pending Return",
@@ -141,13 +152,34 @@ const StatusTab = ({
           <button
             onClick={(e) => {
               e.stopPropagation();
-              handleAction(request.id, "mark_received");
+              handleAction(request.id, "received");
             }}
             className="flex items-center gap-1 px-2 py-1 bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors text-xs font-medium"
           >
             <IoCheckmarkCircle className="w-3 h-3" />
             Received
           </button>
+        );
+      case "received":
+        return (
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              handleAction(request.id, "shipping_for_return");
+            }}
+            className="flex items-center gap-1 px-2 py-1 bg-pink-600 text-white rounded hover:bg-pink-700 transition-colors text-xs font-medium"
+          >
+            <IoCheckmarkCircle className="w-3 h-3" />
+            Ship Item For Return
+          </button>
+        );
+      case "shipping_for_return":
+        return (
+          <span className="px-2 py-1 bg-pink-100 text-pink-800 rounded text-xs font-medium">Shipping for Return</span>
+        );
+      case "returned_to_owner":
+        return (
+          <span className="px-2 py-1 bg-gray-200 text-gray-800 rounded text-xs font-medium">Returned to Owner</span>
         );
       case "pending_return":
         return (
@@ -169,19 +201,33 @@ const StatusTab = ({
 
   const handleAction = (requestId, action) => {
     console.log(`Action: ${action} for request: ${requestId}`);
-    // This will be connected to the actual API later
     if (action === "cancel") {
-      // cancel handled via rental context
       handleCancel(requestId);
       return;
     }
 
+    // Use updateRentalStatus for status-changing actions
+    if (["pay", "received", "mark_shipped", "approve", "reject", "shipped", "paid", "shipping_for_return", "returned_to_owner"].includes(action)) {
+      // Map frontend action to backend status
+      let status = action;
+      if (action === "pay") status = "paid";
+      if (action === "received") status = "received";
+      if (action === "mark_shipped" || action === "shipped") status = "shipped";
+      if (action === "approve") status = "approved";
+      if (action === "reject") status = "rejected";
+      if (action === "shipping_for_return") status = "shipping_for_return";
+      if (action === "returned_to_owner") status = "returned_to_owner";
+      updateRentalStatus(requestId, status);
+      if (onUpdateRequest) onUpdateRequest(requestId, status);
+      return;
+    }
+
+    // Fallback: call parent handler
     if (onUpdateRequest) {
       onUpdateRequest(requestId, action);
     }
   };
 
-  const { cancelRental } = useRental();
   const [cancellingIds, setCancellingIds] = useState(new Set());
 
   const handleCancel = async (requestId) => {
