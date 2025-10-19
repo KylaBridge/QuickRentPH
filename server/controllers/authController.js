@@ -8,6 +8,14 @@ const {
   decodeRefreshToken,
 } = require("../helpers/jwt");
 
+const { sendVerificationEmail } = require("../nodemailer");
+const crypto = require("crypto");
+
+function generate6DigitCode() {
+  // Use crypto for secure random code
+  return crypto.randomInt(100000, 1000000).toString();
+}
+
 const registerEmail = async (req, res) => {
   try {
     const { email } = req.body;
@@ -19,12 +27,19 @@ const registerEmail = async (req, res) => {
       });
     }
 
-    const tempToken = createTempToken({ email });
+    // Generate verification code
+    const code = generate6DigitCode();
+    // Store code in temp token
+    const tempToken = createTempToken({ email, code });
+    await sendVerificationEmail(email, code);
     res.status(200).json({ message: "Email Created", tempToken });
   } catch (error) {
     res.status(400).json({ error: error.message });
   }
 };
+
+// Send verification code to email using nodemailer.js
+// No longer needed: sendVerificationCode only sends email, does not create user
 
 const registerPassword = async (req, res) => {
   try {
@@ -45,6 +60,7 @@ const registerPassword = async (req, res) => {
         .json({ error: "Invalid or Expired Token, Register Your Email Again" });
     }
     const email = decoded.email;
+    const code = decoded.code;
 
     if (password.length < 10) {
       return res
@@ -53,15 +69,71 @@ const registerPassword = async (req, res) => {
     }
 
     const hashedPassword = await hashPassword(password);
+    // Store hashed password in temp token
     const newTempToken = createTempToken({
       email,
       password: hashedPassword,
+      code,
     });
 
+    // Resend verification code to email (if needed)
+    await sendVerificationEmail(email, code);
+
     res.status(200).json({
-      message: "Password created",
+      message: "Password created. Verification code sent to email.",
       newTempToken,
     });
+  } catch (error) {
+    res.status(400).json({ error: error.message });
+  }
+};
+
+// Verify 6-digit code (no user in DB yet)
+const verifyCode = async (req, res) => {
+  try {
+    const { code, newTempToken } = req.body;
+    if (!newTempToken) return res.status(400).json({ error: "No token" });
+    let decoded;
+    try {
+      decoded = decodeTempToken(newTempToken);
+    } catch (error) {
+      return res.status(400).json({ error: "Invalid or expired token" });
+    }
+    const email = decoded.email;
+    const expectedCode = decoded.code;
+    if (!expectedCode)
+      return res.status(400).json({ error: "No code sent. Please resend." });
+    if (expectedCode !== code)
+      return res.status(400).json({ error: "Invalid code." });
+    // Mark email verified in temp token
+    const verifiedTempToken = createTempToken({
+      email,
+      password: decoded.password,
+      code: null,
+      isEmailVerified: true,
+    });
+    res.status(200).json({ message: "Email verified.", verifiedTempToken });
+  } catch (error) {
+    res.status(400).json({ error: error.message });
+  }
+};
+
+// Resend code (just send email again)
+const resendCode = async (req, res) => {
+  try {
+    const { newTempToken } = req.body;
+    if (!newTempToken) return res.status(400).json({ error: "No token" });
+    let decoded;
+    try {
+      decoded = decodeTempToken(newTempToken);
+    } catch (error) {
+      return res.status(400).json({ error: "Invalid or expired token" });
+    }
+    const email = decoded.email;
+    const code = decoded.code;
+    if (!code) return res.status(400).json({ error: "No code to resend." });
+    await sendVerificationEmail(email, code);
+    res.status(200).json({ message: "Verification code resent." });
   } catch (error) {
     res.status(400).json({ error: error.message });
   }
@@ -87,6 +159,7 @@ const registerUser = async (req, res) => {
     }
     const email = decoded.email;
     const password = decoded.password;
+    const isEmailVerified = decoded.isEmailVerified;
 
     // Validate required profile fields
     if (!firstName || String(firstName).trim() === "")
@@ -96,17 +169,31 @@ const registerUser = async (req, res) => {
     if (!birthDate) return res.status(400).json({ error: "Birth date is required" });
     if (!gender) return res.status(400).json({ error: "Gender is required" });
 
-    const newUser = await User.create({
+    // Only create user if email is verified
+    if (!isEmailVerified) {
+      return res.status(400).json({ error: "Email not verified. Please verify your email." });
+    }
+
+    // Check if user already exists (should not happen)
+    let user = await User.findOne({ email });
+    if (user) {
+      return res.status(400).json({ error: "User already exists." });
+    }
+
+    // Create user
+    user = new User({
       email,
       password,
       firstName,
       lastName,
       birthDate,
       gender,
+      isEmailVerified: true,
     });
-    const accessToken = createAccessToken({ id: newUser._id });
-    const refreshToken = createRefreshToken({ id: newUser._id });
-    const { password: pwd, ...userWithoutPassword } = newUser._doc;
+    await user.save();
+    const accessToken = createAccessToken({ id: user._id });
+    const refreshToken = createRefreshToken({ id: user._id });
+    const { password: pwd, ...userWithoutPassword } = user._doc;
 
     res
       .cookie("accessToken", accessToken, {
@@ -243,4 +330,6 @@ module.exports = {
   logoutUser,
   refreshToken,
   profile,
+  verifyCode,
+  resendCode,
 };

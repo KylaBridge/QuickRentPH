@@ -133,33 +133,17 @@ const ItemDetailView = ({ item, onBack, onRentClick, onGoToProfile }) => {
   const [transactionResult, setTransactionResult] = useState(null);
 
 
-  // Profile completeness check (copied from ItemsTab.jsx)
-  const isValidMobile = (m) => {
-    if (!m) return false;
-    if (m === "0") return false;
-    // accept Philippine mobile format 09XXXXXXXXX
-    return /^09\d{9}$/.test(m);
-  };
 
-  const isProfileComplete = () => {
-    if (!user) return false;
-    const hasGender = !!user.gender;
-    const hasBirth = !!user.birthDate;
-    const hasUsername = !!user.username;
-    const hasMobile = isValidMobile(user.mobileNumber);
-    return hasGender && hasBirth && hasUsername && hasMobile;
-  };
-
-  // Modal state for prompting profile completion
-  const [promptCompleteProfile, setPromptCompleteProfile] = useState(false);
+  // Modal state for prompting verification
+  const [promptVerifyAccount, setPromptVerifyAccount] = useState(false);
 
   // Handle rent button click
   const handleRentClick = () => {
     if (isOwnItem) {
       return; // Do nothing if user owns the item
     }
-    if (!isProfileComplete()) {
-      setPromptCompleteProfile(true);
+    if (!user || !user.isVerified) {
+      setPromptVerifyAccount(true);
       return;
     }
     // Prepare item data with pre-calculated deposit info
@@ -250,17 +234,17 @@ const ItemDetailView = ({ item, onBack, onRentClick, onGoToProfile }) => {
 
   return (
     <div className="px-4 sm:px-6 lg:px-8 py-4">
-      {/* Prompt modal to complete profile before renting */}
+      {/* Prompt modal to verify account before renting */}
       <ConfirmationModal
-        isOpen={promptCompleteProfile}
-        onClose={() => setPromptCompleteProfile(false)}
+        isOpen={promptVerifyAccount}
+        onClose={() => setPromptVerifyAccount(false)}
         onConfirm={() => {
-          setPromptCompleteProfile(false);
+          setPromptVerifyAccount(false);
           navigate("/profile");
         }}
-        title="Complete your profile"
-        message="You need to complete your profile before renting items."
-        confirmText="Go to Profile"
+        title="Verify your account"
+        message="You need to verify your account before renting items."
+        confirmText="Go to Verification"
         cancelText="Cancel"
         type="info"
       />

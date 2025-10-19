@@ -2,6 +2,38 @@ const mongoose = require("mongoose");
 const Schema = mongoose.Schema;
 
 const userSchema = new Schema({
+  verificationCode: {
+    type: String,
+    default: null,
+  },
+  codeExpiresAt: {
+    type: Date,
+    default: null,
+  },
+  isEmailVerified: {
+    type: Boolean,
+    default: false,
+  },
+  isVerified: {
+    type: Boolean,
+    default: false,
+  },
+  idType: {
+    type: String,
+    default: null,
+  },
+  idFrontImage: {
+    type: String,
+    default: null,
+  },
+  idBackImage: {
+    type: String,
+    default: null,
+  },
+  selfieImage: {
+    type: String,
+    default: null,
+  },
   firstName: {
     type: String,
     required: true,

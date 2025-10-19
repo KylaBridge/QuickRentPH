@@ -134,32 +134,18 @@ const ProfileVerificationSection = () => {
               </div>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
-                <IoDocument className="w-5 h-5 text-gray-400" />
-                <span className="text-sm text-gray-600">Government ID</span>
-                <span className="text-xs text-gray-400 ml-auto">Required</span>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
+                  <IoDocument className="w-5 h-5 text-gray-400" />
+                  <span className="text-sm text-gray-600">Government ID</span>
+                  <span className="text-xs text-gray-400 ml-auto">Required</span>
+                </div>
+                <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
+                  <IoCamera className="w-5 h-5 text-gray-400" />
+                  <span className="text-sm text-gray-600">Selfie with ID</span>
+                  <span className="text-xs text-gray-400 ml-auto">Optional</span>
+                </div>
               </div>
-              <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
-                <IoCamera className="w-5 h-5 text-gray-400" />
-                <span className="text-sm text-gray-600">Selfie with ID</span>
-                <span className="text-xs text-gray-400 ml-auto">Optional</span>
-              </div>
-              <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
-                <span className="text-sm text-gray-400">📱</span>
-                <span className="text-sm text-gray-600">
-                  Phone Verification
-                </span>
-                <span className="text-xs text-gray-400 ml-auto">Required</span>
-              </div>
-              <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
-                <span className="text-sm text-gray-400">📧</span>
-                <span className="text-sm text-gray-600">
-                  Email Verification
-                </span>
-                <span className="text-xs text-gray-400 ml-auto">Required</span>
-              </div>
-            </div>
           </div>
         )}
       </div>

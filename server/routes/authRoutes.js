@@ -11,7 +11,11 @@ const {
   logoutUser,
   refreshToken,
   profile,
+  verifyCode,
+  resendCode,
 } = require("../controllers/authController");
+router.post("/verify-code", verifyCode);
+router.post("/resend-code", resendCode);
 const { requireAuth } = require("../middleware/requireAuth");
 
 router.post("/login", loginUser);

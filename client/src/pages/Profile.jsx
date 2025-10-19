@@ -37,7 +37,6 @@ const Profile = () => {
     firstName: user?.firstName || "",
     lastName: user?.lastName || "",
     username: user?.username || "",
-    mobileNumber: user?.mobileNumber || "",
     email: user?.email || "",
     gender: user?.gender || "",
     birthDate: formatBirthDate(user?.birthDate) || "",
@@ -78,15 +77,6 @@ const Profile = () => {
       if (value && !/^[\w-.]+@([\w-]+\.)+[\w-]{2,4}$/.test(value))
         err = "Invalid email address";
     }
-    if (field === "mobileNumber") {
-      // Only validate if mobile number is provided and not empty/default
-      if (value && value !== "0" && value !== "") {
-        if (!/^09\d{9}$/.test(value)) {
-          err =
-            "Mobile number must be in format 09XXXXXXXXX (11 digits starting with 09)";
-        }
-      }
-    }
     return err;
   };
 
@@ -99,7 +89,6 @@ const Profile = () => {
       "gender",
       "birthDate",
       "email",
-      "mobileNumber",
     ];
     fieldsToCheck.forEach((f) => {
       errs[f] = validate(f, profileObj[f]);
@@ -139,19 +128,8 @@ const Profile = () => {
 
   const handleSave = async () => {
     try {
-      // Prepare data for saving - handle default mobile number
+      // Prepare data for saving
       const saveData = { ...editProfile };
-
-      // If mobile number is empty, 0, or invalid default, don't include it in the update
-      if (
-        !saveData.mobileNumber ||
-        saveData.mobileNumber === "0" ||
-        saveData.mobileNumber === ""
-      ) {
-        // Keep the existing mobile number from the database
-        saveData.mobileNumber = user?.mobileNumber || "";
-      }
-
       await changeProfile(saveData);
       setProfile(editProfile);
       setChanged(false);
@@ -175,7 +153,6 @@ const Profile = () => {
       firstName: user?.firstName || "",
       lastName: user?.lastName || "",
       username: user?.username || "",
-      mobileNumber: user?.mobileNumber || "",
       email: user?.email || "",
       gender: user?.gender || "",
       birthDate: formatBirthDate(user?.birthDate) || "",
@@ -460,39 +437,7 @@ const Profile = () => {
                       placeholder="Username"
                     />
                   </div>
-                  {/* Mobile Number */}
-                  <div>
-                    <label className="block text-xs text-gray-500 mb-1">
-                      Mobile Number
-                    </label>
-                    <div className="flex items-center gap-2">
-                      <input
-                        type="tel"
-                        className={`flex-1 border-b focus:border-[#6C4BF4] outline-none py-2 text-gray-900 text-base bg-transparent ${
-                          errors.mobileNumber
-                            ? "border-red-500"
-                            : "border-gray-200"
-                        }`}
-                        value={editProfile.mobileNumber}
-                        onChange={(e) =>
-                          handleChange("mobileNumber", e.target.value)
-                        }
-                        placeholder="09XXXXXXXXX"
-                      />
-                    </div>
-                    {errors.mobileNumber ? (
-                      <div className="text-xs text-red-500 mt-1">
-                        {errors.mobileNumber}
-                      </div>
-                    ) : (
-                      <div className="text-xs text-gray-400 mt-1">
-                        {!editProfile.mobileNumber ||
-                        editProfile.mobileNumber === "0"
-                          ? "You can skip this field and add it later"
-                          : "Format: 09XXXXXXXXX (11 digits)"}
-                      </div>
-                    )}
-                  </div>
+
                   {/* Email Address */}
                   <div>
                     <label className="block text-xs text-gray-500 mb-1">

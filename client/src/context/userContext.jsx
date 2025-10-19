@@ -97,6 +97,27 @@ export function UserProvider({ children }) {
     }
   };
 
+  // Account verification
+  const verifyAccount = async (verificationData) => {
+    const formData = new FormData();
+    if (verificationData.idType) formData.append("idType", verificationData.idType);
+    if (verificationData.idFrontImage) formData.append("idFrontImage", verificationData.idFrontImage);
+    if (verificationData.idBackImage) formData.append("idBackImage", verificationData.idBackImage);
+    if (verificationData.selfieImage) formData.append("selfieImage", verificationData.selfieImage);
+    // You can add other fields if needed
+    try {
+      const res = await api.post("/api/user/verify", formData, {
+        headers: { "Content-Type": "multipart/form-data" },
+      });
+      if (res.data && res.data.user) {
+        setUser(res.data.user);
+      }
+      return res.data.user;
+    } catch (error) {
+      throw error.response?.data?.error || "Account verification failed";
+    }
+  };
+
   return (
     <UserContext.Provider
       value={{
@@ -106,6 +127,7 @@ export function UserProvider({ children }) {
         addItem,
         updateItem,
         deleteItem,
+        verifyAccount,
       }}
     >
       {children}

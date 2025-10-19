@@ -35,16 +35,18 @@ const passwordChecks = [
   },
 ];
 
-const steps = ["email", "password", "profile"];
+const steps = ["email", "password", "verify", "profile"];
 
 const SignUpPage = () => {
   const navigate = useNavigate();
-  const { registerEmail, registerPassword, registerUser, signInWithGoogle } =
+  const { registerEmail, registerPassword, registerUser, signInWithGoogle, verifyCode, resendVerificationCode } =
     useContext(AuthContext);
   const [tempToken, setTempToken] = useState();
   const [newTempToken, setNewTempToken] = useState();
   const [token, setToken] = useState();
   const [step, setStep] = useState(0);
+  const [verificationCode, setVerificationCode] = useState("");
+  const [resendTimer, setResendTimer] = useState(0);
   const [formData, setFormData] = useState({
     email: "",
     password: "",
@@ -97,9 +99,25 @@ const SignUpPage = () => {
         const res = await registerPassword(formData.password, tempToken);
         setNewTempToken(res);
         setStep(step + 1);
+        setResendTimer(60); // 60 seconds before resend
       } catch (error) {
         setError(error);
         setStep(step - 1);
+      }
+    }
+
+    if (steps[step] === "verify") {
+      if (!/^[0-9]{6}$/.test(verificationCode)) {
+        setError("Please enter the 6-digit code sent to your email.");
+        return;
+      }
+      try {
+        const res = await verifyCode({ code: verificationCode, newTempToken });
+        // Use the verifiedTempToken for the next step
+        setNewTempToken(res.verifiedTempToken);
+        setStep(step + 1);
+      } catch (error) {
+        setError(error);
       }
     }
 
@@ -138,6 +156,23 @@ const SignUpPage = () => {
         setError(error);
         setStep(0);
       }
+    }
+  };
+  // Timer for resend code
+  useState(() => {
+    let timer;
+    if (resendTimer > 0) {
+      timer = setTimeout(() => setResendTimer(resendTimer - 1), 1000);
+    }
+    return () => clearTimeout(timer);
+  }, [resendTimer]);
+  const handleResendCode = async () => {
+    try {
+      await resendVerificationCode({ newTempToken });
+      setResendTimer(60);
+      setError("");
+    } catch (error) {
+      setError(error);
     }
   };
 
@@ -333,8 +368,56 @@ const SignUpPage = () => {
                   </div>
                 </>
               )}
-              {/* Step 3: First Name, Last Name, Date of Birth, Gender, Terms (Combined) */}
+              {/* Step 3: Verification Code */}
               {step === 2 && (
+                <>
+                  <label className="block text-sm font-semibold text-gray-700 mb-1">
+                    Enter the 6-digit code sent to your email
+                  </label>
+                  <input
+                    type="text"
+                    maxLength={6}
+                    value={verificationCode}
+                    onChange={e => setVerificationCode(e.target.value.replace(/[^0-9]/g, ""))}
+                    className="w-full px-4 py-4 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#6C4BF4] focus:border-transparent font-poppins text-lg tracking-widest text-center"
+                    placeholder="------"
+                  />
+                  <div className="flex justify-between items-center mt-2">
+                    <button
+                      type="button"
+                      onClick={handleBack}
+                      className="text-[#6C4BF4] font-medium"
+                    >
+                      Back
+                    </button>
+                    <button
+                      type="submit"
+                      className="bg-[#6C4BF4] text-white py-3 px-6 rounded-md font-semibold hover:bg-purple-700 transition-colors font-poppins"
+                    >
+                      Verify
+                    </button>
+                  </div>
+                  <div className="flex justify-between items-center mt-4">
+                    <span className="text-sm text-gray-500">
+                      Didn't receive the code?
+                    </span>
+                    <button
+                      type="button"
+                      className="text-[#6C4BF4] font-medium disabled:text-gray-400"
+                      onClick={handleResendCode}
+                      disabled={resendTimer > 0}
+                    >
+                      {resendTimer > 0 ? `Resend in ${resendTimer}s` : "Resend Code"}
+                    </button>
+                  </div>
+                  {error && (
+                    <div className="text-red-500 text-sm mt-2">{error}</div>
+                  )}
+                </>
+              )}
+
+              {/* Step 4: First Name, Last Name, Date of Birth, Gender, Terms (Combined) */}
+              {step === 3 && (
                 <>
                   <label className="block text-sm font-semibold text-gray-700 mb-1">
                     Profile Information

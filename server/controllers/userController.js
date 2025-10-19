@@ -57,4 +57,41 @@ const changeProfile = async (req, res) => {
   }
 };
 
-module.exports = { changeProfile };
+const verifyAccount = async (req, res) => {
+  try {
+    const userId = req.userId;
+    if (!userId) {
+      return res.status(401).json({ error: "Not authenticated" });
+    }
+
+    // Accepts: idType, idFrontImage, idBackImage, selfieImage (images as file paths or URLs)
+    const { idType } = req.body;
+    const idFrontImage = req.files?.idFrontImage?.[0]?.path || req.body.idFrontImage;
+    const idBackImage = req.files?.idBackImage?.[0]?.path || req.body.idBackImage;
+    const selfieImage = req.files?.selfieImage?.[0]?.path || req.body.selfieImage;
+
+    // Basic validation
+    if (!idType || !idFrontImage) {
+      return res.status(400).json({ error: "ID type and front image are required" });
+    }
+
+    // Update user
+    const update = {
+      idType,
+      idFrontImage,
+      idBackImage,
+      selfieImage,
+      isVerified: true,
+    };
+    const updatedUser = await User.findByIdAndUpdate(userId, update, { new: true, runValidators: true }).select("-password");
+    if (!updatedUser) {
+      return res.status(404).json({ error: "User not found" });
+    }
+    res.status(200).json({ message: "Account verified", user: updatedUser });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: "Server error verifying account" });
+  }
+};
+
+module.exports = { changeProfile, verifyAccount };

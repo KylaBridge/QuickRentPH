@@ -61,31 +61,19 @@ const ItemsTab = ({
   const { user } = useContext(AuthContext);
   const navigate = useNavigate();
 
-  // Local modal state to prompt completing profile
-  const [promptCompleteProfile, setPromptCompleteProfile] = useState(false);
-
-  const isValidMobile = (m) => {
-    if (!m) return false;
-    if (m === "0") return false;
-    // accept Philippine mobile format 09XXXXXXXXX
-    return /^09\d{9}$/.test(m);
-  };
-
-  const isProfileComplete = () => {
-    if (!user) return false;
-    const hasGender = !!user.gender;
-    const hasBirth = !!user.birthDate;
-    const hasUsername = !!user.username;
-    const hasMobile = isValidMobile(user.mobileNumber);
-    return hasGender && hasBirth && hasUsername && hasMobile;
-  };
+  // Modal state to prompt for profile or verification
+  const [promptModal, setPromptModal] = useState({ show: false, type: "verify" });
 
   const handleAddClick = () => {
-    if (isProfileComplete()) {
-      if (onAddItem) onAddItem();
-    } else {
-      setPromptCompleteProfile(true);
+    if (!user || !user.username || !user.gender || !user.birthDate) {
+      setPromptModal({ show: true, type: "profile" });
+      return;
     }
+    if (!user.isVerified) {
+      setPromptModal({ show: true, type: "verify" });
+      return;
+    }
+    if (onAddItem) onAddItem();
   };
   return (
     <div className="flex-1 flex flex-col">
@@ -108,17 +96,21 @@ const ItemsTab = ({
           <span>Add an Item</span>
         </button>
 
-        {/* Prompt modal to complete profile before adding */}
+        {/* Prompt modal for profile or verification before adding */}
         <ConfirmationModal
-          isOpen={promptCompleteProfile}
-          onClose={() => setPromptCompleteProfile(false)}
+          isOpen={promptModal.show}
+          onClose={() => setPromptModal({ show: false, type: "verify" })}
           onConfirm={() => {
-            setPromptCompleteProfile(false);
+            setPromptModal({ show: false, type: "verify" });
             navigate("/profile");
           }}
-          title="Complete your profile"
-          message="You need to complete your profile before adding items."
-          confirmText="Go to Profile"
+          title={promptModal.type === "profile" ? "Complete your profile" : "Verify your account"}
+          message={
+            promptModal.type === "profile"
+              ? "You need to complete your profile (username, gender, and birthdate) before adding items."
+              : "You need to verify your account before adding items."
+          }
+          confirmText={promptModal.type === "profile" ? "Go to Profile" : "Go to Verification"}
           cancelText="Cancel"
           type="info"
         />

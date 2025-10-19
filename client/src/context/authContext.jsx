@@ -1,3 +1,21 @@
+  // --- Email Verification Code Methods ---
+  const verifyCode = async ({ code, newTempToken }) => {
+    try {
+      const res = await api.post("/api/auth/verify-code", { code, newTempToken });
+      return res.data;
+    } catch (error) {
+      throw error.response?.data?.error || "Verification failed.";
+    }
+  };
+
+  const resendVerificationCode = async ({ newTempToken }) => {
+    try {
+      const res = await api.post("/api/auth/resend-code", { newTempToken });
+      return res.data;
+    } catch (error) {
+      throw error.response?.data?.error || "Failed to resend code.";
+    }
+  };
 import { createContext, useEffect, useState } from "react";
 import api from "../axios";
 
@@ -102,6 +120,8 @@ export function AuthProvider({ children }) {
         logout: logoutUser, // Alias for consistency
         isAdmin,
         hasAdminAccess,
+        verifyCode,
+        resendVerificationCode,
       }}
     >
       {children}
