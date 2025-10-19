@@ -21,35 +21,20 @@ const ReservedTab = ({
   const displayedReservations = reservations;
   const paginationProps = pagination;
 
+  // Use consistent status mapping as in StatusTab
   const getStatusDisplay = (status) => {
     const statusMap = {
-      pending_review: {
-        text: "Pending Review",
-        color: "bg-yellow-100 text-yellow-800",
-      },
+      pending: { text: "Pending Approval", color: "bg-yellow-100 text-yellow-800" },
       approved: { text: "Approved", color: "bg-green-100 text-green-800" },
+      paid: { text: "Payment Confirmed", color: "bg-blue-100 text-blue-800" },
+      shipped: { text: "Item Shipped", color: "bg-purple-100 text-purple-800" },
+      received: { text: "Item Received", color: "bg-indigo-100 text-indigo-800" },
+      shipping_for_return: { text: "Shipping for Return", color: "bg-pink-100 text-pink-800" },
+      returned_to_owner: { text: "Returned to Owner", color: "bg-gray-200 text-gray-800" },
+      pending_return: { text: "Pending Return", color: "bg-orange-100 text-orange-800" },
+      returned: { text: "Returned", color: "bg-gray-100 text-gray-800" },
+      cancelled: { text: "Cancelled", color: "bg-red-100 text-red-800" },
       rejected: { text: "Rejected", color: "bg-red-100 text-red-800" },
-      payment_pending: {
-        text: "Payment Pending",
-        color: "bg-blue-100 text-blue-800",
-      },
-      paid: {
-        text: "Payment Confirmed",
-        color: "bg-purple-100 text-purple-800",
-      },
-      in_progress: {
-        text: "Rental In Progress",
-        color: "bg-indigo-100 text-indigo-800",
-      },
-      completed: { text: "Completed", color: "bg-gray-100 text-gray-800" },
-      shipping_for_return: {
-        text: "Shipping for Return",
-        color: "bg-pink-100 text-pink-800",
-      },
-      returned_to_owner: {
-        text: "Returned to Owner",
-        color: "bg-gray-200 text-gray-800",
-      },
     };
     return (
       statusMap[status] || { text: status, color: "bg-gray-100 text-gray-800" }

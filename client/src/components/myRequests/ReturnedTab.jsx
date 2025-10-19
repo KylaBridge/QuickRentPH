@@ -65,8 +65,58 @@ const ReturnedTab = ({
     return conditionMap[condition] || "text-gray-600";
   };
 
+  // Map returned item to request structure for modal
+  const mapReturnToRequest = (returnItem) => {
+    if (!returnItem) return null;
+    // Only use real timestamps, do not fallback
+    let approvedAt = returnItem.approvedAt || returnItem.approvedDate || returnItem.requestApprovedDate || null;
+    let paidAt = returnItem.paidAt || returnItem.paidDate || returnItem.paymentSubmittedDate || null;
+
+    // Owner display name for status
+    let ownerDisplay = "Owner";
+    if (returnItem.owner && typeof returnItem.owner === "object") {
+      ownerDisplay = returnItem.owner.firstName
+        ? `${returnItem.owner.firstName} ${returnItem.owner.lastName}`
+        : returnItem.owner.username || returnItem.owner._id || "Owner";
+    } else if (returnItem.owner) {
+      ownerDisplay = returnItem.owner;
+    }
+
+    // Status text override for returned_to_owner
+    let statusText = returnItem.returnStatus === "completed"
+      ? `Returned to ${ownerDisplay}`
+      : (returnItem.returnStatus || "");
+
+    return {
+      // Status mapping
+      status: returnItem.returnStatus === "completed" ? "returned_to_owner" : returnItem.returnStatus,
+      statusText,
+      approvedAt,
+      paidAt,
+      shippedDate: returnItem.shippedDate,
+      receivedDate: returnItem.receivedDate,
+      returnedDate: returnItem.returnDate,
+      cancelledDate: returnItem.cancelledDate,
+      rejectedDate: returnItem.rejectedDate,
+      createdAt: returnItem.createdAt,
+      item: {
+        name: returnItem.itemName,
+        price: returnItem.price,
+        images: returnItem.image ? [returnItem.image] : [],
+        description: returnItem.description,
+        depositPercent: returnItem.depositPercent,
+        downpayment: returnItem.downpayment,
+      },
+      owner: returnItem.owner,
+      durationOfRent: returnItem.duration,
+      preferredStartDate: returnItem.preferredStartDate,
+      cost: returnItem.cost,
+      image: returnItem.image,
+    };
+  };
+
   const openModal = (returnItem) => {
-    setSelectedReturn(returnItem);
+    setSelectedReturn(mapReturnToRequest(returnItem));
     setShowModal(true);
   };
 

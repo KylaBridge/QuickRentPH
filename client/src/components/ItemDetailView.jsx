@@ -42,11 +42,22 @@ const ItemDetailView = ({ item, onBack, onRentClick, onGoToProfile }) => {
   const [hasRequestedServer, setHasRequestedServer] = useState(false);
   const [checkingRequested, setCheckingRequested] = useState(true);
 
-  // Local fallback if item.rentals is populated
+
+  // Only consider rentals with active statuses
+  const ACTIVE_RENTAL_STATUSES = [
+    "pending",
+    "approved",
+    "paid",
+    "shipped",
+    "received",
+    "shipping_for_return"
+  ];
   const hasRequestedLocal =
     user && Array.isArray(item.rentals)
       ? item.rentals.some(
-          (r) => r.renter === user._id || r.renter?._id === user._id
+          (r) =>
+            (r.renter === user._id || r.renter?._id === user._id) &&
+            ACTIVE_RENTAL_STATUSES.includes(r.status)
         )
       : false;
 
@@ -77,7 +88,8 @@ const ItemDetailView = ({ item, onBack, onRentClick, onGoToProfile }) => {
             itemId &&
             (itemId === item._id || itemId.toString() === item._id) &&
             renterId &&
-            (renterId === user._id || renterId.toString() === user._id)
+            (renterId === user._id || renterId.toString() === user._id) &&
+            ACTIVE_RENTAL_STATUSES.includes(r.status)
           );
         });
         if (mounted) setHasRequestedServer(found);

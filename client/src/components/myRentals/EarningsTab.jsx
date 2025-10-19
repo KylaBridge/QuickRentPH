@@ -31,66 +31,67 @@ const EarningsTab = ({
       {/* Earnings Table */}
       <div className="mt-3 overflow-x-auto overflow-y-auto pr-4">
         {/* Table Header */}
-        <div className="grid grid-cols-8 text-sm gap-4 pt-4 pb-4 pl-2 pr-7 font-semibold text-white bg-[#6C4BF4] rounded-lg shadow-sm">
+        <div className="grid grid-cols-7 text-sm gap-4 pt-4 pb-4 pl-2 pr-7 font-semibold text-white bg-[#6C4BF4] rounded-lg shadow-sm">
           <div className="col-span-1 text-center">Transaction ID</div>
           <div className="col-span-1 text-center">Item Model</div>
           <div className="col-span-1 text-center">Rental Date</div>
           <div className="col-span-1 text-center">Payment</div>
           <div className="col-span-1 text-center">Status</div>
-          <div className="col-span-1 text-center">Held in Escrow</div>
           <div className="col-span-1 text-center">Total Earned</div>
           <div className="col-span-1.5 text-center">Action</div>
         </div>
 
         {/* Table Body */}
-        {currentEarnings.map((earning) => (
-          <div
-            key={earning.id}
-            className="grid grid-cols-8 gap-4 items-center pl-2 pr-4 pt-4 pb-4 bg-white rounded-lg shadow-sm hover:bg-gray-50 transition-colors duration-150"
-          >
-            <div className="col-span-1 text-center text-sm font-medium text-gray-600">
-              {earning.transactionId}
-            </div>
-            <div className="col-span-1 text-center">
-              <p className="font-medium text-sm text-gray-900">
-                {earning.item}
-              </p>
-              {/*<p className="text-sm text-gray-500">{earning.model}</p>*/}
-            </div>
-            <div className="col-span-1 text-center text-sm text-gray-800">
-              {earning.rentalDate}
-            </div>
-            <div className="col-span-1 text-center text-sm text-gray-800">{`₱${parseFloat(
-              earning.payment
-            ).toFixed(2)}`}</div>
-            <div className="col-span-1 text-center">
-              <span
-                className={`text-sm text-center ${getStatusClass(
-                  earning.status
-                )}`}
-              >
-                {earning.status}
-              </span>
-            </div>
-            <div className="col-span-1 text-center text-sm text-gray-800">{`₱${parseFloat(
-              earning.escrow
-            ).toFixed(2)}`}</div>
-            <div className="col-span-1 text-center text-sm text-black">{`₱${parseFloat(
-              earning.totalEarned
-            ).toFixed(2)}`}</div>
-            <div className="col-span-1.5 flex justify-center pr-8">
-              <button
-                onClick={() =>
-                  console.log("View Receipt", earning.transactionId)
-                }
-                className="flex items-center gap-1 text-sm text-[#6C4BF4] hover:text-[#5a3fd0] font-medium whitespace-nowrap"
-              >
-                <IoDocumentTextOutline className="w-4 h-4" />
-                <span>View Receipt</span>
-              </button>
-            </div>
+        {currentEarnings.length === 0 ? (
+          <div className="flex items-center justify-center h-[300px] text-gray-500 text-lg">
+            <span className="mx-auto">No Earnings Yet</span>
           </div>
-        ))}
+        ) : (
+          currentEarnings.map((earning) => (
+            <div
+              key={earning.id}
+              className="grid grid-cols-7 gap-4 items-center pl-2 pr-4 pt-4 pb-4 bg-white rounded-lg shadow-sm hover:bg-gray-50 transition-colors duration-150"
+            >
+              <div className="col-span-1 text-center text-sm font-medium text-gray-600">
+                {earning.transactionId}
+              </div>
+              <div className="col-span-1 text-center">
+                <p className="font-medium text-sm text-gray-900">
+                  {earning.item}
+                </p>
+              </div>
+              <div className="col-span-1 text-center text-sm text-gray-800">
+                {earning.rentalDate}
+              </div>
+              <div className="col-span-1 text-center text-sm text-gray-800">{`₱${parseFloat(
+                earning.payment
+              ).toFixed(2)}`}</div>
+              <div className="col-span-1 text-center">
+                <span
+                  className={`text-sm text-center ${getStatusClass(
+                    earning.status
+                  )}`}
+                >
+                  {earning.status}
+                </span>
+              </div>
+              <div className="col-span-1 text-center text-black">{`₱${parseFloat(
+                earning.totalEarned
+              ).toFixed(2)}`}</div>
+              <div className="col-span-1.5 flex justify-center pr-8">
+                <button
+                  onClick={() =>
+                    console.log("View Receipt", earning.transactionId)
+                  }
+                  className="flex items-center gap-1 text-sm text-[#6C4BF4] hover:text-[#5a3fd0] font-medium whitespace-nowrap"
+                >
+                  <IoDocumentTextOutline className="w-4 h-4" />
+                  <span>View Receipt</span>
+                </button>
+              </div>
+            </div>
+          ))
+        )}
       </div>
 
       {/* Pagination */}

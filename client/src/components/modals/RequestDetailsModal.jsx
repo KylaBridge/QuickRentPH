@@ -136,6 +136,12 @@ const RequestDetailsModal = ({ isOpen, onClose, request, getActionButton }) => {
         : request.owner.username || request.owner._id || "Owner"
       : request.owner || "Owner";
 
+  // Custom status text for returned_to_owner
+  let statusText = request.statusText;
+  if (request.status === "returned_to_owner") {
+    statusText = `Returned to ${ownerDisplay}`;
+  }
+
   const imageSrc = images.length > 0 ? images[currentImage] : null;
 
   const itemName = request.item?.name || request.itemName || "Requested Item";
@@ -359,23 +365,13 @@ const RequestDetailsModal = ({ isOpen, onClose, request, getActionButton }) => {
               <h5 className="font-medium text-gray-700 mb-3">
                 Status:{" "}
                 <span className="text-[#6C4BF4] capitalize">
-                  {request.status?.replace("_", " ") || "Unknown"}
+                  {statusText || request.status?.replace("_", " ") || "Unknown"}
                 </span>
               </h5>
               <h6 className="font-medium text-gray-700 mb-2 text-sm">
                 Status Timeline
               </h6>
               <div className="space-y-3 text-sm">
-                {/* Request Submitted */}
-                <div className="flex items-start gap-3">
-                  <div className="w-2 h-2 bg-green-500 rounded-full mt-1.5 flex-shrink-0"></div>
-                  <div className="flex-1">
-                    <div className="font-medium text-gray-900">Request Submitted</div>
-                    <div className="text-xs text-gray-500 mt-0.5">
-                      {request.createdAt ? new Date(request.createdAt).toLocaleString() : "Date not available"}
-                    </div>
-                  </div>
-                </div>
 
                 {/* Approved */}
                 {request.approvedAt && (
@@ -449,7 +445,7 @@ const RequestDetailsModal = ({ isOpen, onClose, request, getActionButton }) => {
                   <div className="flex items-start gap-3">
                     <div className="w-2 h-2 bg-green-500 rounded-full mt-1.5 flex-shrink-0"></div>
                     <div className="flex-1">
-                      <div className="font-medium text-gray-900">Returned to Owner</div>
+                      <div className="font-medium text-gray-900">Returned to {ownerDisplay}</div>
                       <div className="text-xs text-gray-500 mt-0.5">Item has been returned and rental is complete.</div>
                     </div>
                   </div>

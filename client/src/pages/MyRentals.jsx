@@ -1,4 +1,5 @@
 import { useState, useContext, useEffect } from "react";
+import api from "../axios";
 import { UserContext } from "../context/userContext";
 import { useRental } from "../context/rentalContext";
 import { usePagination } from "../hooks/usePagination";
@@ -122,206 +123,54 @@ const MyRentals = () => {
   }, [getOwnerRentals]);
 
   // State for earnings data
-  const [earningsData] = useState([
-    {
-      id: 1,
-      transactionId: "TXN73847",
-      item: "Electric Drill",
-      model: "X-2500",
-      rentalDate: "2024-05-10",
-      payment: "850.00",
-      status: "Completed",
-      escrow: "0.00",
-      totalEarned: "850.00",
-    },
-    {
-      id: 2,
-      transactionId: "TXN84923",
-      item: "Telescope",
-      model: "Celestron 130EQ",
-      rentalDate: "2024-05-12",
-      payment: "1200.00",
-      status: "Pending",
-      escrow: "1200.00",
-      totalEarned: "0.00",
-    },
-    {
-      id: 3,
-      transactionId: "TXN92384",
-      item: "DJ Controller",
-      model: "Pioneer DDJ-400",
-      rentalDate: "2024-05-15",
-      payment: "1500.00",
-      status: "Completed",
-      escrow: "0.00",
-      totalEarned: "1500.00",
-    },
-    {
-      id: 4,
-      transactionId: "TXN10293",
-      item: "Kayak",
-      model: "Seahawk II",
-      rentalDate: "2024-05-18",
-      payment: "2000.00",
-      status: "In Escrow",
-      escrow: "2000.00",
-      totalEarned: "0.00",
-    },
-    {
-      id: 5,
-      transactionId: "TXN29384",
-      item: "GoPro Camera",
-      model: "Hero 9",
-      rentalDate: "2024-05-20",
-      payment: "1300.00",
-      status: "Completed",
-      escrow: "0.00",
-      totalEarned: "1300.00",
-    },
-    {
-      id: 6,
-      transactionId: "TXN38475",
-      item: "Camping Tent",
-      model: "Outfitter 4P",
-      rentalDate: "2024-05-22",
-      payment: "600.00",
-      status: "Completed",
-      escrow: "0.00",
-      totalEarned: "600.00",
-    },
-    {
-      id: 7,
-      transactionId: "TXN47563",
-      item: "Camera Lens",
-      model: "Canon 50mm",
-      rentalDate: "2024-05-25",
-      payment: "950.00",
-      status: "Pending",
-      escrow: "950.00",
-      totalEarned: "0.00",
-    },
-    {
-      id: 8,
-      transactionId: "TXN56382",
-      item: "Pressure Washer",
-      model: "PowerClean 3000",
-      rentalDate: "2024-06-01",
-      payment: "1100.00",
-      status: "Completed",
-      escrow: "0.00",
-      totalEarned: "1100.00",
-    },
-    {
-      id: 9,
-      transactionId: "TXN63829",
-      item: "Mountain Bike",
-      model: "Trailmaster 29",
-      rentalDate: "2024-06-05",
-      payment: "1800.00",
-      status: "In Escrow",
-      escrow: "1800.00",
-      totalEarned: "0.00",
-    },
-    {
-      id: 10,
-      transactionId: "TXN73829",
-      item: "Inflatable Boat",
-      model: "Explorer Pro",
-      rentalDate: "2024-06-10",
-      payment: "2200.00",
-      status: "Completed",
-      escrow: "0.00",
-      totalEarned: "2200.00",
-    },
-    {
-      id: 11,
-      transactionId: "TXN82930",
-      item: "Portable Projector",
-      model: "MiniBeam P7",
-      rentalDate: "2024-06-12",
-      payment: "700.00",
-      status: "Pending",
-      escrow: "700.00",
-      totalEarned: "0.00",
-    },
-    {
-      id: 12,
-      transactionId: "TXN93021",
-      item: "Car Roof Rack",
-      model: "Thule Aero",
-      rentalDate: "2024-06-15",
-      payment: "500.00",
-      status: "Completed",
-      escrow: "0.00",
-      totalEarned: "500.00",
-    },
-    {
-      id: 13,
-      transactionId: "TXN10293",
-      item: "Concrete Mixer",
-      model: "ProMix 1.5",
-      rentalDate: "2024-06-18",
-      payment: "2500.00",
-      status: "In Escrow",
-      escrow: "2500.00",
-      totalEarned: "0.00",
-    },
-    {
-      id: 14,
-      transactionId: "TXN29384",
-      item: "Snowboard",
-      model: "Burton Custom",
-      rentalDate: "2024-06-20",
-      payment: "1400.00",
-      status: "Completed",
-      escrow: "0.00",
-      totalEarned: "1400.00",
-    },
-    {
-      id: 15,
-      transactionId: "TXN38475",
-      item: "Leaf Blower",
-      model: "Husqvarna 125B",
-      rentalDate: "2024-06-22",
-      payment: "400.00",
-      status: "Completed",
-      escrow: "0.00",
-      totalEarned: "400.00",
-    },
-    {
-      id: 16,
-      transactionId: "TXN47563",
-      item: "Karaoke Machine",
-      model: "Singsation All-In-One",
-      rentalDate: "2024-06-25",
-      payment: "900.00",
-      status: "Pending",
-      escrow: "900.00",
-      totalEarned: "0.00",
-    },
-    {
-      id: 17,
-      transactionId: "TXN56382",
-      item: "Portable Sound System",
-      model: "JBL PartyBox",
-      rentalDate: "2024-06-28",
-      payment: "1600.00",
-      status: "In Escrow",
-      escrow: "1600.00",
-      totalEarned: "0.00",
-    },
-    {
-      id: 18,
-      transactionId: "TXN63829",
-      item: "Electric Drill",
-      model: "X-2500",
-      rentalDate: "2024-07-01",
-      payment: "850.00",
-      status: "Completed",
-      escrow: "0.00",
-      totalEarned: "850.00",
-    },
-  ]);
+  const [earningsData, setEarningsData] = useState([]);
+  const [earningsLoading, setEarningsLoading] = useState(true);
+  const [earningsError, setEarningsError] = useState(null);
+
+  useEffect(() => {
+    const fetchEarnings = async () => {
+      try {
+        setEarningsLoading(true);
+        const res = await api.get("/api/payments/owner");
+        // Map backend data to EarningsTab format
+        const mapped = (res.data.payments || []).map((p, idx) => {
+          // Status mapping for display
+          let status = "Pending";
+          if (p.status === "completed") status = "Completed";
+          else if (p.status === "processing") status = "In Escrow";
+          else if (p.status === "pending") status = "Pending";
+          else if (p.status === "refunded") status = "Refunded";
+          else if (p.status === "failed") status = "Failed";
+
+          // Escrow: if not completed, show totalPaid as escrow, else 0
+          const escrow = status === "Completed" ? 0 : p.totalPaid || 0;
+          // Total earned: only if completed
+          const totalEarned = status === "Completed" ? (p.amount || 0) : 0;
+
+          return {
+            id: p._id || idx,
+            transactionId: p._id, // Use payment's _id for Transaction ID
+            item: p.rental?.item?.name || "-",
+            rentalDate: p.rental?.preferredStartDate
+              ? new Date(p.rental.preferredStartDate).toLocaleDateString()
+              : "-",
+            payment: p.totalPaid || 0,
+            status,
+            escrow,
+            totalEarned,
+          };
+        });
+        setEarningsData(mapped);
+        setEarningsError(null);
+      } catch (error) {
+        setEarningsError(error);
+        setEarningsData([]);
+      } finally {
+        setEarningsLoading(false);
+      }
+    };
+    fetchEarnings();
+  }, []);
 
   // Filter items based on current filters
   const filteredItems = itemsData.filter((item) => {
@@ -458,19 +307,25 @@ const MyRentals = () => {
     ),
     earnings: (
       <div className="flex-1 flex flex-col">
-        <EarningsTab
-          currentEarnings={earningsPagination.currentItems}
-          paginate={earningsPagination.goToPage}
-          pageNumbers={Array.from(
-            { length: earningsPagination.totalPages },
-            (_, i) => i + 1
-          )}
-          currentPage={earningsPagination.currentPage}
-          totalPages={earningsPagination.totalPages}
-          totalItems={earningsPagination.totalItems}
-          startIndex={earningsPagination.startIndex}
-          endIndex={earningsPagination.endIndex}
-        />
+        {earningsLoading ? (
+          <div className="flex-1 flex items-center justify-center text-gray-500">Loading earnings...</div>
+        ) : earningsError ? (
+          <div className="flex-1 flex items-center justify-center text-red-500">Error loading earnings.</div>
+        ) : (
+          <EarningsTab
+            currentEarnings={earningsPagination.currentItems}
+            paginate={earningsPagination.goToPage}
+            pageNumbers={Array.from(
+              { length: earningsPagination.totalPages },
+              (_, i) => i + 1
+            )}
+            currentPage={earningsPagination.currentPage}
+            totalPages={earningsPagination.totalPages}
+            totalItems={earningsPagination.totalItems}
+            startIndex={earningsPagination.startIndex}
+            endIndex={earningsPagination.endIndex}
+          />
+        )}
       </div>
     ),
   };

@@ -1,4 +1,4 @@
-import { useState, useContext } from "react";
+import { useState, useContext, useEffect } from "react";
 import { AuthContext } from "../context/authContext";
 import {
   IoCheckmarkCircle,
@@ -7,10 +7,8 @@ import {
   IoCash,
   IoDocument,
 } from "react-icons/io5";
-import {
-  getRecentNotifications,
-  getNotificationTypeColor,
-} from "../utils/notificationUtils";
+import { getRecentNotifications, getNotificationTypeColor } from "../utils/notificationUtils";
+import api from "../axios";
 import Sidebar from "../components/Sidebar";
 import BarChart from "../components/BarChart";
 import { Link } from "react-router-dom";
@@ -21,6 +19,28 @@ const Dashboard = () => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [activeTab, setActiveTab] = useState("overview");
   const [earningsActiveTab, setEarningsActiveTab] = useState("earnings");
+
+  const [earningsData, setEarningsData] = useState([]);
+  const [paymentsData, setPaymentsData] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        setLoading(true);
+  // Owner payments and earnings
+  const ownerRes = await api.get("/api/payments/owner");
+  setEarningsData(ownerRes.data.payments || []);
+  setPaymentsData(ownerRes.data.payments || []);
+      } catch (err) {
+        setEarningsData([]);
+        setPaymentsData([]);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchData();
+  }, []);
 
   const dashboardName = () => {
     const fullName = `${user.firstName + " " + user.lastName}`;
@@ -34,32 +54,64 @@ const Dashboard = () => {
   const toggleSidebar = () => {
     setSidebarOpen(!sidebarOpen);
   };
+  
+  // Calculate summary data from API results
+  // Earnings summary
+  const totalEarnings = earningsData.reduce(
+    (sum, p) => p.status === "completed" ? sum + (p.amount || 0) : sum,
+    0
+  );
+  // Rental payments summary
+  const totalPayments = paymentsData.reduce(
+    (sum, p) => p.status === "completed" ? sum + (p.totalPaid || 0) : sum,
+    0
+  );
 
-  // Example dynamic data. Wire these to real API data later.
+  // Chart data: group by day of week
+  const getDayOfWeek = (dateStr) => {
+    const date = new Date(dateStr);
+    return date.getDay(); // 0=Sun, 1=Mon, ...
+  };
+  const weekLabels = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+  const earningsByDay = Array(7).fill(0);
+  earningsData.forEach((p) => {
+    if (p.status === "completed" && p.paymentDate) {
+      const day = getDayOfWeek(p.paymentDate);
+      earningsByDay[day] += p.amount || 0;
+    }
+  });
+  const paymentsByDay = Array(7).fill(0);
+  paymentsData.forEach((p) => {
+    if (p.status === "completed" && p.paymentDate) {
+      const day = getDayOfWeek(p.paymentDate);
+      paymentsByDay[day] += p.totalPaid || 0;
+    }
+  });
+
   const summaryData = {
     earnings: {
-      amount: "₱ 4, 444.00",
+      amount: `₱ ${totalEarnings.toLocaleString(undefined, { minimumFractionDigits: 2 })}`,
       description: "Your total earnings available for withdrawal.",
       chart: {
-        labels: ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"],
+        labels: weekLabels,
         datasets: [
           {
             label: "Earnings",
-            data: [500, 650, 420, 800, 720, 300, 1054],
+            data: earningsByDay,
             backgroundColor: "#7C5CFF",
           },
         ],
       },
     },
     rentalPayments: {
-      amount: "₱ 3, 210.00",
+      amount: `₱ ${totalPayments.toLocaleString(undefined, { minimumFractionDigits: 2 })}`,
       description: "Payments collected from active and recent rentals.",
       chart: {
-        labels: ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"],
+        labels: weekLabels,
         datasets: [
           {
             label: "Rental Payments",
-            data: [300, 420, 380, 520, 610, 250, 730],
+            data: paymentsByDay,
             backgroundColor: "#34D399",
           },
         ],
@@ -67,20 +119,25 @@ const Dashboard = () => {
     },
   };
 
-  const paymentsSummary = [
-    { label: "Upcoming Payments", value: 1, bg: "bg-orange-500" },
-    { label: "Completed Payments", value: 4, bg: "bg-purple-600" },
-    { label: "Pending Earnings", value: 2, bg: "bg-red-600" },
-    { label: "Released Earnings", value: 3, bg: "bg-green-600" },
+  // Payments summary cards using payment status enums
+  const paymentStatusEnums = [
+    { key: "completed", label: "Completed", bg: "bg-green-600" },
+    { key: "pending", label: "Pending", bg: "bg-orange-500" },
+    { key: "failed", label: "Failed", bg: "bg-red-600" },
+    { key: "refunded", label: "Refunded", bg: "bg-blue-600" },
+    { key: "processing", label: "Processing", bg: "bg-purple-600" },
   ];
+
+  const paymentsSummary = paymentStatusEnums.map((status) => ({
+    label: `${status.label} Payments`,
+    value: paymentsData.filter((p) => p.status === status.key).length,
+    bg: status.bg,
+  }));
 
   // Get recent notifications from shared data
   const notifications = getRecentNotifications(5);
 
-  const currentSummary =
-    earningsActiveTab === "earnings"
-      ? summaryData.earnings
-      : summaryData.rentalPayments;
+  const currentSummary = summaryData.earnings;
 
   const renderIcon = (type) => {
     switch (type) {
@@ -119,6 +176,13 @@ const Dashboard = () => {
   };
 
   const renderTabContent = () => {
+    if (loading) {
+      return (
+        <div className="flex items-center justify-center h-96 text-gray-500 text-lg">
+          Loading dashboard data...
+        </div>
+      );
+    }
     switch (activeTab) {
       case "overview":
         return (
@@ -144,26 +208,13 @@ const Dashboard = () => {
                         <span className="absolute left-0 -bottom-3 h-1 w-full bg-[#6C4BF4] rounded" />
                       )}
                     </button>
-                    <button
-                      onClick={() => setEarningsActiveTab("rental")}
-                      className={`relative ${
-                        earningsActiveTab === "rental"
-                          ? "text-[#6C4BF4]"
-                          : "text-gray-700"
-                      }`}
-                    >
-                      Rental Payments
-                      {earningsActiveTab === "rental" && (
-                        <span className="absolute left-0 -bottom-3 h-1 w-full bg-[#6C4BF4] rounded" />
-                      )}
-                    </button>
                   </div>
 
                   {/* Content: responsive two-column; stack on small screens */}
                   <div className="mt-6 grid grid-cols-1 md:grid-cols-2 gap-6 items-center">
                     <div>
                       <p className="text-3xl font-bold text-gray-900">
-                        {currentSummary.amount}
+                        {totalEarnings === 0 ? "No earnings yet" : currentSummary.amount}
                       </p>
                       <p className="text-sm text-gray-500 mt-1">
                         {currentSummary.description}
@@ -187,19 +238,25 @@ const Dashboard = () => {
                     Payments
                   </h3>
                   <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 gap-4">
-                    {paymentsSummary.map((item) => (
-                      <div
-                        key={item.label}
-                        className={`${item.bg} text-white p-5 rounded-lg flex flex-col items-center justify-center`}
-                      >
-                        <p className="text-3xl font-bold leading-none">
-                          {item.value}
-                        </p>
-                        <p className="text-xs mt-1 opacity-90 text-center">
-                          {item.label}
-                        </p>
-                      </div>
-                    ))}
+                    {paymentsSummary.filter((item) => item.value >= 1).length === 0 ? (
+                      <div className="col-span-2 flex items-center justify-center text-gray-500 text-lg py-8">No payments yet</div>
+                    ) : (
+                      paymentsSummary
+                        .filter((item) => item.value >= 1)
+                        .map((item) => (
+                          <div
+                            key={item.label}
+                            className={`${item.bg} text-white p-5 rounded-lg flex flex-col items-center justify-center`}
+                          >
+                            <p className="text-3xl font-bold leading-none">
+                              {item.value}
+                            </p>
+                            <p className="text-xs mt-1 opacity-90 text-center">
+                              {item.label}
+                            </p>
+                          </div>
+                        ))
+                    )}
                   </div>
                 </div>
               </div>
@@ -237,18 +294,6 @@ const Dashboard = () => {
                 </div>
               </div>
             </div>
-          </div>
-        );
-
-      case "rental-payments":
-        return (
-          <div className="bg-white rounded-lg shadow p-6">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">
-              Rental Payments
-            </h3>
-            <p className="text-gray-600">
-              Rental payments content will go here...
-            </p>
           </div>
         );
 

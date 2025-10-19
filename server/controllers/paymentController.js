@@ -59,4 +59,21 @@ const getPayments = async (req, res) => {
   }
 };
 
-module.exports = { createPayment, getPayments };
+
+// Get payments where the current user is the owner (lender)
+const getOwnerEarnings = async (req, res) => {
+  try {
+    const userId = req.userId;
+    const payments = await Payment.find({ owner: userId })
+      .populate({
+        path: 'rental',
+        select: 'item cost durationOfRent preferredStartDate',
+        populate: { path: 'item', select: 'name' },
+      });
+    res.status(200).json({ payments });
+  } catch (error) {
+    res.status(400).json({ error: error.message });
+  }
+};
+
+module.exports = { createPayment, getPayments, getOwnerEarnings };
