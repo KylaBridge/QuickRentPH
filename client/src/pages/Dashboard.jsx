@@ -7,7 +7,10 @@ import {
   IoCash,
   IoDocument,
 } from "react-icons/io5";
-import { getRecentNotifications, getNotificationTypeColor } from "../utils/notificationUtils";
+import {
+  getRecentNotifications,
+  getNotificationTypeColor,
+} from "../utils/notificationUtils";
 import api from "../axios";
 import Sidebar from "../components/Sidebar";
 import BarChart from "../components/BarChart";
@@ -28,10 +31,10 @@ const Dashboard = () => {
     const fetchData = async () => {
       try {
         setLoading(true);
-  // Owner payments and earnings
-  const ownerRes = await api.get("/api/payments/owner");
-  setEarningsData(ownerRes.data.payments || []);
-  setPaymentsData(ownerRes.data.payments || []);
+        // Owner payments and earnings
+        const ownerRes = await api.get("/api/payments/owner");
+        setEarningsData(ownerRes.data.payments || []);
+        setPaymentsData(ownerRes.data.payments || []);
       } catch (err) {
         setEarningsData([]);
         setPaymentsData([]);
@@ -54,16 +57,16 @@ const Dashboard = () => {
   const toggleSidebar = () => {
     setSidebarOpen(!sidebarOpen);
   };
-  
+
   // Calculate summary data from API results
   // Earnings summary
   const totalEarnings = earningsData.reduce(
-    (sum, p) => p.status === "completed" ? sum + (p.amount || 0) : sum,
+    (sum, p) => (p.status === "completed" ? sum + (p.amount || 0) : sum),
     0
   );
   // Rental payments summary
   const totalPayments = paymentsData.reduce(
-    (sum, p) => p.status === "completed" ? sum + (p.totalPaid || 0) : sum,
+    (sum, p) => (p.status === "completed" ? sum + (p.totalPaid || 0) : sum),
     0
   );
 
@@ -90,7 +93,9 @@ const Dashboard = () => {
 
   const summaryData = {
     earnings: {
-      amount: `₱ ${totalEarnings.toLocaleString(undefined, { minimumFractionDigits: 2 })}`,
+      amount: `₱ ${totalEarnings.toLocaleString(undefined, {
+        minimumFractionDigits: 2,
+      })}`,
       description: "Your total earnings available for withdrawal.",
       chart: {
         labels: weekLabels,
@@ -104,7 +109,9 @@ const Dashboard = () => {
       },
     },
     rentalPayments: {
-      amount: `₱ ${totalPayments.toLocaleString(undefined, { minimumFractionDigits: 2 })}`,
+      amount: `₱ ${totalPayments.toLocaleString(undefined, {
+        minimumFractionDigits: 2,
+      })}`,
       description: "Payments collected from active and recent rentals.",
       chart: {
         labels: weekLabels,
@@ -214,7 +221,9 @@ const Dashboard = () => {
                   <div className="mt-6 grid grid-cols-1 md:grid-cols-2 gap-6 items-center">
                     <div>
                       <p className="text-3xl font-bold text-gray-900">
-                        {totalEarnings === 0 ? "No earnings yet" : currentSummary.amount}
+                        {totalEarnings === 0
+                          ? "No earnings yet"
+                          : currentSummary.amount}
                       </p>
                       <p className="text-sm text-gray-500 mt-1">
                         {currentSummary.description}
@@ -238,8 +247,11 @@ const Dashboard = () => {
                     Payments
                   </h3>
                   <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 gap-4">
-                    {paymentsSummary.filter((item) => item.value >= 1).length === 0 ? (
-                      <div className="col-span-2 flex items-center justify-center text-gray-500 text-lg py-8">No payments yet</div>
+                    {paymentsSummary.filter((item) => item.value >= 1)
+                      .length === 0 ? (
+                      <div className="col-span-2 flex items-center justify-center text-gray-500 text-lg py-8">
+                        No payments yet
+                      </div>
                     ) : (
                       paymentsSummary
                         .filter((item) => item.value >= 1)

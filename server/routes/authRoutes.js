@@ -28,12 +28,18 @@ router.get("/profile", requireAuth, profile);
 
 router.get(
   "/google",
-  passport.authenticate("google", { scope: ["profile", "email"], session: false })
+  passport.authenticate("google", {
+    scope: ["profile", "email"],
+    session: false,
+  })
 );
 
 router.get(
   "/google/callback",
-  passport.authenticate("google", { session: false, failureRedirect: `${process.env.FRONTEND_URL}/login?error=oauth` }),
+  passport.authenticate("google", {
+    session: false,
+    failureRedirect: `${process.env.FRONTEND_URL}/login?error=oauth`,
+  }),
   (req, res) => {
     // req.user is set by passport verify callback
     const user = req.user;
@@ -53,8 +59,14 @@ router.get(
         sameSite: "strict",
         maxAge: 1000 * 60 * 60 * 24 * 7,
       })
-      // redirect to frontend (dashboard or a dedicated oauth success page)
-      .redirect(`${process.env.FRONTEND_URL}/dashboard`);
+      // redirect to frontend based on user role
+      .redirect(
+        `${process.env.FRONTEND_URL}${
+          user.role === "admin" || user.isAdmin
+            ? "/admin/dashboard"
+            : "/dashboard"
+        }`
+      );
   }
 );
 

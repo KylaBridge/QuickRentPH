@@ -10,32 +10,25 @@ import {
 const QuickActions = () => {
   const actions = [
     {
-      title: "Add New Item",
-      description: "Quick add rental item",
-      icon: IoAdd,
+      title: "Manage Users",
+      description: "View and manage all users",
+      icon: IoPersonOutline,
       color: "bg-blue-500",
-      action: () => console.log("Add item"),
-    },
-    {
-      title: "Approve User",
-      description: "Verify pending users",
-      icon: IoCheckmarkCircle,
-      color: "bg-green-500",
-      action: () => console.log("Approve user"),
-    },
-    {
-      title: "Review Reports",
-      description: "Check reported content",
-      icon: IoWarning,
-      color: "bg-yellow-500",
-      action: () => console.log("Review reports"),
+      action: () => (window.location.href = "/admin/users"),
     },
     {
       title: "Manage Rentals",
-      description: "Process rental requests",
+      description: "View and process rental requests",
+      icon: IoCubeOutline,
+      color: "bg-green-500",
+      action: () => (window.location.href = "/admin/items"),
+    },
+    {
+      title: "View Activity Log",
+      description: "See recent admin activities",
       icon: IoDocumentTextOutline,
       color: "bg-purple-500",
-      action: () => console.log("Manage rentals"),
+      action: () => (window.location.href = "/admin/activity-log"),
     },
   ];
 

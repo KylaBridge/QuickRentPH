@@ -66,43 +66,11 @@ const AdminDashboard = () => {
       trendUp: true,
     },
     {
-      title: "Total Items",
-      value: dashboardStats.totalItems,
-      icon: IoCubeOutline,
-      color: "bg-green-500",
-      trend: "+8%",
-      trendUp: true,
-    },
-    {
-      title: "Pending Requests",
-      value: dashboardStats.pendingRequests,
-      icon: IoTime,
-      color: "bg-yellow-500",
-      trend: "-3%",
-      trendUp: false,
-    },
-    {
-      title: "Active Rentals",
-      value: dashboardStats.activeRentals,
-      icon: IoDocumentTextOutline,
-      color: "bg-purple-500",
-      trend: "+15%",
-      trendUp: true,
-    },
-    {
       title: "Total Revenue",
       value: `₱${dashboardStats.totalRevenue.toLocaleString()}`,
       icon: IoStatsChart,
       color: "bg-[#6C4BF4]",
       trend: "+22%",
-      trendUp: true,
-    },
-    {
-      title: "Completed Rentals",
-      value: dashboardStats.completedRentals,
-      icon: IoCheckmarkCircle,
-      color: "bg-emerald-500",
-      trend: "+18%",
       trendUp: true,
     },
   ];
@@ -130,68 +98,66 @@ const AdminDashboard = () => {
               </p>
             </div>
 
-            {/* Statistics Cards */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-6 mb-8">
-              {statsCards.map((stat, index) => (
-                <StatsCard
-                  key={index}
-                  title={stat.title}
-                  value={stat.value}
-                  icon={stat.icon}
-                  color={stat.color}
-                  trend={stat.trend}
-                  trendUp={stat.trendUp}
-                  loading={loading}
-                />
-              ))}
-            </div>
-
-            {/* Main Content Grid */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
-              {/* Quick Actions */}
-              <div className="xl:col-span-1">
-                <QuickActions />
-              </div>
-
-              {/* Recent Activity */}
-              <div className="xl:col-span-2">
-                <RecentActivity />
-              </div>
-            </div>
-
-            {/* Additional Dashboard Widgets */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-6">
-              {/* Revenue Chart Placeholder */}
-              <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+            {/* Statistics Cards + Revenue Chart Row */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+              <StatsCard
+                title={statsCards[0].title}
+                value={statsCards[0].value}
+                icon={statsCards[0].icon}
+                color={statsCards[0].color}
+                trend={statsCards[0].trend}
+                trendUp={statsCards[0].trendUp}
+                loading={loading}
+              />
+              <StatsCard
+                title={statsCards[1].title}
+                value={statsCards[1].value}
+                icon={statsCards[1].icon}
+                color={statsCards[1].color}
+                trend={statsCards[1].trend}
+                trendUp={statsCards[1].trendUp}
+                loading={loading}
+              />
+              {/* Revenue Chart beside Revenue Card */}
+              <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 flex flex-col justify-center">
                 <h3 className="text-lg font-semibold text-gray-900 mb-4">
                   Revenue Overview
                 </h3>
-                <div className="h-64 flex items-center justify-center bg-gray-50 rounded-lg">
+                <div className="h-40 flex items-center justify-center bg-gray-50 rounded-lg">
                   <div className="text-center">
-                    <IoStatsChart className="w-12 h-12 text-gray-400 mx-auto mb-2" />
-                    <p className="text-gray-500">
+                    <IoStatsChart className="w-10 h-10 text-gray-400 mx-auto mb-2" />
+                    <p className="text-gray-500 text-sm">
                       Revenue chart will be implemented here
                     </p>
                   </div>
                 </div>
               </div>
+            </div>
 
-              {/* Popular Items Placeholder */}
-              <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-                <h3 className="text-lg font-semibold text-gray-900 mb-4">
-                  Popular Items
-                </h3>
-                <div className="h-64 flex items-center justify-center bg-gray-50 rounded-lg">
-                  <div className="text-center">
-                    <IoCubeOutline className="w-12 h-12 text-gray-400 mx-auto mb-2" />
+            {/* Main Content Grid */}
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+              {/* Quick Actions - 1/3 width */}
+              <div className="lg:col-span-1 flex flex-col">
+                <QuickActions />
+              </div>
+
+              {/* Recent Activity Placeholder - 2/3 width */}
+              <div className="lg:col-span-2 flex flex-col">
+                <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 h-full flex flex-col justify-center items-center">
+                  <h3 className="text-lg font-semibold text-gray-900 mb-4">
+                    Recent Activity
+                  </h3>
+                  <div className="flex flex-col items-center justify-center flex-1">
+                    <IoTime className="w-12 h-12 text-gray-400 mb-2" />
                     <p className="text-gray-500">
-                      Popular items list will be implemented here
+                      Recent activity feed will be shown here.
                     </p>
                   </div>
                 </div>
               </div>
             </div>
           </div>
+          {/* End .p-6 */}
         </main>
       </div>
     </div>

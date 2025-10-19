@@ -20,6 +20,8 @@ import ProtectedRoute from "./components/ProtectedRoute.jsx";
 import AdminProtectedRoute from "./components/AdminProtectedRoute.jsx";
 import AdminDashboard from "./pages/admin/AdminDashboard.jsx";
 import ProductManagement from "./pages/admin/ProductManagement.jsx";
+import UserManagement from "./pages/admin/UserManagement.jsx";
+import ActivityLog from "./pages/admin/ActivityLog.jsx";
 import { UserProvider } from "./context/userContext.jsx";
 import { ModalProvider, useModal } from "./context/modalContext.jsx";
 import { WishlistProvider } from "./context/wishlistContext.jsx";
@@ -179,6 +181,10 @@ function App() {
 
             {/* Admin Routes */}
             <Route
+              path="/admin"
+              element={<Navigate to="/admin/dashboard" replace />}
+            />
+            <Route
               path="/admin/dashboard"
               element={
                 <AdminProtectedRoute>
@@ -186,7 +192,6 @@ function App() {
                 </AdminProtectedRoute>
               }
             />
-
             <Route
               path="/admin/items"
               element={
@@ -194,6 +199,22 @@ function App() {
                   <UserProvider>
                     <ProductManagement />
                   </UserProvider>
+                </AdminProtectedRoute>
+              }
+            />
+            <Route
+              path="/admin/users"
+              element={
+                <AdminProtectedRoute>
+                  <UserManagement />
+                </AdminProtectedRoute>
+              }
+            />
+            <Route
+              path="/admin/activity-log"
+              element={
+                <AdminProtectedRoute>
+                  <ActivityLog />
                 </AdminProtectedRoute>
               }
             />

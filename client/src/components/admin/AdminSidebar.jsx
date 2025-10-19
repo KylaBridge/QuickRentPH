@@ -35,112 +35,38 @@ const AdminSidebar = ({ isOpen, onToggle }) => {
       label: "User Management",
       icon: IoPeople,
       path: "/admin/users",
-      description: "Manage users and verification",
-      subItems: [
-        { label: "All Users", path: "/admin/users", icon: IoPeople },
-        {
-          label: "Verification Requests",
-          path: "/admin/users/verification",
-          icon: IoCheckmarkCircle,
-        },
-        { label: "Banned Users", path: "/admin/users/banned", icon: IoWarning },
-      ],
+      description: "Manage users, verification and actions",
+      subItems: [{ label: "All Users", path: "/admin/users", icon: IoPeople }],
     },
     {
       id: "items",
       label: "Item Management",
       icon: IoCube,
       path: "/admin/items",
-      description: "Manage rental items",
-      subItems: [
-        { label: "All Items", path: "/admin/items", icon: IoCube },
-        {
-          label: "Pending Approval",
-          path: "/admin/items/pending",
-          icon: IoTime,
-        },
-        {
-          label: "Reported Items",
-          path: "/admin/items/reported",
-          icon: IoWarning,
-        },
-      ],
+      description: "Manage and review rental items",
+      subItems: [{ label: "All Items", path: "/admin/items", icon: IoCube }],
     },
     {
-      id: "rentals",
-      label: "Rental Management",
-      icon: IoDocumentText,
-      path: "/admin/rentals",
-      description: "Manage rental requests and orders",
-      subItems: [
-        { label: "All Rentals", path: "/admin/rentals", icon: IoDocumentText },
-        {
-          label: "Pending Requests",
-          path: "/admin/rentals/pending",
-          icon: IoTime,
-        },
-        {
-          label: "Active Rentals",
-          path: "/admin/rentals/active",
-          icon: IoCheckmarkCircle,
-        },
-        {
-          label: "Completed",
-          path: "/admin/rentals/completed",
-          icon: IoCheckmarkCircle,
-        },
-        { label: "Disputes", path: "/admin/rentals/disputes", icon: IoWarning },
-      ],
-    },
-    {
-      id: "payments",
-      label: "Payment Management",
-      icon: IoCard,
-      path: "/admin/payments",
-      description: "Transaction and payment oversight",
-      subItems: [
-        { label: "All Transactions", path: "/admin/payments", icon: IoCard },
-        {
-          label: "Pending Payments",
-          path: "/admin/payments/pending",
-          icon: IoTime,
-        },
-        { label: "Refunds", path: "/admin/payments/refunds", icon: IoWarning },
-      ],
-    },
-    {
-      id: "analytics",
-      label: "Analytics & Reports",
-      icon: IoStatsChart,
-      path: "/admin/analytics",
-      description: "Business insights and reports",
-    },
-    {
-      id: "notifications",
-      label: "Notifications",
-      icon: IoNotifications,
-      path: "/admin/notifications",
-      description: "System notifications and alerts",
-    },
-    {
-      id: "security",
-      label: "Security & Moderation",
-      icon: IoShield,
-      path: "/admin/security",
-      description: "Platform security and content moderation",
-    },
-    {
-      id: "settings",
-      label: "System Settings",
-      icon: IoSettings,
-      path: "/admin/settings",
-      description: "Platform configuration",
+      id: "activitylog",
+      label: "Activity Log",
+      icon: IoTime,
+      path: "/admin/activity-log",
+      description: "View and export activity log",
     },
   ];
 
   const handleMenuClick = (item) => {
     if (item.subItems) {
-      setExpandedMenu(expandedMenu === item.id ? null : item.id);
+      // If there's only one submenu item, navigate directly to it
+      if (item.subItems.length === 1) {
+        navigate(item.subItems[0].path);
+        if (window.innerWidth < 1024) {
+          onToggle();
+        }
+      } else {
+        // Multiple subitems, show/hide dropdown
+        setExpandedMenu(expandedMenu === item.id ? null : item.id);
+      }
     } else {
       navigate(item.path);
       if (window.innerWidth < 1024) {
@@ -179,7 +105,7 @@ const AdminSidebar = ({ isOpen, onToggle }) => {
 
       {/* Sidebar */}
       <div
-        className={`fixed inset-y-0 left-0 z-50 w-72 bg-white shadow-lg transform transition-transform duration-300 ease-in-out lg:translate-x-0 lg:static lg:inset-0 ${
+        className={`fixed inset-y-0 left-0 z-50 w-72 bg-white shadow-lg transform transition-transform duration-300 ease-in-out lg:translate-x-0 lg:static lg:inset-0 flex flex-col ${
           isOpen ? "translate-x-0" : "-translate-x-full"
         }`}
       >
@@ -233,7 +159,7 @@ const AdminSidebar = ({ isOpen, onToggle }) => {
                       </div>
                     </div>
                   </div>
-                  {item.subItems && (
+                  {item.subItems && item.subItems.length > 1 && (
                     <div
                       className={`transform transition-transform ${
                         expandedMenu === item.id ? "rotate-180" : ""
@@ -256,25 +182,27 @@ const AdminSidebar = ({ isOpen, onToggle }) => {
                   )}
                 </button>
 
-                {/* Sub-menu items */}
-                {item.subItems && expandedMenu === item.id && (
-                  <div className="mt-2 ml-6 space-y-1">
-                    {item.subItems.map((subItem, index) => (
-                      <button
-                        key={index}
-                        onClick={() => handleSubItemClick(subItem.path)}
-                        className={`w-full flex items-center space-x-3 px-3 py-2 rounded-md text-left transition-colors ${
-                          isActiveRoute(subItem.path)
-                            ? "bg-blue-50 text-[#6C4BF4] border-l-2 border-[#6C4BF4]"
-                            : "text-gray-600 hover:bg-gray-50"
-                        }`}
-                      >
-                        <subItem.icon className="w-4 h-4" />
-                        <span className="text-sm">{subItem.label}</span>
-                      </button>
-                    ))}
-                  </div>
-                )}
+                {/* Sub-menu items - only show for multi-item submenus */}
+                {item.subItems &&
+                  item.subItems.length > 1 &&
+                  expandedMenu === item.id && (
+                    <div className="mt-2 ml-6 space-y-1">
+                      {item.subItems.map((subItem, index) => (
+                        <button
+                          key={index}
+                          onClick={() => handleSubItemClick(subItem.path)}
+                          className={`w-full flex items-center space-x-3 px-3 py-2 rounded-md text-left transition-colors ${
+                            isActiveRoute(subItem.path)
+                              ? "bg-blue-50 text-[#6C4BF4] border-l-2 border-[#6C4BF4]"
+                              : "text-gray-600 hover:bg-gray-50"
+                          }`}
+                        >
+                          <subItem.icon className="w-4 h-4" />
+                          <span className="text-sm">{subItem.label}</span>
+                        </button>
+                      ))}
+                    </div>
+                  )}
               </div>
             ))}
           </div>
