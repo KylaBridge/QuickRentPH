@@ -27,7 +27,13 @@ const initPassport = () => {
                             firstName: (profile.name && profile.name.givenName) || "",
                             lastName: (profile.name && profile.name.familyName) || "",
                             password: hashed,
+                            isEmailVerified: true,
+                            provider: "google",
                         });
+                    } else if (!user.provider || user.provider !== "google") {
+                        // If user exists but provider is not set to google, update it
+                        user.provider = "google";
+                        await user.save();
                     }
                     return done(null, user);
                 } catch (err) {

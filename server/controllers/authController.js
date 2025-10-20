@@ -227,6 +227,11 @@ const loginUser = async (req, res) => {
       return res.status(400).json({ error: "Email is not registered" });
     }
 
+    // If user registered with Google, block password login and show message
+    if (user.provider === 'google') {
+      return res.status(400).json({ error: "This email is registered with Google. Please use 'Continue with Google' to log in." });
+    }
+
     const match = await comparePassword(password, user.password);
     if (!match) {
       return res.status(400).json({ error: "Invalid Credentials" });

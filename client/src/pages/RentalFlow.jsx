@@ -33,28 +33,17 @@ const RentalFlow = () => {
 
   // Form states
   const [formData, setFormData] = useState({
-    // Personal Information
     name: user?.firstName + " " + user?.lastName || "",
-    phone: user?.mobileNumber || "",
     email: user?.email || "",
     completeAddress: "",
     addressLine1: "",
     city: "",
     stateProvince: "",
     confirmEmail: user?.email || "",
-
-    // Rental Details
-    durationOfRent: "1", // Default to 1 day minimum
+    durationOfRent: "1",
     preferredStartDate: "",
     reasonForRenting: "",
-
-    // ID Collection Agreement
     idCollectionAgreed: false,
-
-    // File Uploads
-    validId: null,
-    selfieWithId: null,
-    proofOfBilling: null,
   });
 
   const [errors, setErrors] = useState({});
@@ -156,9 +145,8 @@ const RentalFlow = () => {
     const newErrors = {};
 
     // Required fields validation
-    if (!formData.name.trim()) newErrors.name = "Name is required";
-    if (!formData.phone.trim()) newErrors.phone = "Phone number is required";
-    if (!formData.email.trim()) newErrors.email = "Email is required";
+  if (!formData.name.trim()) newErrors.name = "Name is required";
+  if (!formData.email.trim()) newErrors.email = "Email is required";
     if (!formData.confirmEmail.trim())
       newErrors.confirmEmail = "Please confirm your email";
     if (formData.email !== formData.confirmEmail)
@@ -178,13 +166,6 @@ const RentalFlow = () => {
     if (!formData.idCollectionAgreed)
       newErrors.idCollectionAgreed = "You must agree to ID collection";
 
-    // File uploads
-    if (!formData.validId) newErrors.validId = "Valid ID is required";
-    if (!formData.selfieWithId)
-      newErrors.selfieWithId = "Selfie with valid ID is required";
-    if (!formData.proofOfBilling)
-      newErrors.proofOfBilling = "Proof of billing is required";
-
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -199,35 +180,26 @@ const RentalFlow = () => {
     setIsSubmitting(true);
 
     try {
-      // Build multipart form data
-      const fd = new FormData();
-      fd.append("item", item._id || itemId);
-      fd.append("contactName", formData.name);
-      fd.append("phone", formData.phone);
-      fd.append("email", formData.email);
-      fd.append("completeAddress", formData.completeAddress);
-      fd.append("addressLine1", formData.addressLine1 || "");
-      fd.append("city", formData.city || "");
-      fd.append("stateProvince", formData.stateProvince || "");
-      fd.append("preferredStartDate", formData.preferredStartDate);
-      fd.append("durationOfRent", formData.durationOfRent);
-      fd.append("reasonForRenting", formData.reasonForRenting);
-      fd.append(
-        "idCollectionAgreed",
-        formData.idCollectionAgreed ? "true" : "false"
-      );
-      if (formData.validId) fd.append("validId", formData.validId);
-      if (formData.selfieWithId)
-        fd.append("selfieWithId", formData.selfieWithId);
-      if (formData.proofOfBilling)
-        fd.append("proofOfBilling", formData.proofOfBilling);
+      // Send rental data as JSON (no file uploads)
+      const rentalData = {
+        item: item?._id || itemId,
+        contactName: formData.name,
+        email: formData.email,
+        completeAddress: formData.completeAddress,
+        addressLine1: formData.addressLine1 || "",
+        city: formData.city || "",
+        stateProvince: formData.stateProvince || "",
+        preferredStartDate: formData.preferredStartDate,
+        durationOfRent: formData.durationOfRent,
+        reasonForRenting: formData.reasonForRenting,
+        idCollectionAgreed: formData.idCollectionAgreed,
+        deliveryOption: item?.deliveryOption || "pickup",
+      };
 
-      const result = await createRental(fd);
-
+      await createRental(rentalData);
       navigate("/my-requests", {
         state: {
           message:
-            result?.message ||
             "Rental request submitted successfully! Wait for the owner's approval.",
         },
       });
@@ -416,25 +388,7 @@ const RentalFlow = () => {
                     )}
                   </div>
 
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Phone *
-                    </label>
-                    <input
-                      type="tel"
-                      name="phone"
-                      value={formData.phone}
-                      onChange={handleInputChange}
-                      className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-[#6C4BF4] ${
-                        errors.phone ? "border-red-500" : "border-gray-300"
-                      }`}
-                    />
-                    {errors.phone && (
-                      <p className="text-red-500 text-sm mt-1">
-                        {errors.phone}
-                      </p>
-                    )}
-                  </div>
+
 
                   <div className="md:col-span-2">
                     <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -684,97 +638,7 @@ const RentalFlow = () => {
                 </div>
 
                 {/* File Uploads */}
-                <div className="space-y-6">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Upload 1 Valid ID *
-                    </label>
-                    <div className="relative">
-                      <input
-                        type="file"
-                        name="validId"
-                        onChange={handleInputChange}
-                        accept="image/*"
-                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#6C4BF4] text-xs file:mr-4 file:py-2 file:px-4 file:rounded-l-md file:border-0 file:text-sm file:font-medium file:bg-[#6C4BF4] file:text-white hover:file:bg-[#5A3DE8] file:cursor-pointer"
-                      />
-                      {formData.validId && (
-                        <p className="text-xs text-green-600 mt-1">
-                          Selected: {formData.validId.name}
-                        </p>
-                      )}
-                    </div>
-                    {errors.validId && (
-                      <p className="text-red-500 text-sm mt-1">
-                        {errors.validId}
-                      </p>
-                    )}
-                    <p className="text-xs text-gray-500 mt-1">
-                      Please upload 1 valid government-issued ID. This can be:
-                      Passport, Driver's License, PRC, UMID, Senior Citizen ID,
-                      Integrated Bar ID, ARC card for foreigners. (Images only)
-                    </p>
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Upload a selfie with your Valid ID *
-                    </label>
-                    <div className="relative">
-                      <input
-                        type="file"
-                        name="selfieWithId"
-                        onChange={handleInputChange}
-                        accept="image/*"
-                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#6C4BF4] text-xs file:mr-4 file:py-2 file:px-4 file:rounded-l-md file:border-0 file:text-sm file:font-medium file:bg-[#6C4BF4] file:text-white hover:file:bg-[#5A3DE8] file:cursor-pointer"
-                      />
-                      {formData.selfieWithId && (
-                        <p className="text-xs text-green-600 mt-1">
-                          Selected: {formData.selfieWithId.name}
-                        </p>
-                      )}
-                    </div>
-                    {errors.selfieWithId && (
-                      <p className="text-red-500 text-sm mt-1">
-                        {errors.selfieWithId}
-                      </p>
-                    )}
-                    <p className="text-xs text-gray-500 mt-1">
-                      Please take a selfie with your submitted valid ID. (Images
-                      only)
-                    </p>
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Upload 1 Proof of Billing *
-                    </label>
-                    <div className="relative">
-                      <input
-                        type="file"
-                        name="proofOfBilling"
-                        onChange={handleInputChange}
-                        accept="image/*"
-                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#6C4BF4] text-xs file:mr-4 file:py-2 file:px-4 file:rounded-l-md file:border-0 file:text-sm file:font-medium file:bg-[#6C4BF4] file:text-white hover:file:bg-[#5A3DE8] file:cursor-pointer"
-                      />
-                      {formData.proofOfBilling && (
-                        <p className="text-xs text-green-600 mt-1">
-                          Selected: {formData.proofOfBilling.name}
-                        </p>
-                      )}
-                    </div>
-                    {errors.proofOfBilling && (
-                      <p className="text-red-500 text-sm mt-1">
-                        {errors.proofOfBilling}
-                      </p>
-                    )}
-                    <p className="text-xs text-gray-500 mt-1">
-                      Please upload a picture of at least 1 proof of billing.
-                      This can be a billing for: Meralco, MWSS/Maynilad, Credit
-                      Card, Cable TV, PLDT, Mobile Postpaid Plan, Internet
-                      Service Provider. (Images only)
-                    </p>
-                  </div>
-                </div>
+                {/* ID upload fields removed. User's ID images are now fetched from their profile in the backend. */}
               </div>
 
               {/* Submit Button */}

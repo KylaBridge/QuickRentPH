@@ -61,11 +61,10 @@ const Profile = () => {
   // Validation
   const validate = (field, value) => {
     let err = "";
-    // Required fields
+    // Required fields (username NOT required)
     const requiredFields = [
       "firstName",
       "lastName",
-      "username",
       "gender",
       "birthDate",
     ];
@@ -85,9 +84,9 @@ const Profile = () => {
     const fieldsToCheck = [
       "firstName",
       "lastName",
-      "username",
       "gender",
       "birthDate",
+      "username",
       "email",
     ];
     fieldsToCheck.forEach((f) => {
@@ -298,11 +297,10 @@ const Profile = () => {
                   disabled={
                     !changed ||
                     Object.values(errors).some((e) => e) ||
-                    // also disable when required fields are empty
+                    // also disable when required fields are empty (username NOT required)
                     [
                       "firstName",
                       "lastName",
-                      "username",
                       "gender",
                       "birthDate",
                     ].some(

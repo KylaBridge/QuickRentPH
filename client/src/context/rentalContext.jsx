@@ -5,10 +5,8 @@ const RentalContext = createContext(null);
 
 export const RentalProvider = ({ children }) => {
   const createRental = async (data) => {
-    // data is expected to be a FormData instance
-    const resp = await api.post("/api/rentals", data, {
-      headers: { "Content-Type": "multipart/form-data" },
-    });
+    // data is now a plain object, send as JSON
+    const resp = await api.post("/api/rentals", data);
     return resp.data;
   };
 

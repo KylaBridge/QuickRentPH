@@ -65,7 +65,7 @@ const ItemsTab = ({
   const [promptModal, setPromptModal] = useState({ show: false, type: "verify" });
 
   const handleAddClick = () => {
-    if (!user || !user.username || !user.gender || !user.birthDate) {
+    if (!user || !user.gender || !user.birthDate) {
       setPromptModal({ show: true, type: "profile" });
       return;
     }

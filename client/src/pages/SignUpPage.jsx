@@ -59,6 +59,7 @@ const SignUpPage = () => {
   const [error, setError] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [emailChecked, setEmailChecked] = useState(false);
+  const [loading, setLoading] = useState(false);
 
   const handleInputChange = (e) => {
     const { name, value, type, checked } = e.target;
@@ -72,9 +73,11 @@ const SignUpPage = () => {
   const handleNext = async (e) => {
     e.preventDefault();
     setError("");
+    setLoading(true);
     if (steps[step] === "email") {
       if (!validateEmail(formData.email)) {
         setError("Please enter a valid email address.");
+        setLoading(false);
         return;
       }
       try {
@@ -84,8 +87,10 @@ const SignUpPage = () => {
         setStep(step + 1);
       } catch (error) {
         setError(error);
+        setLoading(false);
         return;
       }
+      setLoading(false);
     }
 
     if (steps[step] === "password") {
@@ -93,6 +98,7 @@ const SignUpPage = () => {
         setError(
           "Password must be at least 8 characters, include an uppercase letter, a lowercase letter, and a number."
         );
+        setLoading(false);
         return;
       }
       try {
@@ -103,12 +109,16 @@ const SignUpPage = () => {
       } catch (error) {
         setError(error);
         setStep(step - 1);
+        setLoading(false);
+        return;
       }
+      setLoading(false);
     }
 
     if (steps[step] === "verify") {
       if (!/^[0-9]{6}$/.test(verificationCode)) {
         setError("Please enter the 6-digit code sent to your email.");
+        setLoading(false);
         return;
       }
       try {
@@ -118,28 +128,36 @@ const SignUpPage = () => {
         setStep(step + 1);
       } catch (error) {
         setError(error);
+        setLoading(false);
+        return;
       }
+      setLoading(false);
     }
 
     if (steps[step] === "profile") {
       if (!formData.firstName.trim()) {
         setError("Please enter your first name.");
+        setLoading(false);
         return;
       }
       if (!formData.lastName.trim()) {
         setError("Please enter your last name.");
+        setLoading(false);
         return;
       }
       if (!formData.birthDate) {
         setError("Please enter your date of birth.");
+        setLoading(false);
         return;
       }
       if (!formData.gender) {
         setError("Please select your gender.");
+        setLoading(false);
         return;
       }
       if (!formData.agreeToTerms) {
         setError("You must agree to the Terms and Conditions to continue.");
+        setLoading(false);
         return;
       }
       try {
@@ -155,7 +173,10 @@ const SignUpPage = () => {
       } catch (error) {
         setError(error);
         setStep(0);
+        setLoading(false);
+        return;
       }
+      setLoading(false);
     }
   };
   // Timer for resend code
@@ -253,15 +274,17 @@ const SignUpPage = () => {
                     required
                     className="w-full px-4 py-4 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#6C4BF4] focus:border-transparent font-poppins text-lg"
                     placeholder="Email"
+                    disabled={loading}
                   />
                   {error && (
                     <div className="text-red-500 text-sm mt-1">{error}</div>
                   )}
                   <button
                     type="submit"
-                    className="w-full bg-[#6C4BF4] text-white py-4 px-4 rounded-md font-semibold hover:bg-purple-700 transition-colors font-poppins text-lg mb-2"
+                    className={`w-full bg-[#6C4BF4] text-white py-4 px-4 rounded-md font-semibold transition-colors font-poppins text-lg mb-2 ${loading ? 'opacity-60 cursor-not-allowed' : 'hover:bg-purple-700'}`}
+                    disabled={loading}
                   >
-                    Next
+                    {loading ? 'Loading...' : 'Next'}
                   </button>
                   {/* Social Login Buttons */}
                   <div className="relative mb-2">
@@ -279,6 +302,7 @@ const SignUpPage = () => {
                       type="button"
                       onClick={signInWithGoogle}
                       className="w-full flex items-center justify-center px-4 py-3 border border-gray-300 rounded-md shadow-sm bg-white text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors"
+                      disabled={loading}
                     >
                       <FcGoogle className="w-5 h-5 mr-2" />
                       Google
@@ -305,6 +329,7 @@ const SignUpPage = () => {
                       required
                       className="w-full px-4 py-4 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#6C4BF4] focus:border-transparent font-poppins text-lg pr-10"
                       placeholder="Create a password"
+                      disabled={loading}
                     />
                     <button
                       type="button"
@@ -314,6 +339,7 @@ const SignUpPage = () => {
                       aria-label={
                         showPassword ? "Hide password" : "Show password"
                       }
+                      disabled={loading}
                     >
                       {showPassword ? (
                         <IoEyeOff className="h-5 w-5" />
@@ -356,14 +382,16 @@ const SignUpPage = () => {
                       type="button"
                       onClick={handleBack}
                       className="text-[#6C4BF4] font-medium"
+                      disabled={loading}
                     >
                       Back
                     </button>
                     <button
                       type="submit"
-                      className="bg-[#6C4BF4] text-white py-3 px-6 rounded-md font-semibold hover:bg-purple-700 transition-colors font-poppins"
+                      className={`bg-[#6C4BF4] text-white py-3 px-6 rounded-md font-semibold transition-colors font-poppins ${loading ? 'opacity-60 cursor-not-allowed' : 'hover:bg-purple-700'}`}
+                      disabled={loading}
                     >
-                      Next
+                      {loading ? 'Loading...' : 'Next'}
                     </button>
                   </div>
                 </>
@@ -381,20 +409,23 @@ const SignUpPage = () => {
                     onChange={e => setVerificationCode(e.target.value.replace(/[^0-9]/g, ""))}
                     className="w-full px-4 py-4 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#6C4BF4] focus:border-transparent font-poppins text-lg tracking-widest text-center"
                     placeholder="------"
+                    disabled={loading}
                   />
                   <div className="flex justify-between items-center mt-2">
                     <button
                       type="button"
                       onClick={handleBack}
                       className="text-[#6C4BF4] font-medium"
+                      disabled={loading}
                     >
                       Back
                     </button>
                     <button
                       type="submit"
-                      className="bg-[#6C4BF4] text-white py-3 px-6 rounded-md font-semibold hover:bg-purple-700 transition-colors font-poppins"
+                      className={`bg-[#6C4BF4] text-white py-3 px-6 rounded-md font-semibold transition-colors font-poppins ${loading ? 'opacity-60 cursor-not-allowed' : 'hover:bg-purple-700'}`}
+                      disabled={loading}
                     >
-                      Verify
+                      {loading ? 'Loading...' : 'Verify'}
                     </button>
                   </div>
                   <div className="flex justify-between items-center mt-4">
@@ -405,7 +436,7 @@ const SignUpPage = () => {
                       type="button"
                       className="text-[#6C4BF4] font-medium disabled:text-gray-400"
                       onClick={handleResendCode}
-                      disabled={resendTimer > 0}
+                      disabled={resendTimer > 0 || loading}
                     >
                       {resendTimer > 0 ? `Resend in ${resendTimer}s` : "Resend Code"}
                     </button>
@@ -432,6 +463,7 @@ const SignUpPage = () => {
                       required
                       className="w-1/2 px-4 py-4 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#6C4BF4] focus:border-transparent font-poppins text-lg"
                       placeholder="First name"
+                      disabled={loading}
                     />
                     <input
                       type="text"
@@ -442,6 +474,7 @@ const SignUpPage = () => {
                       required
                       className="w-1/2 px-4 py-4 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#6C4BF4] focus:border-transparent font-poppins text-lg"
                       placeholder="Last name"
+                      disabled={loading}
                     />
                   </div>
                   <label
@@ -458,6 +491,7 @@ const SignUpPage = () => {
                     onChange={handleInputChange}
                     required
                     className="w-full px-4 py-4 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#6C4BF4] focus:border-transparent font-poppins text-lg mb-3"
+                    disabled={loading}
                   />
                   <label className="block text-sm font-semibold text-gray-700 mb-1">
                     Gender
@@ -471,6 +505,7 @@ const SignUpPage = () => {
                         checked={formData.gender === "male"}
                         onChange={handleInputChange}
                         className="accent-[#6C4BF4]"
+                        disabled={loading}
                       />
                       <span>Male</span>
                     </label>
@@ -482,6 +517,7 @@ const SignUpPage = () => {
                         checked={formData.gender === "female"}
                         onChange={handleInputChange}
                         className="accent-[#6C4BF4]"
+                        disabled={loading}
                       />
                       <span>Female</span>
                     </label>
@@ -493,6 +529,7 @@ const SignUpPage = () => {
                         checked={formData.gender === "other"}
                         onChange={handleInputChange}
                         className="accent-[#6C4BF4]"
+                        disabled={loading}
                       />
                       <span>Other</span>
                     </label>
@@ -506,6 +543,7 @@ const SignUpPage = () => {
                       checked={formData.agreeToTerms}
                       onChange={handleInputChange}
                       className="accent-[#6C4BF4] mr-2"
+                      disabled={loading}
                     />
                     <label
                       htmlFor="agreeToTerms"
@@ -529,14 +567,16 @@ const SignUpPage = () => {
                       type="button"
                       onClick={handleBack}
                       className="text-[#6C4BF4] font-medium"
+                      disabled={loading}
                     >
                       Back
                     </button>
                     <button
                       type="submit"
-                      className="bg-[#6C4BF4] text-white py-3 px-6 rounded-md font-semibold hover:bg-purple-700 transition-colors font-poppins"
+                      className={`bg-[#6C4BF4] text-white py-3 px-6 rounded-md font-semibold transition-colors font-poppins ${loading ? 'opacity-60 cursor-not-allowed' : 'hover:bg-purple-700'}`}
+                      disabled={loading}
                     >
-                      Sign Up
+                      {loading ? 'Loading...' : 'Sign Up'}
                     </button>
                   </div>
                 </>

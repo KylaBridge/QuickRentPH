@@ -10,16 +10,8 @@ const {
   deleteRental,
   updateRentalStatus,
 } = require("../controllers/rentalController");
-const { idUpload } = require("../helpers/multer");
 
-// Accept multipart form-data for ID uploads. Fields are optional.
-const uploadFields = idUpload.fields([
-  { name: "validId", maxCount: 1 },
-  { name: "selfieWithId", maxCount: 1 },
-  { name: "proofOfBilling", maxCount: 1 },
-]);
-
-router.post("/", requireAuth, uploadFields, createRental);
+router.post("/", requireAuth, createRental);
 router.get("/", requireAuth, getUserRentals);
 router.get("/owner", requireAuth, getOwnerRentals);
 router.get("/:id", requireAuth, getRentalById);

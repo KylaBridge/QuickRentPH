@@ -49,6 +49,11 @@ const userSchema = new Schema({
     default: "user",
     required: true
   },
+  provider: {
+    type: String,
+    default: "local",
+    required: true
+  },
   username: {
     type: String,
     default: null,

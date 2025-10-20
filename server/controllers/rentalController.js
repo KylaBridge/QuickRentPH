@@ -20,10 +20,11 @@ const calculateCost = ({
 const createRental = async (req, res) => {
   try {
     const renterId = req.userId;
+    // Accept both item and itemId for flexibility
     const {
-      item: itemId,
+      item,
+      itemId,
       contactName,
-      phone,
       email,
       completeAddress,
       addressLine1,
@@ -36,33 +37,32 @@ const createRental = async (req, res) => {
       deliveryOption,
     } = req.body;
 
-    if (!itemId) return res.status(400).json({ error: "Item id is required" });
+    // Support both item and itemId in request body
+    const resolvedItemId = itemId || item;
+    if (!resolvedItemId) return res.status(400).json({ error: "Item id is required" });
 
-    const item = await Item.findById(itemId);
-    if (!item) return res.status(404).json({ error: "Item not found" });
+    const itemDoc = await Item.findById(resolvedItemId);
+    if (!itemDoc) return res.status(404).json({ error: "Item not found" });
 
     // Calculate cost
     const duration = Number(durationOfRent) || 1;
     const cost = calculateCost({
-      itemPrice: item.price,
+      itemPrice: itemDoc.price,
       duration,
       deliveryOption,
     });
 
-    // Handle uploaded id files (optional)
-    const files = req.files || {};
-    const validId = files.validId ? files.validId[0].path : null;
-    const selfieWithId = files.selfieWithId ? files.selfieWithId[0].path : null;
-    const proofOfBilling = files.proofOfBilling
-      ? files.proofOfBilling[0].path
-      : null;
+    // Instead of uploading IDs, fetch the user's stored ID images from the user model.
+    const user = await require("../models/user").findById(renterId);
+    if (!user) return res.status(404).json({ error: "User not found" });
+    const validId = user.idFrontImage || null;
+    const selfieWithId = user.selfieImage || null;
 
     const rentalData = {
-      item: item._id,
+      item: itemDoc._id,
       renter: renterId,
-      owner: item.owner,
+      owner: itemDoc.owner,
       contactName,
-      phone,
       email,
       completeAddress,
       addressLine1,
@@ -77,7 +77,6 @@ const createRental = async (req, res) => {
         idCollectionAgreed === "true" || idCollectionAgreed === true,
       validId,
       selfieWithId,
-      proofOfBilling,
       cost,
     };
 

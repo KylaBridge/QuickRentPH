@@ -53,6 +53,9 @@ const LoginPage = () => {
         case "This email is already tied to an existing QuickRent account.":
           setError("Email is already registered");
           break;
+        case "This email is registered with Google. Please use 'Continue with Google' to log in.":
+          setError("This email is registered with Google. Please use 'Continue with Google' to log in.");
+          break;
         default:
           setError(
             typeof err === "string" ? err : "Login failed. Please try again."
