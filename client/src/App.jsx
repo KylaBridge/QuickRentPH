@@ -1,3 +1,5 @@
+import { AdminUserProvider } from "./context/adminUserContext.jsx";
+import React from "react";
 import { Routes, Route, Navigate } from "react-router-dom";
 import LandingPage from "./pages/LandingPage.jsx";
 import LoginPage from "./pages/LoginPage.jsx";
@@ -185,37 +187,46 @@ function App() {
               element={<Navigate to="/admin/dashboard" replace />}
             />
             <Route
-              path="/admin/dashboard"
+              path="/admin/*"
               element={
-                <AdminProtectedRoute>
-                  <AdminDashboard />
-                </AdminProtectedRoute>
-              }
-            />
-            <Route
-              path="/admin/items"
-              element={
-                <AdminProtectedRoute>
-                  <UserProvider>
-                    <ProductManagement />
-                  </UserProvider>
-                </AdminProtectedRoute>
-              }
-            />
-            <Route
-              path="/admin/users"
-              element={
-                <AdminProtectedRoute>
-                  <UserManagement />
-                </AdminProtectedRoute>
-              }
-            />
-            <Route
-              path="/admin/activity-log"
-              element={
-                <AdminProtectedRoute>
-                  <ActivityLog />
-                </AdminProtectedRoute>
+                <AdminUserProvider>
+                  <Routes>
+                    <Route
+                      path="dashboard"
+                      element={
+                        <AdminProtectedRoute>
+                          <AdminDashboard />
+                        </AdminProtectedRoute>
+                      }
+                    />
+                    <Route
+                      path="items"
+                      element={
+                        <AdminProtectedRoute>
+                          <UserProvider>
+                            <ProductManagement />
+                          </UserProvider>
+                        </AdminProtectedRoute>
+                      }
+                    />
+                    <Route
+                      path="users"
+                      element={
+                        <AdminProtectedRoute>
+                          <UserManagement />
+                        </AdminProtectedRoute>
+                      }
+                    />
+                    <Route
+                      path="activity-log"
+                      element={
+                        <AdminProtectedRoute>
+                          <ActivityLog />
+                        </AdminProtectedRoute>
+                      }
+                    />
+                  </Routes>
+                </AdminUserProvider>
               }
             />
 

@@ -47,12 +47,12 @@ const userSchema = new Schema({
   role: {
     type: String,
     default: "user",
-    required: true
+    required: true,
   },
   provider: {
     type: String,
     default: "local",
-    required: true
+    required: true,
   },
   username: {
     type: String,
@@ -83,7 +83,7 @@ const userSchema = new Schema({
   },
   earnings: {
     type: Number,
-    default: 0
+    default: 0,
   },
   // Wishlist: array of Item ObjectId references
   wishlist: [
@@ -92,6 +92,10 @@ const userSchema = new Schema({
       ref: "Items",
     },
   ],
+  createdAt: {
+    type: Date,
+    default: Date.now(),
+  },
 });
 
 module.exports = mongoose.model("Users", userSchema);

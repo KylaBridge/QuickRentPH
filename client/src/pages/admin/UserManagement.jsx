@@ -1,5 +1,6 @@
 import { useState, useContext } from "react";
 import { AuthContext } from "../../context/authContext";
+import { AdminUserContext } from "../../context/adminUserContext";
 import AdminSidebar from "../../components/admin/AdminSidebar";
 import AdminHeader from "../../components/admin/AdminHeader";
 import AllUsersTab from "../../components/admin/tabs/AllUsersTab";
@@ -8,6 +9,7 @@ import ReportedUsersTab from "../../components/admin/tabs/ReportedUsersTab";
 
 const UserManagement = () => {
   const { user } = useContext(AuthContext);
+  const { getAllUsers, deleteUser } = useContext(AdminUserContext);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [query, setQuery] = useState("");
   const [activeTab, setActiveTab] = useState("all");
@@ -87,13 +89,28 @@ const UserManagement = () => {
             {/* Tab Content */}
             <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden text-xs">
               {activeTab === "all" && (
-                <AllUsersTab query={query} onUserAction={addActivity} />
+                <AllUsersTab
+                  query={query}
+                  onUserAction={addActivity}
+                  getAllUsers={getAllUsers}
+                  deleteUser={deleteUser}
+                />
               )}
               {activeTab === "verification" && (
-                <VerificationTab query={query} onUserAction={addActivity} />
+                <VerificationTab
+                  query={query}
+                  onUserAction={addActivity}
+                  getAllUsers={getAllUsers}
+                  deleteUser={deleteUser}
+                />
               )}
               {activeTab === "reported" && (
-                <ReportedUsersTab query={query} onUserAction={addActivity} />
+                <ReportedUsersTab
+                  query={query}
+                  onUserAction={addActivity}
+                  getAllUsers={getAllUsers}
+                  deleteUser={deleteUser}
+                />
               )}
             </div>
           </div>

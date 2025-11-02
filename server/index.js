@@ -13,6 +13,7 @@ const itemRoutes = require("./routes/itemRoutes");
 const wishlistRoutes = require("./routes/wishlistRoutes");
 const rentalRoutes = require("./routes/rentalRoutes");
 const paymentRoutes = require("./routes/paymentRoute");
+const adminUserManagementRoute = require("./routes/adminUserManagementRoute");
 
 // Middleware packages
 app.use(
@@ -55,6 +56,7 @@ app.use("/api/items", itemRoutes);
 app.use("/api/wishlist", wishlistRoutes);
 app.use("/api/rentals", rentalRoutes);
 app.use("/api/payments", paymentRoutes);
+app.use("/api/admin", adminUserManagementRoute);
 
 // The main shit
 mongoose

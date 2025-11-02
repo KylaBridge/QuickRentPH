@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import ChangeRoleModal from "../ChangeRoleModal";
 import DeleteUserModal from "../DeleteUserModal";
 
-const AllUsersTab = ({ query, onUserAction }) => {
+const AllUsersTab = ({ query, onUserAction, getAllUsers, deleteUser }) => {
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [changeRoleModal, setChangeRoleModal] = useState({
@@ -13,65 +13,36 @@ const AllUsersTab = ({ query, onUserAction }) => {
     isOpen: false,
     user: null,
   });
+  const [error, setError] = useState(null);
 
   useEffect(() => {
-    // Simulate fetching all users with dummy data
-    setTimeout(() => {
-      setUsers([
-        {
-          id: 1,
-          name: "John Doe",
-          email: "john@example.com",
-          status: "Active",
-          role: "User",
-          joinDate: "2024-01-15",
-          lastActive: "2024-10-18",
-          profileImage: "/api/placeholder/40/40",
-        },
-        {
-          id: 2,
-          name: "Jane Smith",
-          email: "jane@example.com",
-          status: "Active",
-          role: "User",
-          joinDate: "2024-02-20",
-          lastActive: "2024-10-19",
-          profileImage: "/api/placeholder/40/40",
-        },
-        {
-          id: 3,
-          name: "Mike Johnson",
-          email: "mike@example.com",
-          status: "Suspended",
-          role: "User",
-          joinDate: "2024-03-10",
-          lastActive: "2024-10-10",
-          profileImage: "/api/placeholder/40/40",
-        },
-        {
-          id: 4,
-          name: "Admin User",
-          email: "admin@quickrent.com",
-          status: "Active",
-          role: "Admin",
-          joinDate: "2024-01-01",
-          lastActive: "2024-10-20",
-          profileImage: "/api/placeholder/40/40",
-        },
-        {
-          id: 5,
-          name: "Sarah Wilson",
-          email: "sarah@example.com",
-          status: "Banned",
-          role: "User",
-          joinDate: "2024-04-05",
-          lastActive: "2024-09-15",
-          profileImage: "/api/placeholder/40/40",
-        },
-      ]);
-      setLoading(false);
-    }, 1000);
-  }, []);
+    const fetchUsers = async () => {
+      setLoading(true);
+      setError(null);
+      try {
+        const data = await getAllUsers();
+        // Map backend user data to UI format if needed
+        setUsers(
+          data.map((user) => ({
+            id: user._id,
+            name: `${user.firstName} ${user.lastName}`,
+            email: user.email,
+            status: user.isVerified ? "Active" : "Unverified",
+            role: user.role === "admin" ? "Admin" : "User",
+            joinDate: user.createdAt ? user.createdAt.slice(0, 10) : "-",
+            lastActive: user.updatedAt ? user.updatedAt.slice(0, 10) : "-",
+            profileImage: user.profileImage || "/api/placeholder/40/40",
+          }))
+        );
+      } catch (err) {
+        setError(err.toString());
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchUsers();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [getAllUsers]);
 
   const filteredUsers = users.filter(
     (user) =>
@@ -101,11 +72,16 @@ const AllUsersTab = ({ query, onUserAction }) => {
     }
   };
 
-  const handleDelete = (userId) => {
-    setUsers((prev) => prev.filter((user) => user.id !== userId));
-    if (onUserAction) {
-      const user = users.find((u) => u.id === userId);
-      onUserAction(`Deleted user account: ${user?.name}`);
+  const handleDelete = async (userId) => {
+    try {
+      await deleteUser(userId);
+      setUsers((prev) => prev.filter((user) => user.id !== userId));
+      if (onUserAction) {
+        const user = users.find((u) => u.id === userId);
+        onUserAction(`Deleted user account: ${user?.name}`);
+      }
+    } catch (err) {
+      setError(err.toString());
     }
   };
 
@@ -116,6 +92,10 @@ const AllUsersTab = ({ query, onUserAction }) => {
         <p className="text-gray-600">Loading users...</p>
       </div>
     );
+  }
+
+  if (error) {
+    return <div className="p-6 text-center text-red-600">Error: {error}</div>;
   }
 
   return (
@@ -139,9 +119,7 @@ const AllUsersTab = ({ query, onUserAction }) => {
               <th className="px-3 py-2 text-left font-medium text-gray-500 uppercase tracking-wider">
                 Join Date
               </th>
-              <th className="px-3 py-2 text-left font-medium text-gray-500 uppercase tracking-wider">
-                Last Active
-              </th>
+              {/* Removed Last Active column */}
               <th className="px-3 py-2 text-left font-medium text-gray-500 uppercase tracking-wider">
                 Actions
               </th>
@@ -189,9 +167,7 @@ const AllUsersTab = ({ query, onUserAction }) => {
                   <td className="px-3 py-2 whitespace-nowrap">
                     {user.joinDate}
                   </td>
-                  <td className="px-3 py-2 whitespace-nowrap">
-                    {user.lastActive}
-                  </td>
+                  {/* Removed Last Active cell */}
                   <td className="px-3 py-2 whitespace-nowrap font-medium space-x-1">
                     <button
                       onClick={() => openChangeRoleModal(user)}
